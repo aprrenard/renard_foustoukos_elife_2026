@@ -1,7 +1,7 @@
 # Fast Learning — Analysis Code for Renard, Foustoukos et al. (2026)
 
 Analysis pipeline for a two-photon calcium imaging study of rapid cortical plasticity during sensory learning in mice.  
-Preprint: [bioRxiv 2026.05.11.724293](https://doi.org/10.64898/2026.05.11.724293) — *eLife*, 2026.
+Preprint: (https://www.biorxiv.org/content/10.64898/2026.05.11.724293v1) — *eLife*, 2026.
 
 ---
 
@@ -60,26 +60,7 @@ src/
 └── projection_gui/             # GUI tool for cross-day FOV registration (SimpleElastix)
 ```
 
-Data are stored in [NWB format](https://www.nwb.org/) and loaded via a companion [NWB_analysis](https://github.com/LSENS-BMI-EPFL/NWB_converter) library. The full dataset will be deposited on Zenodo.
-
----
-
-## Methods and Technical Stack
-
-| Category | Tools / Approaches |
-|---|---|
-| **Calcium imaging** | Suite2p (ROI detection, neuropil correction: F = F_soma − 0.7 × F_neuropil), custom maximin-filter dF/F |
-| **Data formats** | NWB (Neurodata Without Borders), xarray trial-aligned tensors, Pandas DataFrames |
-| **Single-cell plasticity** | LMI via ROC/AUC (permutation test, 1,000 shuffles); sigmoid vs. linear vs. flat model comparison (`scipy.optimize`) |
-| **Dimensionality reduction** | PCA, LDA |
-| **Population decoding** | Logistic regression (L2, z-scored features, 10-fold stratified CV); SVM, Ridge Classifier, Random Forest |
-| **Representational geometry** | Cosine similarity matrices (200 × 200); network reorganization index |
-| **Reactivation detection** | Template correlation (Pearson) on catch trials; per-mouse surrogate thresholds (1,000 circular shifts, 99th percentile); `scipy.signal.find_peaks` (150 ms min distance, prominence 0.15) |
-| **Behavioral modeling** | Bayesian state-space model (PyMC, Gaussian random walk in logit space, MCMC) for trial-by-trial lick probability |
-| **Statistics** | Mann-Whitney U, Wilcoxon signed-rank, Kruskal-Wallis, Kolmogorov–Smirnov, Pearson/Spearman correlation, Benjamini–Hochberg FDR, bootstrap CIs |
-| **Parallel processing** | `joblib` (up to 35 cores for per-mouse analyses) |
-| **Visualization** | Matplotlib, Seaborn; SVG/PDF output for publication panels |
-| **Language / environment** | Python 3.9, conda |
+Data are stored in [NWB format](https://www.nwb.org/). The full dataset will be deposited on Zenodo.
 
 ---
 
@@ -116,6 +97,6 @@ pip install -e .
 
 Renard A.\*, Foustoukos G.\*, Iuga M., Bech P., Bisi A., Dard R.F., Crochet S.\*, Petersen C.C.H.\*  
 **Rapid cortical reorganization tracks goal-directed sensorimotor learning in real time.**  
-*eLife*, 2026. DOI: [10.64898/2026.05.11.724293](https://doi.org/10.64898/2026.05.11.724293)
+*eLife*, 2026.
 
 \* Equal contribution / co-corresponding authors.
