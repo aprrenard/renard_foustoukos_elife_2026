@@ -4,24 +4,17 @@ import sys
 
 import numpy as np
 import pandas as pd
-import xarray as xr
-import scipy.stats as stats
-from sklearn.metrics import auc, roc_curve
-from sklearn.utils import shuffle
 
 sys.path.append(r'/home/aprenard/repos/fast-learning')
 import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging 
-from src.utils.utils_behavior import *
-from src.utils.utils_imaging import compute_roc
-from joblib import Parallel, delayed
+import src.utils.utils_imaging as utils_imaging
 
 
 # =============================================================================
 # Compute LMI.
 # =============================================================================
 
-# This perfornms ROC analysis on each cell with mapping trials.
+# This performs ROC analysis on each cell with mapping trials.
 # Mapping trial of Day 0 are not included in the analysis.
 
 # Parameters.
@@ -58,7 +51,10 @@ for mouse_id in mice_list:
         print(f'Mouse {mouse_id} already done. Skipping.')
         continue
     print(f'Processing {mouse_id}')
-    data_mapping = xr.open_dataarray(os.path.join(io.tensor_dir, mouse_id, 'tensor_xarray_mapping_data.nc'))
+    # Load through load_mouse_xarray so artefact cells are excluded as in
+    # every other analysis.
+    data_mapping = utils_imaging.load_mouse_xarray(
+        mouse_id, io.tensor_dir, 'tensor_xarray_mapping_data.nc', substracted=False)
     data_mapping = data_mapping - np.nanmean(data_mapping.sel(time=slice(*baseline_win)), axis=2, keepdims=True)
     
     data_pre = data_mapping.sel(trial=data_mapping.coords['day'].isin([-2, -1]))
@@ -75,12 +71,8 @@ if len(df)>0:
     df = pd.concat(df)
     df = df.reset_index(drop=True)
     df_results = pd.concat([df_results, df])
-    df_results.to_csv(result_file)
+    os.makedirs(processed_data_folder, exist_ok=True)
+    df_results.to_csv(result_file, index=False)
 else:
     print('No new data to process.')
-
-# data_mapping.shape
-# np.isnan(data_mapping).sum()
-# data_mapping[0].mean('time')
-
 
