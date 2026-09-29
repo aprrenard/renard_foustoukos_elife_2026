@@ -163,8 +163,8 @@ def _per_mouse_cv_accuracy(vectors, label_encoder, seed=42, n_shuffles=100, n_jo
             fold_scores.append(np.mean(clf.predict(X_test) == y[test_idx]))
         accuracies.append(np.mean(fold_scores))
 
-        def _shuffle_score(clf, X, y, cv, rng):
-            y_shuff = rng.permutation(y)
+        def _shuffle_score(clf, X, y, cv, shuffle_seed):
+            y_shuff = np.random.default_rng(shuffle_seed).permutation(y)
             scores = []
             for train_idx, test_idx in cv.split(X, y_shuff):
                 scaler = StandardScaler()
@@ -174,8 +174,11 @@ def _per_mouse_cv_accuracy(vectors, label_encoder, seed=42, n_shuffles=100, n_jo
                 scores.append(np.mean(clf.predict(X_test) == y_shuff[test_idx]))
             return np.mean(scores)
 
+        # One seed per shuffle, drawn in the main process, so results do not
+        # depend on how joblib batches the work.
+        shuffle_seeds = rng.integers(0, 2**32, size=n_shuffles)
         shuffle_scores = Parallel(n_jobs=n_jobs)(
-            delayed(_shuffle_score)(clf, X, y, cv, rng) for _ in range(n_shuffles)
+            delayed(_shuffle_score)(clf, X, y, cv, s) for s in shuffle_seeds
         )
         chance_accuracies.append(np.mean(shuffle_scores))
 

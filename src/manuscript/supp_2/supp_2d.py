@@ -21,14 +21,9 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 sys.path.append(r'/home/aprenard/repos/fast-learning')
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
 import src.utils.utils_io as io
 from src.utils.utils_plot import reward_palette
-
-# Import shared data-loading function from figure_3m_o
-sys.path.insert(0, os.path.join(os.path.dirname(__file__),
-                                '..', '..', 'manuscript', 'figure_3'))
-from figure_3m_o import load_and_process_data
+from src.manuscript.figure_3.figure_3l_n import load_and_process_data
 
 
 # ============================================================================
@@ -122,7 +117,7 @@ def agg_with_ci(accs_list):
         means.append(np.nanmean(a))
         if len(a) > 1:
             res = bootstrap((a,), np.nanmean, confidence_level=0.95,
-                            n_resamples=1000, method='basic')
+                            n_resamples=1000, method='basic', random_state=SEED)
             ci_lows.append(res.confidence_interval.low)
             ci_highs.append(res.confidence_interval.high)
         else:
