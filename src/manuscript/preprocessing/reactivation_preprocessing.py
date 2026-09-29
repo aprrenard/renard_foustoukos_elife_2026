@@ -102,7 +102,7 @@ def _p_str(p):
 
 def create_whisker_template(mouse, day, threshold_dff=THRESHOLD_DFF, verbose=False):
     """Create whisker response template from mapping data for a specific day."""
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = io.tensor_dir
     xarray_map = utils_imaging.load_mouse_xarray(
         mouse, folder, 'tensor_xarray_mapping_data.nc', substracted=True)
 
@@ -334,7 +334,7 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
     Returns a nested dict: {mouse, days: {day: {correlations, events, ...}}}
     """
     results = {'mouse': mouse, 'days': {}}
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = io.tensor_dir
 
     for day in days:
         try:
@@ -477,7 +477,7 @@ def _analyze_surrogates_per_day(mouse, days=DAYS, threshold_dff=THRESHOLD_DFF,
     Compute per-day surrogate thresholds for one mouse.
     Returns (results_dfs, all_surrogate_data) where results_dfs is {percentile: DataFrame}.
     """
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = io.tensor_dir
     results_lists = {p: [] for p in percentiles}
     all_surrogate_data = {p: {} for p in percentiles}
 
@@ -553,7 +553,7 @@ def _analyze_surrogates_per_mouse(mouse, threshold_dff=THRESHOLD_DFF,
     Compute single per-mouse surrogate threshold using pre-learning days pooled.
     Returns (results_dfs, surrogate_data) where results_dfs is {percentile: DataFrame}.
     """
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = io.tensor_dir
     try:
         xarray_learning = utils_imaging.load_mouse_xarray(
             mouse, folder, 'tensor_xarray_learning_data.nc', substracted=False)

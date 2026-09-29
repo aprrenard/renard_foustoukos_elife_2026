@@ -76,7 +76,7 @@ PARTICIPATION_CSV = os.path.join(RESULTS_DIR, 'cell_participation_rates_per_day.
 LMI_RESULTS_CSV = os.path.join(io.processed_dir, 'lmi_results.csv')
 LMI_DATA_CSV = os.path.join(RESULTS_DIR, 'supp4ab_lmi_data_day0.csv')
 OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_4', 'output')
-FOLDER = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+FOLDER = io.tensor_dir
 
 # Execution mode
 MODE = 'plot'

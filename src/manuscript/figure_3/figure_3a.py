@@ -30,7 +30,8 @@ from nwb_wrappers.nwb_reader_functions import get_image_mask
 
 MOUSE_ID        = 'GF314'
 NWB_FILE        = os.path.join(io.nwb_dir, 'GF314_28112020_171800.nwb')
-OPS_PATH        = io.adjust_path_to_host(os.path.join(io.processed_dir, 'GF314_ops.npy'))
+# suite2p ops file is an input stored next to the pre-refactor tensors.
+OPS_PATH        = os.path.join(os.path.dirname(io.tensor_dir), 'GF314_ops.npy')
 SEGMENTATION_INFO = ['ophys', 'all_cells', 'my_plane_segmentation']
 
 sampling_rate   = 30
@@ -41,11 +42,9 @@ nan_gap         = 60         # NaN frames inserted between trials
 offset_step     = 400        # % dF/F vertical offset between cells
 
 file_name = 'tensor_xarray_mapping_data.nc'
-folder    = os.path.join(io.processed_dir, 'mice')
+folder    = io.tensor_dir
 
-OUTPUT_DIR = io.adjust_path_to_host(
-    '/mnt/lsens-analysis/Anthony_Renard/manuscript/outputs/figure_3/output'
-)
+OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_3', 'output')
 
 
 # #############################################################################

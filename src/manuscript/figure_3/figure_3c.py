@@ -44,7 +44,7 @@ _, _, mice, _ = io.select_sessions_from_db(io.db_path, io.nwb_dir,
 psth_records = []
 for mouse_id in mice:
     reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = io.tensor_dir
     xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, 'tensor_xarray_mapping_data.nc')
     xarr = utils_imaging.substract_baseline(xarr, 2, BASELINE_WIN)
     xarr = xarr.sel(trial=xarr['day'].isin(DAYS))

@@ -29,9 +29,7 @@ baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * samp
 days = [-2, -1, 0, 1, 2]
 days_str = ['Day -2', 'Day -1', 'Day 0', 'Day +1', 'Day +2']
 
-OUTPUT_DIR = io.adjust_path_to_host(
-    '/mnt/lsens-analysis/Anthony_Renard/manuscript/outputs/figure_3/output'
-)
+OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_3', 'output')
 
 
 # #############################################################################
@@ -62,7 +60,7 @@ print(f"Found {len(mouse_lmi)} cells with LMI data for {session_mouse_id}")
 
 # Load activity data for this mouse
 file_name = 'tensor_xarray_mapping_data.nc'
-folder = os.path.join(io.processed_dir, 'mice')
+folder = io.tensor_dir
 xarr = utils_imaging.load_mouse_xarray(session_mouse_id, folder, file_name)
 xarr = utils_imaging.substract_baseline(xarr, 2, baseline_win)
 

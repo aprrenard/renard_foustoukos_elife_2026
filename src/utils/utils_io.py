@@ -163,15 +163,22 @@ def adjust_path_to_host(path):
 
 
 def solve_common_paths(target):
-    
-    # Directories.
+
+    # Read-only inputs.
     data_path = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/data'
     analysis_path = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard'
     nwb_path = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/NWB'
-    processed_data_dir = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed'
-    results_dir = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/analysis_output/fast-learning'
-    manuscript_output_dir = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/manuscript/outputs'
-    
+    # Pre-refactor per-mouse xarrays, read only.
+    tensor_dir = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/mice'
+
+    # Outputs. Everything written by the code goes under output_root; the
+    # pre-refactor outputs (data_processed/, manuscript/outputs/) are kept
+    # untouched as reference.
+    output_root = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/fast_learning_release'
+    processed_data_dir = output_root + '/processed'
+    results_dir = output_root + '/results'
+    manuscript_output_dir = output_root + '/figures'
+
     # Files.    
     db_path = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/mice_info/session_metadata.xlsx'
     trial_indices_yaml = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/mice_info/stop_flags/trial_indices_end_session.yaml'
@@ -201,13 +208,18 @@ def solve_common_paths(target):
         path = results_dir
     elif target == 'manuscript_output_dir':
         path = manuscript_output_dir
-        
+    elif target == 'tensors':
+        path = tensor_dir
+    else:
+        raise ValueError(f'Unknown path target: {target}')
+
     return adjust_path_to_host(path)
 
 
 # Path to the directory containing the processed data.
 results_dir = solve_common_paths('results')
 processed_dir = solve_common_paths('processed_data')
+tensor_dir = solve_common_paths('tensors')
 manuscript_output_dir = solve_common_paths('manuscript_output_dir')
 nwb_dir = solve_common_paths('nwb')
 db_path = solve_common_paths('db')

@@ -62,7 +62,7 @@ def load_and_process_response_data(
     for mouse_id in mice:
         reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
 
-        folder = os.path.join(io.processed_dir, 'mice')
+        folder = io.tensor_dir
         xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name)
         xarr = utils_imaging.substract_baseline(xarr, 2, baseline_win_samples)
 

@@ -62,7 +62,7 @@ vectors_rew_day0_learning = []
 vectors_nonrew_day0_learning = []
 
 for mouse in mice:
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = io.tensor_dir
     rew_gp = io.get_mouse_reward_group_from_db(io.db_path, mouse, db)
 
     # --- mapping data ---

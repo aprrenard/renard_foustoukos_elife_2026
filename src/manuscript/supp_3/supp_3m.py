@@ -66,7 +66,7 @@ for mouse_id in mice:
 
 def process_mouse(mouse_id):
     reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = io.tensor_dir
     xarr = utils_imaging.load_mouse_xarray(
         mouse_id, folder, 'tensor_xarray_mapping_data.nc', substracted=False)
     xarr.name = 'dff'

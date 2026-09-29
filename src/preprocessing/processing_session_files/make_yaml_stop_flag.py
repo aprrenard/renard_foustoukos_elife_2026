@@ -129,13 +129,14 @@ for nwb_file in nwb_list:
                          & (table.lick_flag == 1)].shape[0]
     trial_count.append([mouse_id, session_id, start, stop, n_wh_miss, n_wh_hit])
 
-# Save yaml files.
-yaml_save = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/mice_info/stop_flags/stop_flags_sensory_map.yaml'
-yaml_save = io.adjust_path_to_host(yaml_save)
+# Save yaml files. Written under the output root; the yaml files in
+# mice_info/stop_flags are read-only inputs.
+yaml_dir = os.path.join(io.processed_dir, 'stop_flags')
+os.makedirs(yaml_dir, exist_ok=True)
+yaml_save = os.path.join(yaml_dir, 'stop_flags_sensory_map.yaml')
 with open(yaml_save, 'w') as stream:
     yaml.safe_dump(stop_flags, stream)
-yaml_save = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/mice_info/stop_flags/trial_indices_sensory_map.yaml'
-yaml_save = io.adjust_path_to_host(yaml_save)
+yaml_save = os.path.join(yaml_dir, 'trial_indices_sensory_map.yaml')
 with open(yaml_save, 'w') as stream:
     yaml.safe_dump(trial_indices, stream)
 
@@ -214,9 +215,9 @@ for nwb_file in nwb_list:
     trial_indices[session_id] = trial_ids
 
 # Save yaml files.
-yaml_save = r'\\sv-nas1.rcp.epfl.ch\Petersen-Lab\analysis\Anthony_Renard\mice_info\stop_flags\stop_flags_end_session.yaml'
+yaml_save = os.path.join(yaml_dir, 'stop_flags_end_session.yaml')
 with open(yaml_save, 'w') as stream:
     yaml.dump(stop_flags, stream)
-yaml_save = r'\\sv-nas1.rcp.epfl.ch\Petersen-Lab\analysis\Anthony_Renard\mice_info\stop_flags\trial_indices_end_session.yaml'
+yaml_save = os.path.join(yaml_dir, 'trial_indices_end_session.yaml')
 with open(yaml_save, 'w') as stream:
     yaml.dump(trial_indices, stream)

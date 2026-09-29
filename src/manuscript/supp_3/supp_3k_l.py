@@ -128,7 +128,7 @@ cell_type_info = []
 for mouse_id in weights_df['mouse_id'].unique():
     try:
         xarr = utils_imaging.load_mouse_xarray(
-            mouse_id, os.path.join(io.processed_dir, 'mice'),
+            mouse_id, io.tensor_dir,
             'tensor_xarray_mapping_data.nc')
         rois = xarr.coords['roi'].values
         cts  = (xarr.coords['cell_type'].values if 'cell_type' in xarr.coords

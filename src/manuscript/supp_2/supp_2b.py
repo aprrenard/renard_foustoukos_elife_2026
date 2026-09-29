@@ -72,7 +72,7 @@ for cell, label in cells:
 # Figure
 # ============================================================================
 
-folder = os.path.join(io.processed_dir, 'mice')
+folder = io.tensor_dir
 
 fig, axes = plt.subplots(len(cells), len(DAYS), figsize=(15, 9))
 

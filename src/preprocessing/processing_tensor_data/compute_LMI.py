@@ -58,7 +58,7 @@ for mouse_id in mice_list:
         print(f'Mouse {mouse_id} already done. Skipping.')
         continue
     print(f'Processing {mouse_id}')
-    data_mapping = xr.open_dataarray(os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_mapping_data.nc'))
+    data_mapping = xr.open_dataarray(os.path.join(io.tensor_dir, mouse_id, 'tensor_xarray_mapping_data.nc'))
     data_mapping = data_mapping - np.nanmean(data_mapping.sel(time=slice(*baseline_win)), axis=2, keepdims=True)
     
     data_pre = data_mapping.sel(trial=data_mapping.coords['day'].isin([-2, -1]))

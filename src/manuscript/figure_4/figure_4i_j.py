@@ -78,7 +78,7 @@ else:
 
 LMI_RESULTS_CSV = os.path.join(io.processed_dir, 'lmi_results.csv')
 OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_4', 'output')
-FOLDER = os.path.join(io.processed_dir, 'mice')
+FOLDER = io.tensor_dir
 
 # Participation-threshold robustness check: main value (10%) plus the two
 # additional values requested for the revision (20%, 50%).

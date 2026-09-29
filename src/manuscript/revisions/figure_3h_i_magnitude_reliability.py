@@ -112,7 +112,7 @@ def _load_vectors_and_matrices(
 
     for mouse in mice:
         print(f"Processing mouse: {mouse}")
-        folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+        folder = io.tensor_dir
         xarray = utils_imaging.load_mouse_xarray(
             mouse, folder, 'tensor_xarray_mapping_data.nc', substracted=substract_baseline
         )

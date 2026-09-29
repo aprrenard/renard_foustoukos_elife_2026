@@ -102,7 +102,7 @@ def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
         reward_group = io.get_mouse_reward_group_from_db(db_path, mouse_id)
 
         data_mapping = xr.open_dataarray(os.path.join(
-            PROCESSED_DATA_DIR, 'mice', mouse_id, 'tensor_xarray_mapping_data.nc'))
+            io.tensor_dir, mouse_id, 'tensor_xarray_mapping_data.nc'))
         data_mapping = data_mapping - np.nanmean(
             data_mapping.sel(time=slice(*BASELINE_WIN)), axis=2, keepdims=True)
 

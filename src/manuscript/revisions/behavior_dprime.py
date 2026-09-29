@@ -648,7 +648,7 @@ def panel_4e_dprime_correlation(
         weights = pickle.load(f)
     print(f"Loaded decoder weights for {len(weights)} mice.")
 
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = io.tensor_dir
     results = []
     for mouse, w in weights.items():
         xarr = utils_imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')

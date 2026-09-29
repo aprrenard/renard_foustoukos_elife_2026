@@ -35,9 +35,7 @@ OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_1', 'output')
 # Load particle-test behaviour table
 # ============================================================================
 
-table_path = io.adjust_path_to_host(
-    r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_particle_test.csv'
-)
+table_path = os.path.join(io.processed_dir, 'behavior', 'behavior_particle_test.csv')
 table_particle_test = pd.read_csv(table_path)
 
 

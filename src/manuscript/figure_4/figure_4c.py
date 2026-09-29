@@ -60,7 +60,7 @@ bh_path = os.path.join(io.processed_dir, 'behavior',
 table = pd.read_csv(bh_path)
 bh_df = table.loc[(table['day'] == 0) & (table['whisker_stim'] == 1)]
 
-folder = os.path.join(io.processed_dir, 'mice')
+folder = io.tensor_dir
 xarrays_learning = {}
 for mouse in weights:
     xarr = utils_imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')

@@ -138,7 +138,7 @@ def _compute_participation_with_shifts(mouse, day, n_shifts, preloaded_events):
     or None on failure.
     """
     try:
-        folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+        folder = io.tensor_dir
         xr = utils_imaging.load_mouse_xarray(
             mouse, folder, 'tensor_xarray_learning_data.nc', substracted=False)
         xr_day = xr.sel(trial=xr['day'] == day)
