@@ -19,6 +19,13 @@ Execution modes:
 Intermediate data (participation rates, merged day-0 dataset) are saved to
 data_processed/reactivation/.
 Figures and data/stats CSVs are saved to io.manuscript_output_dir/supp_4/output/.
+
+NOTE (revision): per reviewer comment (3), both panels' Pearson correlations
+(raw and partial) pool cells across mice as independent observations. A
+mixed-effects version (mouse_id as random intercept; the partial correlation
+becomes the lmi coefficient of a participation_rate ~ lmi + transient_freq
+model) is implemented in src/manuscript/revisions/supp_4a_b_lmm.py, reusing
+this module's data pipeline unchanged.
 """
 
 import os

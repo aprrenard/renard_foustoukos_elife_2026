@@ -77,11 +77,22 @@ def generate_panel(
     # Create two-panel figure
     fig, axes = plt.subplots(1, 2, sharey=True, figsize=(12, 5))
 
-    # Create colormap for p-value visualization
+    # p > 0.05 (not significant) is left pure white. p <= 0.05 uses a log10
+    # gradient from a visible grey right at the p=0.05 boundary down to
+    # black as p keeps shrinking. A linear scale collapses almost all
+    # significant p-values (which routinely span many orders of magnitude,
+    # e.g. 0.04 down to 1e-8) into indistinguishable black; log gives each
+    # order of magnitude equal visual weight instead. PVALUE_FLOOR is the
+    # p-value at which the gradient bottoms out at pure black -- tune it to
+    # the actual range of p-values in the data (anything smaller renders
+    # identically black).
+    PVALUE_FLOOR = 1e-3
+    NONSIG_GREY = 0.8  # grey at p=0.05
     cmap = matplotlib.colors.LinearSegmentedColormap.from_list(
-        'pval_cmap', ['black', 'white']
+        'pval_cmap', [(0.0, 'black'), (1.0, (NONSIG_GREY,) * 3)]
     )
-    norm = matplotlib.colors.Normalize(vmin=0, vmax=0.05)
+    cmap.set_over('white')  # p > vmax (0.05) -- not part of the gradient
+    norm = matplotlib.colors.LogNorm(vmin=PVALUE_FLOOR, vmax=0.05)
 
     # ========================================================================
     # Panel 1: Raw trial outcomes
@@ -127,7 +138,7 @@ def generate_panel(
 
     # Plot p-value rectangles
     for trial, p_value in p_values_single:
-        color = cmap(norm(min(p_value, 0.05)))
+        color = cmap(norm(max(p_value, PVALUE_FLOOR)))
         ax.add_patch(plt.Rectangle(
             (trial - 0.4, 0.95), 0.8, 0.03,
             color=color, edgecolor='none'
@@ -181,7 +192,7 @@ def generate_panel(
 
     # Plot p-value rectangles
     for trial, p_value in p_values_learning:
-        color = cmap(norm(min(p_value, 0.05)))
+        color = cmap(norm(max(p_value, PVALUE_FLOOR)))
         ax.add_patch(plt.Rectangle(
             (trial - 0.4, 0.95), 0.8, 0.03,
             color=color, edgecolor='none'
@@ -191,6 +202,21 @@ def generate_panel(
     ax.set_xlabel('Whisker trial')
     ax.set_ylim([-0.1, 1])
     ax.legend(frameon=False, title='Reward group')
+
+    # Shared colorbar for the p-value color code (same cmap/norm as the
+    # significance rectangles above; p > 0.05 renders white in the actual
+    # rectangles via cmap.set_over(), but isn't depicted on the bar itself
+    # -- no extend cap). Reversed so the most significant (blackest) end
+    # is on top and the p=0.05 boundary is at the bottom.
+    sm = plt.cm.ScalarMappable(norm=norm, cmap=cmap)
+    sm.set_array([])
+    cbar = fig.colorbar(sm, ax=axes, orientation='vertical',
+                        shrink=0.6, pad=0.02, aspect=15)
+    tick_vals = [PVALUE_FLOOR, 1e-2, 0.05]
+    cbar.set_ticks(tick_vals)
+    cbar.set_ticklabels(['≤ {:.0e}'.format(PVALUE_FLOOR), '0.01', '0.05'])
+    cbar.set_label('p-value (FDR-corrected)', fontsize=9)
+    cbar.ax.invert_yaxis()
 
     sns.despine()
     plt.tight_layout()

@@ -6,9 +6,18 @@ Panel i: Scatter plot of day-0 participation rate vs LMI (one dot per cell),
          Pearson r coefficient.
 
 Panel j: Participation rate across days (-2 to +2) for LMI+ vs LMI- cells,
-         showing per-mouse averages with individual trajectories. Stats:
-         2-way repeated-measures ANOVA (day × LMI category) followed by
-         Mann-Whitney U posthoc tests (positive vs negative per day).
+         showing per-mouse averages. Stats: per-(reward_group, LMI category)
+         Kruskal-Wallis test for an effect of day, run independently for
+         each of the four groups.
+
+NOTE (revision): per reviewer comment (3), these two panels' statistics
+pool cells across mice as independent observations (panel i) or compare
+two independently-obtained p-values to each other (panel j), rather than
+accounting for within-mouse correlation or testing the day x LMI-category
+interaction directly. A mixed-effects version (mouse_id as random
+intercept, non-modulated cells reinstated as a third category in panel j)
+is implemented in src/manuscript/revisions/figure_4i_j_lmm.py, reusing this
+module's data pipeline unchanged.
 
 Execution modes:
     MODE = 'compute' : run participation-rate pipeline, save CSVs, then plot

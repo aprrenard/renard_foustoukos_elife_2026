@@ -52,7 +52,7 @@ DAYS = ['-2', '-1', '0', '+1', '+2']
 PROCESSED_DATA_DIR = io.solve_common_paths('processed_data')
 NULL_LMI_CSV = os.path.join(PROCESSED_DATA_DIR, 'lmi_null_shuffles.csv')
 LMI_RESULTS_CSV = os.path.join(io.processed_dir, 'lmi_results.csv')
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_3', 'output')
+OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'revisions', 'figure_3f_LMIshuffles')
 
 # Execution mode
 #   'compute' : rerun the shuffle procedure for all mice, save CSV, then plot

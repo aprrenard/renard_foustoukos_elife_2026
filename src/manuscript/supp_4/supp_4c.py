@@ -20,6 +20,15 @@ Execution modes:
 
 Processed data files are saved/loaded from data_processed/reactivation/.
 Figures and CSVs are saved to io.manuscript_output_dir/supp_4/output/.
+
+NOTE (revision): per reviewer comment (3), the per-group Kruskal-Wallis test
+treats the 5 repeated days per mouse as independent cross-sections. A
+corrected version (per-mouse day-slope fit, then a one-sample t-test of
+those slopes across mice within each reward_group x lmi_category group) is
+implemented in src/manuscript/revisions/supp_4c_lmm.py, reusing this
+module's data pipeline unchanged. (A random-intercept mixed model was
+tried first but gave anti-conservative p-values with this few mice per
+group — see that script's docstring.)
 """
 
 import os
