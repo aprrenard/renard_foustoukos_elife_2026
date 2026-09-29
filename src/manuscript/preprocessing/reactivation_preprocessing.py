@@ -20,6 +20,7 @@ no imports from src/core_analysis/ are required.
 import os
 import sys
 import pickle
+import zlib
 
 import numpy as np
 import pandas as pd
@@ -54,6 +55,7 @@ SURROGATE_MODE = 'mouse'    # 'day' | 'mouse' | 'both'
 DAYS = [-2, -1, 0, 1, 2]
 PRELEARNING_DAYS = [-2, -1]
 N_SURROGATES = 1000
+SURROGATE_SEED = 0          # Base seed; each (mouse, day) gets its own stream
 PERCENTILES = [99, 99.5, 99.9]
 N_JOBS = 35
 
@@ -94,6 +96,15 @@ print(f"R- mice ({len(r_minus_mice)}): {r_minus_mice}")
 
 def _p_str(p):
     return f"p{int(p)}" if p == int(p) else f"p{int(p * 10)}"
+
+
+def _surrogate_rng(mouse, day):
+    """Random generator for the surrogates of one mouse and day.
+
+    Seeded from SURROGATE_SEED, the mouse id and the day, so results do not
+    depend on how mice are distributed across parallel workers.
+    """
+    return np.random.default_rng([SURROGATE_SEED, zlib.crc32(mouse.encode()), day + 10])
 
 
 # ============================================================================
@@ -285,11 +296,15 @@ def compute_reactivation_frequency_per_trial(selected_trials, template, threshol
 # ============================================================================
 
 def load_surrogate_thresholds(surrogate_csv_path, percentile=99):
-    """Load percentile-based thresholds from surrogate CSV."""
-    if any(s in surrogate_csv_path for s in ('_p95.csv', '_p99.csv', '_p999.csv')):
+    """Load percentile-based thresholds from surrogate CSV.
+
+    surrogate_csv_path may already carry the percentile suffix (e.g.
+    ..._p995.csv) or not, in which case it is appended.
+    """
+    ps = _p_str(percentile)
+    if surrogate_csv_path.endswith(f'_{ps}.csv'):
         final_path = surrogate_csv_path
     else:
-        ps = f"p{int(percentile)}" if percentile == int(percentile) else f"p{int(percentile * 10)}"
         base = surrogate_csv_path[:-4] if surrogate_csv_path.endswith('.csv') else surrogate_csv_path
         final_path = f"{base}_{ps}.csv"
 
@@ -414,9 +429,9 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
             }
 
         except Exception as e:
+            print(f"  WARNING {mouse} day {day} skipped: {e!r}")
             if verbose:
                 import traceback
-                print(f"  Error on day {day}: {e}")
                 traceback.print_exc()
             continue
 
@@ -427,28 +442,32 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
 # Surrogate computation functions
 # ============================================================================
 
-def create_surrogate_by_circular_shift(data, min_shift_frames=0):
+def create_surrogate_by_circular_shift(data, min_shift_frames=0, rng=None):
     """Create one surrogate by independently circular-shifting each cell."""
+    if rng is None:
+        rng = np.random.default_rng()
     n_cells, n_frames = data.shape
     surrogate = np.zeros_like(data)
     for i in range(n_cells):
-        shift = np.random.randint(min_shift_frames if min_shift_frames > 0 else 1, n_frames)
+        shift = rng.integers(min_shift_frames if min_shift_frames > 0 else 1, n_frames)
         surrogate[i, :] = np.roll(data[i, :], shift)
     return surrogate
 
 
 def compute_surrogate_thresholds(data, template, n_surrogates=1000, min_shift=0,
-                                  percentiles=(99,), verbose=False):
+                                  percentiles=(99,), verbose=False, rng=None):
     """
     Compute surrogate-based thresholds for multiple percentiles via circular shift.
     Returns dict keyed by percentile value.
     """
+    if rng is None:
+        rng = np.random.default_rng()
     observed_corr = compute_template_correlation(data, template)
     observed_pcts = {p: np.percentile(observed_corr, p) for p in percentiles}
     surrogate_pcts = {p: np.zeros(n_surrogates) for p in percentiles}
 
     for i in range(n_surrogates):
-        surr = create_surrogate_by_circular_shift(data, min_shift)
+        surr = create_surrogate_by_circular_shift(data, min_shift, rng=rng)
         surr_corr = compute_template_correlation(surr, template)
         for p in percentiles:
             surrogate_pcts[p][i] = np.percentile(surr_corr, p)
@@ -504,7 +523,8 @@ def _analyze_surrogates_per_day(mouse, days=DAYS, threshold_dff=THRESHOLD_DFF,
                 continue
 
             surrogate_results = compute_surrogate_thresholds(
-                data, template, n_surrogates, 0, percentiles, verbose)
+                data, template, n_surrogates, 0, percentiles, verbose,
+                rng=_surrogate_rng(mouse, day))
 
             for p in percentiles:
                 pr = surrogate_results[p]
@@ -524,8 +544,7 @@ def _analyze_surrogates_per_day(mouse, days=DAYS, threshold_dff=THRESHOLD_DFF,
                 all_surrogate_data[p][day] = pr
 
         except Exception as e:
-            if verbose:
-                print(f"  Error day {day}: {e}")
+            print(f"  WARNING {mouse} day {day} skipped (per-day surrogates): {e!r}")
             continue
 
     if all(len(results_lists[p]) == 0 for p in percentiles):
@@ -587,7 +606,8 @@ def _analyze_surrogates_per_mouse(mouse, threshold_dff=THRESHOLD_DFF,
                 continue
 
             day_results = compute_surrogate_thresholds(
-                data, template, n_surrogates, 0, percentiles, verbose)
+                data, template, n_surrogates, 0, percentiles, verbose,
+                rng=_surrogate_rng(mouse, day))
 
             for p in percentiles:
                 pooled_surr[p].append(day_results[p]['surrogate_percentiles'])
@@ -597,8 +617,7 @@ def _analyze_surrogates_per_mouse(mouse, threshold_dff=THRESHOLD_DFF,
             days_processed += 1
 
         except Exception as e:
-            if verbose:
-                print(f"  Error day {day}: {e}")
+            print(f"  WARNING {mouse} day {day} skipped (per-mouse surrogates): {e!r}")
             continue
 
     if days_processed == 0:
@@ -788,8 +807,9 @@ def run_reactivation_detection(
     """
     Detect reactivation events for all mice and save results.
 
-    Loads surrogate thresholds from output_dir if use_surrogate_thresholds is set.
-    Falls back to fixed threshold_corr if the CSV is not found.
+    Loads surrogate thresholds from output_dir if use_surrogate_thresholds is
+    set (raises if the CSV is missing); uses the fixed threshold_corr only when
+    use_surrogate_thresholds is None.
 
     Saves:
         reactivation_results_p<N>.pkl
@@ -805,11 +825,8 @@ def run_reactivation_detection(
                     if use_surrogate_thresholds == 'day'
                     else f'surrogate_thresholds_per_mouse_{_p_str(percentile)}.csv')
         csv_path = os.path.join(output_dir, csv_name)
-        try:
-            threshold_dict = load_surrogate_thresholds(csv_path, percentile=percentile)
-            print(f"  Loaded thresholds: {csv_path} ({len(threshold_dict)} mice)")
-        except FileNotFoundError as e:
-            print(f"  Warning: {e}\n  Falling back to fixed threshold {threshold_corr}")
+        threshold_dict = load_surrogate_thresholds(csv_path, percentile=percentile)
+        print(f"  Loaded thresholds: {csv_path} ({len(threshold_dict)} mice)")
     else:
         print(f"  Using fixed threshold: {threshold_corr}")
 
