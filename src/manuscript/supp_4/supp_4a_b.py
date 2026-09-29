@@ -78,8 +78,8 @@ LMI_DATA_CSV = os.path.join(RESULTS_DIR, 'supp4ab_lmi_data_day0.csv')
 OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_4', 'output')
 FOLDER = io.tensor_dir
 
-# Execution mode
-MODE = 'plot'
+# Execution mode ('compute' or 'plot'); FAST_LEARNING_MODE overrides the default.
+MODE = os.environ.get('FAST_LEARNING_MODE', 'plot')
 
 
 # ============================================================================
@@ -98,7 +98,7 @@ for _mouse in _all_mice:
             r_plus_mice.append(_mouse)
         elif _rg == 'R-':
             r_minus_mice.append(_mouse)
-    except:
+    except Exception:
         continue
 
 print(f"Found {len(r_plus_mice)} R+ mice and {len(r_minus_mice)} R- mice")
@@ -119,8 +119,9 @@ def _extract_event_responses(mouse, day, preloaded_events):
     Returns DataFrame (mouse_id, day, roi, event_idx, avg_response, participates)
     or None if insufficient data (<10 no-stim trials or no valid events).
     """
+    # Baseline-subtracted dF/F, as in figure_4i_j and supp_4c.
     xarr = utils_imaging.load_mouse_xarray(
-        mouse, FOLDER, 'tensor_xarray_learning_data.nc', substracted=False
+        mouse, FOLDER, 'tensor_xarray_learning_data.nc', substracted=True
     )
     xarr_day = xarr.sel(trial=xarr['day'] == day)
     nostim = xarr_day.sel(trial=xarr_day['no_stim'] == 1)

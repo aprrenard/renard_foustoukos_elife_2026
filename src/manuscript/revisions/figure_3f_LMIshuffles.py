@@ -57,7 +57,8 @@ OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'revisions', 'figure_3f_LMIs
 # Execution mode
 #   'compute' : rerun the shuffle procedure for all mice, save CSV, then plot
 #   'plot'    : load previously saved CSV and plot only
-MODE = 'compute'
+#   FAST_LEARNING_MODE overrides the default.
+MODE = os.environ.get('FAST_LEARNING_MODE', 'compute')
 
 
 # ============================================================================
@@ -101,8 +102,9 @@ def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
         print(f'Processing {mouse_id}')
         reward_group = io.get_mouse_reward_group_from_db(db_path, mouse_id)
 
-        data_mapping = xr.open_dataarray(os.path.join(
-            io.tensor_dir, mouse_id, 'tensor_xarray_mapping_data.nc'))
+        # Same loader as compute_LMI.py, so artefact cells are excluded.
+        data_mapping = utils_imaging.load_mouse_xarray(
+            mouse_id, io.tensor_dir, 'tensor_xarray_mapping_data.nc', substracted=False)
         data_mapping = data_mapping - np.nanmean(
             data_mapping.sel(time=slice(*BASELINE_WIN)), axis=2, keepdims=True)
 

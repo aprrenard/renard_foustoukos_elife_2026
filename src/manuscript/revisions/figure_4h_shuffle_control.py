@@ -81,7 +81,8 @@ OUTPUT_DIR = os.path.join(
 # Execution mode
 #   'compute' : run the shuffle-detection pipeline, save CSVs, then plot
 #   'plot'    : load previously saved CSVs and plot only
-MODE = 'plot'
+#   FAST_LEARNING_MODE overrides the default.
+MODE = os.environ.get('FAST_LEARNING_MODE', 'plot')
 
 
 # ============================================================================

@@ -32,7 +32,8 @@ import src.utils.utils_io as io
 # Parameters
 # ============================================================================
 
-ANALYSIS_MODE = 'analyze'   # 'compute' or 'analyze'
+# 'compute' or 'analyze'; FAST_LEARNING_MODE overrides the default.
+ANALYSIS_MODE = os.environ.get('FAST_LEARNING_MODE', 'analyze')
 WIN_SEC       = (-2, 0)     # quiet window before stimulus onset
 PRE_DAYS      = [-2, -1]
 POST_DAYS     = [1, 2]

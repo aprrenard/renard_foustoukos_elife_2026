@@ -27,6 +27,7 @@ import src.utils.utils_io as io
 # ============================================================================
 
 N_BOOT = 1000
+SEED = 42
 RESULTS_DIR = os.path.join(io.processed_dir, 'decoding')
 OUTPUT_DIR  = os.path.join(io.manuscript_output_dir, 'supp_2', 'output')
 
@@ -65,7 +66,7 @@ y_pred = reg.predict(x_vals.reshape(-1, 1))
 y_boot = np.zeros((N_BOOT, len(x_vals)))
 r2_boot = []
 for i in range(N_BOOT):
-    Xb, yb = resample(lmi_flat, w_flat)
+    Xb, yb = resample(lmi_flat, w_flat, random_state=SEED + i)
     rb = LinearRegression().fit(Xb.reshape(-1, 1), yb)
     y_boot[i] = rb.predict(x_vals.reshape(-1, 1))
     r2_boot.append(rb.score(Xb.reshape(-1, 1), yb))

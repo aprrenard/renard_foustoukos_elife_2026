@@ -49,8 +49,6 @@ trial_indices = pd.DataFrame(trial_indices.items(), columns=['session_id', 'tria
 #     trial_indices_sensory_map = yaml.load(stream, yaml.Loader)
 # trial_indices_sensory_map = pd.DataFrame(trial_indices_sensory_map.items(), columns=['session_id', 'trial_idx'])
 
-mice_list = ['GF305',]
-# nwb_list = [nwb for nwb in nwb_list if 'AR143' in nwb]
 
 for mouse in mice_list:
     save_dir = os.path.join(processed_data_dir, 'mice', mouse)

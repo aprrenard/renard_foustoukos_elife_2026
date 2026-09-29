@@ -42,7 +42,8 @@ from src.utils.utils_behavior import make_behavior_table
 from src.utils.utils_plot import stim_palette, reward_palette
 
 
-MODE = 'compute'
+# FAST_LEARNING_MODE overrides the default.
+MODE = os.environ.get('FAST_LEARNING_MODE', 'compute')
 
 OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'revisions', 'figure_2b_c_execution', 'output')
 TABLE_PATH = os.path.join(io.processed_dir, 'behavior', 'behavior_muscimol_execution.csv')

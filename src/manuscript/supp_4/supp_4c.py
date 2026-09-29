@@ -34,6 +34,7 @@ group — see that script's docstring.)
 import os
 import sys
 import pickle
+import zlib
 
 import numpy as np
 import pandas as pd
@@ -65,11 +66,13 @@ OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_4', 'output')
 # Execution mode
 #   'compute' : run circular-shift control, save CSV, then plot
 #   'plot'    : load previously saved CSV and plot only
-MODE = 'plot'
+#   FAST_LEARNING_MODE overrides the default.
+MODE = os.environ.get('FAST_LEARNING_MODE', 'plot')
 
 # Circular shift parameters
 SAMPLING_RATE = 30
 N_SHIFTS = 1000
+SHIFT_SEED = 0            # Base seed; each (mouse, day) gets its own stream
 MIN_SHIFT_FRAMES = 0
 SIGNIFICANCE_PCTILE = 95      # top 5 % -> p < 0.05
 EVENT_WINDOW_MS = 150
@@ -139,8 +142,9 @@ def _compute_participation_with_shifts(mouse, day, n_shifts, preloaded_events):
     """
     try:
         folder = io.tensor_dir
+        # Baseline-subtracted dF/F, as in figure_4i_j and supp_4a_b.
         xr = utils_imaging.load_mouse_xarray(
-            mouse, folder, 'tensor_xarray_learning_data.nc', substracted=False)
+            mouse, folder, 'tensor_xarray_learning_data.nc', substracted=True)
         xr_day = xr.sel(trial=xr['day'] == day)
         nostim  = xr_day.sel(trial=xr_day['no_stim'] == 1)
 
@@ -162,10 +166,11 @@ def _compute_participation_with_shifts(mouse, day, n_shifts, preloaded_events):
 
         data_flat  = data_3d.reshape(n_cells, n_frames)
         null_rates = np.full((n_shifts, n_cells), np.nan)
+        rng = np.random.default_rng([SHIFT_SEED, zlib.crc32(mouse.encode()), day + 10])
         for i_shift in range(n_shifts):
-            shift = (np.random.randint(MIN_SHIFT_FRAMES + 1, n_frames)
+            shift = (rng.integers(MIN_SHIFT_FRAMES + 1, n_frames)
                      if MIN_SHIFT_FRAMES > 0
-                     else np.random.randint(1, n_frames))
+                     else rng.integers(1, n_frames))
             shifted_3d = np.roll(data_flat, shift, axis=1).reshape(
                 n_cells, n_trials, n_timepoints)
             null_r, _ = _participation_from_3d(
