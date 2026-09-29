@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import zlib
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -300,7 +301,7 @@ def plot_perf_across_blocks(data, reward_group, day, palette, nmax_trials=None, 
     sns.despine(trim=True)
 
 
-def fit_learning_curve(outcomes, alpha=1, beta=1):
+def fit_learning_curve(outcomes, alpha=1, beta=1, random_seed=None):
     n_trials = len(outcomes)
     conf_int = 80  # Confidence interval percentage
     if n_trials == 0:
@@ -322,7 +323,8 @@ def fit_learning_curve(outcomes, alpha=1, beta=1):
         obs = pm.Bernoulli("obs", p=p, observed=outcomes)
 
         # MCMC Sampling
-        trace = pm.sample(1000, tune=10, cores=8, chains=4)
+        trace = pm.sample(1000, tune=10, cores=8, chains=4,
+                          random_seed=random_seed, progressbar=False)
 
     # Extract posterior mean and credible intervals for p (Pr(correct))
     p_samples = trace.posterior["p"].values.reshape(-1, n_trials)
@@ -332,8 +334,19 @@ def fit_learning_curve(outcomes, alpha=1, beta=1):
     return p_samples, p_mean, p_low, p_high
 
 
-def compute_learning_curves(table):
-        
+def compute_learning_curves(table, random_seed=None):
+    """Fit learning curves for each session and stimulus type.
+
+    If random_seed is given, each (session, stimulus) fit gets its own seed
+    derived from random_seed and the session id, so results do not depend on
+    session order.
+    """
+
+    def _seed(session, stim):
+        if random_seed is None:
+            return None
+        return (random_seed + zlib.crc32(f'{session}_{stim}'.encode())) % 2**32
+
     session_list = table.session_id.unique()
     
     for session in session_list:
@@ -344,15 +357,18 @@ def compute_learning_curves(table):
 
         data_w = data[(data.session_id == session) & (data.whisker_stim==1)].reset_index(drop=True)
         outcomes = data_w.outcome_w.values
-        p_samples_w, p_mean_w, p_low_w, p_high_w = fit_learning_curve(outcomes)
-        
+        p_samples_w, p_mean_w, p_low_w, p_high_w = fit_learning_curve(
+            outcomes, random_seed=_seed(session, 'w'))
+
         data_a = data[(data.session_id == session) & (data.auditory_stim==1)].reset_index(drop=True)
         outcomes = data_a.outcome_a.values
-        p_samples_a, p_mean_a, p_low_a, p_high_a = fit_learning_curve(outcomes)
-        
+        p_samples_a, p_mean_a, p_low_a, p_high_a = fit_learning_curve(
+            outcomes, random_seed=_seed(session, 'a'))
+
         data_ns = data[(data.session_id == session) & (data.no_stim==1)].reset_index(drop=True)
         outcomes = data_ns.outcome_c.values
-        p_samples_ns, p_mean_ns, p_low_ns, p_high_ns = fit_learning_curve(outcomes)
+        p_samples_ns, p_mean_ns, p_low_ns, p_high_ns = fit_learning_curve(
+            outcomes, random_seed=_seed(session, 'ns'))
 
         if p_mean_w is not None:
             table.loc[(table.session_id==session) & (table.whisker_stim==1), 'learning_curve_w'] = p_mean_w.astype(float)
