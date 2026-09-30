@@ -1,6 +1,6 @@
 # fast-learning
 
-[![CI](https://github.com/aprrenard/fast-learning/actions/workflows/ci.yml/badge.svg)](https://github.com/aprrenard/fast-learning/actions/workflows/ci.yml)
+[![CI](https://github.com/LSENS-BMI-EPFL/renard_foustoukos/actions/workflows/ci.yml/badge.svg)](https://github.com/LSENS-BMI-EPFL/renard_foustoukos/actions/workflows/ci.yml)
 [![eLife](https://img.shields.io/badge/eLife-10.7554%2FeLife.111818.1-087acc)](https://doi.org/10.7554/eLife.111818.1)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
@@ -49,7 +49,7 @@ analyses show that:
 Python ≥ 3.11. With conda:
 
 ```bash
-git clone https://github.com/aprrenard/fast-learning.git
+git clone https://github.com/LSENS-BMI-EPFL/renard_foustoukos.git fast-learning
 cd fast-learning
 conda env create -f environment.yml      # creates the 'fast-learning' env and installs the package
 conda activate fast-learning

@@ -8,8 +8,8 @@ Two-column layout (one example R+ mouse, one example R- mouse):
 Decoder weights (trained on Days -2/-1 vs +1/+2 mapping trials) are loaded
 from RESULTS_DIR/decoder_weights.pkl, produced by pipeline/06_decoder.py.
 
-Set EXAMPLE_MOUSE_RPLUS and EXAMPLE_MOUSE_RMINUS to the desired mouse IDs.
-Use figure_4c.pdf to browse all mice and pick representative examples.
+Example mice: EXAMPLE_MOUSE_RPLUS and EXAMPLE_MOUSE_RMINUS (figure_4c.pdf
+shows all mice).
 """
 
 import os
@@ -35,10 +35,9 @@ window_size = 10
 step_size = 1
 cut_n_trials = 100
 
-# Set these to the desired example mouse IDs.
-# Browse figure_4c.pdf to pick representative mice.
-EXAMPLE_MOUSE_RPLUS = None  # e.g. 'GF314'
-EXAMPLE_MOUSE_RMINUS = None  # e.g. 'AR127'
+# Example mice shown in the panel.
+EXAMPLE_MOUSE_RPLUS = 'GF306'
+EXAMPLE_MOUSE_RMINUS = 'AR179'
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
@@ -58,14 +57,9 @@ if __name__ == '__main__':
     # Select example mice
     # ============================================================================
 
-    if EXAMPLE_MOUSE_RPLUS is None or EXAMPLE_MOUSE_RMINUS is None:
-        # Fall back to first available mouse per group from the weights dict.
-        rplus_mice = [m for m, w in weights.items() if w['reward_group'] == 'R+']
-        rminus_mice = [m for m, w in weights.items() if w['reward_group'] == 'R-']
-        if EXAMPLE_MOUSE_RPLUS is None:
-            EXAMPLE_MOUSE_RPLUS = rplus_mice[0]
-        if EXAMPLE_MOUSE_RMINUS is None:
-            EXAMPLE_MOUSE_RMINUS = rminus_mice[0]
+    for mouse, group in [(EXAMPLE_MOUSE_RPLUS, 'R+'), (EXAMPLE_MOUSE_RMINUS, 'R-')]:
+        if weights.get(mouse, {}).get('reward_group') != group:
+            raise ValueError(f"Example mouse {mouse} is not an {group} mouse of the decoder file.")
 
     example_mice = [EXAMPLE_MOUSE_RPLUS, EXAMPLE_MOUSE_RMINUS]
     print(f"Example mice: R+ = {EXAMPLE_MOUSE_RPLUS}, R- = {EXAMPLE_MOUSE_RMINUS}")
