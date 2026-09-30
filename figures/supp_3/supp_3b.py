@@ -22,11 +22,8 @@ from fast_learning.plotting import reward_palette, save_figure
 # Parameters
 # ============================================================================
 
-SAMPLING_RATE = 30
 WIN_SEC = (-0.5, 1.5)
-BASELINE_WIN = (0, 1)
 if __name__ == '__main__':
-    BASELINE_WIN = (int(BASELINE_WIN[0] * SAMPLING_RATE), int(BASELINE_WIN[1] * SAMPLING_RATE))
     DAYS = [-2, -1, 0, 1, 2]
     CELL_TYPES = ['wS2', 'wM1']
     MIN_CELLS = 3  # minimum cells per mouse to include that mouse
@@ -46,7 +43,7 @@ if __name__ == '__main__':
         reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
         folder = paths.tensor_dir
         xarr = imaging.load_mouse_xarray(mouse_id, folder, 'tensor_xarray_mapping_data.nc')
-        xarr = imaging.subtract_baseline(xarr, 2, BASELINE_WIN)
+        xarr = imaging.subtract_baseline(xarr, 2, imaging.baseline_frames(xarr))
         xarr = xarr.sel(trial=xarr['day'].isin(DAYS))
         xarr = xarr.sel(time=slice(WIN_SEC[0], WIN_SEC[1]))
         xarr = xarr.groupby('day').mean(dim='trial')

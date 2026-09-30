@@ -20,11 +20,8 @@ from fast_learning.plotting import save_figure
 # Parameters.
 # #############################################################################
 
-sampling_rate = 30
 win_sec = (-0.5, 1.5)
-baseline_win = (0, 1)
 if __name__ == '__main__':
-    baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * sampling_rate))
     days = [-2, -1, 0, 1, 2]
     days_str = ['Day -2', 'Day -1', 'Day 0', 'Day +1', 'Day +2']
 
@@ -61,7 +58,7 @@ if __name__ == '__main__':
     file_name = 'tensor_xarray_mapping_data.nc'
     folder = paths.tensor_dir
     xarr = imaging.load_mouse_xarray(session_mouse_id, folder, file_name)
-    xarr = imaging.subtract_baseline(xarr, 2, baseline_win)
+    xarr = imaging.subtract_baseline(xarr, 2, imaging.baseline_frames(xarr))
 
     xarr = xarr.sel(trial=xarr['day'].isin(days))
     xarr = xarr.sel(time=slice(win_sec[0], win_sec[1]))

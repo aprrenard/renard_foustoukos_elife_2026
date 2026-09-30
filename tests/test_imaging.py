@@ -50,3 +50,17 @@ def test_filter_data_by_cell_count():
     data = pd.DataFrame({'mouse_id': ['A'] * 3 + ['B'] * 2, 'cell_type': ['wS2'] * 5, 'roi': [1, 2, 3, 1, 2]})
     out = imaging.filter_data_by_cell_count(data, min_cells=3)
     assert set(out['mouse_id']) == {'A'}
+
+
+def test_baseline_frames_follow_the_time_axis():
+    import xarray as xr
+
+    for start in (-1, -2):
+        n = int((6 - start) * 30) + 1
+        x = xr.DataArray(
+            np.zeros((1, 1, n)), dims=['cell', 'trial', 'time'], coords={'time': np.linspace(start, 6, n)}
+        )
+        i0, i1 = imaging.baseline_frames(x)
+        t = x.time.values
+        assert t[i0] == -1 and t[i1 - 1] < 0 <= t[i1]  # -1 to 0 s whatever the tensor start
+        assert i1 - i0 == 30

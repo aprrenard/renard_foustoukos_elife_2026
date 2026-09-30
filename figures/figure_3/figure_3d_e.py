@@ -34,8 +34,7 @@ def load_and_process_response_data(
     days=[-2, -1, 0, 1, 2],
     win_sec_amp=(0, 0.300),
     win_sec_psth=(-0.5, 1.5),
-    baseline_win=(0, 1),
-    sampling_rate=30,
+    baseline_win=imaging.BASELINE_WIN_S,
     file_name='tensor_xarray_mapping_data.nc',
 ):
     """
@@ -49,8 +48,6 @@ def load_and_process_response_data(
             paths.db_path, paths.nwb_dir, two_p_imaging='yes', experimenters=['AR', 'GF', 'MI']
         )
 
-    baseline_win_samples = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * sampling_rate))
-
     avg_resp_list = []
     psth_list = []
 
@@ -59,7 +56,7 @@ def load_and_process_response_data(
 
         folder = paths.tensor_dir
         xarr = imaging.load_mouse_xarray(mouse_id, folder, file_name)
-        xarr = imaging.subtract_baseline(xarr, 2, baseline_win_samples)
+        xarr = imaging.subtract_baseline(xarr, 2, imaging.baseline_frames(xarr, baseline_win))
 
         # Average response
         avg = xarr.sel(trial=xarr['day'].isin(days))

@@ -23,11 +23,6 @@ def load_mouse_xarray(mouse_id, dir_path, file_name, subtracted=True):
     if subtracted:
         file_name = file_name.replace('.nc', '_baselinesubstracted.nc')
     array_path = os.path.join(dir_path, mouse_id, file_name)
-    # Check if file exists locally to speed up loading.
-    # local_path = array_path.replace('/mnt/lsens-analysis/Anthony_Renard/data_processed', '/raid0/anthony/data_processed')
-    # if os.path.exists(local_path):
-    #     array_path = local_path
-    # # Load the xarray dataset.
     print(f'Loading {array_path}')
     data = xr.open_dataarray(array_path, lock=False)
 
@@ -42,6 +37,21 @@ def load_mouse_xarray(mouse_id, dir_path, file_name, subtracted=True):
     data.close()
 
     return data
+
+
+BASELINE_WIN_S = (-1, 0)  # seconds relative to stimulus onset
+
+
+def baseline_frames(xarr, win=BASELINE_WIN_S):
+    """Frame range (start, stop) of a baseline window given in seconds, from
+    the time coordinate of an xarray; independent of where the tensor starts."""
+    t = xarr['time'].values
+    idx = np.flatnonzero((t >= win[0]) & (t < win[1]))
+    if len(idx) == 0:
+        raise ValueError(
+            f'Baseline window {win} s is outside the tensor time axis ({t[0]:.2f} to {t[-1]:.2f} s).'
+        )
+    return idx[0], idx[-1] + 1
 
 
 def subtract_baseline(arr, time_axis, baseline_win):

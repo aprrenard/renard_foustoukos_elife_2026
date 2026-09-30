@@ -29,12 +29,9 @@ from fast_learning.plotting import save_figure
 # Parameters
 # ============================================================================
 
-SAMPLING_RATE = 30
 WIN_SEC_AMP = (0, 0.300)
 WIN_SEC_PSTH = (-0.5, 1.5)
-BASELINE_WIN = (0, 1)
 if __name__ == '__main__':
-    BASELINE_WIN = (int(BASELINE_WIN[0] * SAMPLING_RATE), int(BASELINE_WIN[1] * SAMPLING_RATE))
     DAYS = [-2, -1, 0, 1, 2]
     DAYS_SELECTED = [-2, -1, 1, 2]
     MIN_CELLS = 3
@@ -63,7 +60,7 @@ if __name__ == '__main__':
         reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
         folder = paths.tensor_dir
         xarr = imaging.load_mouse_xarray(mouse_id, folder, 'tensor_xarray_mapping_data.nc')
-        xarr = imaging.subtract_baseline(xarr, 2, BASELINE_WIN)
+        xarr = imaging.subtract_baseline(xarr, 2, imaging.baseline_frames(xarr))
 
         # Average response (amplitude window)
         avg = xarr.sel(trial=xarr['day'].isin(DAYS))

@@ -39,6 +39,10 @@ def pairwise_correlations_mouse(mouse_id):
     reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
     folder = paths.tensor_dir
     xarr = imaging.load_mouse_xarray(mouse_id, folder, 'tensor_xarray_mapping_data.nc', subtracted=False)
+    if xarr['time'].values[0] > WIN_SEC[0] + 1e-6:
+        raise ValueError(
+            f'Mapping tensor starts at {xarr["time"].values[0]:.2f} s; the correlation window needs {WIN_SEC[0]} s.'
+        )
     xarr.name = 'dff'
     xarr = xarr.sel(trial=xarr['day'].isin(PRE_DAYS + POST_DAYS))
     xarr = xarr.sel(time=slice(WIN_SEC[0], WIN_SEC[1]))

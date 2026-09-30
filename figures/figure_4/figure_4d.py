@@ -27,11 +27,8 @@ from fast_learning.stats import format_p
 # Parameters
 # ============================================================================
 
-sampling_rate = 30
 win = (0, 0.300)  # response window from stimulus onset (seconds)
-baseline_win = (-1, 0)
 if __name__ == '__main__':
-    baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * sampling_rate))
     days = [-2, -1, 0, 1, 2]
     n_map_trials = 40
     window_size = 10
