@@ -2,16 +2,12 @@
 index for each session to know when to cut the session.
 """
 import os
-import sys
 
 import yaml
 import matplotlib.pyplot as plt
 import pandas as pd
+from cicada_nwb import NWBSession
 
-sys.path.append(r'H:\anthony\repos\NWB_analysis')
-# sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-# sys.path.append(r'/home/aprenard/repos/fast-learning')
-from nwb_wrappers import nwb_reader_functions as nwb_read
 from fast_learning import paths, database
 
 
@@ -21,6 +17,12 @@ from fast_learning import paths, database
 
 nwb_dir = paths.nwb_dir
 db_path = paths.db_path
+
+
+def get_trial_table(nwb_file):
+    """Trial table of one NWB file (index 'id', one row per trial)."""
+    with NWBSession(nwb_file) as session:
+        return session.behavior.get_trial_table()
 
 
 # =============================================================================
@@ -48,7 +50,7 @@ for nwb_file in nwb_list:
     # if mouse_id not in mouse_ids:
     #     continue
     session_id = nwb_file[-25:-4]
-    table = nwb_read.get_trial_table(nwb_file)
+    table = get_trial_table(nwb_file)
     print(f"Processing {session_id} ({nwb_list.index(nwb_file) + 1}/{len(nwb_list)})")
 
     # Beginning of the whisker sensory mapping block.
@@ -145,7 +147,7 @@ trial_count = pd.DataFrame(trial_count, columns = ['mouse_id', 'session_id', 'st
 
 nwb_file = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/NWB/AR127_20240221_133407.nwb'
 nwb_file = paths.adjust_path_to_host(nwb_file)
-table = nwb_read.get_trial_table(nwb_file)
+table = get_trial_table(nwb_file)
 table = table.reset_index()
 table = table.loc[(table.trial_id >= 250)]
 plt.figure()
@@ -166,6 +168,10 @@ nwb_list = database.read_excel_db(db_path)
 nwb_list = nwb_list.loc[(nwb_list['exclude']!='exclude')]
 nwb_list = list(nwb_list.session_id)
 nwb_list = [os.path.join(nwb_dir, f + '.nwb') for f in nwb_list]
+# The database also lists sessions without an NWB file; skip them.
+missing = [f for f in nwb_list if not os.path.exists(f)]
+nwb_list = [f for f in nwb_list if os.path.exists(f)]
+print(f"{len(missing)} sessions in the database have no NWB file: skipped.")
 
 stop_flags = {}
 trial_indices = {}
@@ -177,7 +183,7 @@ for nwb_file in nwb_list:
     # if mouse_id not in mouse_ids:
     #     continue
     session_id = nwb_file[-25:-4]
-    table = nwb_read.get_trial_table(nwb_file)
+    table = get_trial_table(nwb_file)
     print(f"\rProcessing {session_id} ({nwb_list.index(nwb_file) + 1}/{len(nwb_list)})", end="")
 
     # If a session does not contain auditory trials, keep whole session.

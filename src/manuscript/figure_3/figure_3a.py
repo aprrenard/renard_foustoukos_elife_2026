@@ -9,7 +9,6 @@ Right panel: concatenated single-trial traces for a fixed set of ROIs (in the
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -17,10 +16,10 @@ import matplotlib.gridspec as gridspec
 import numpy as np
 import pandas as pd
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
+from cicada_nwb import NWBSession
+
 from fast_learning import paths
 from fast_learning import imaging
-from nwb_wrappers.nwb_reader_functions import get_image_mask
 
 
 # #############################################################################
@@ -69,7 +68,9 @@ lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
 lmi_df = lmi_df[lmi_df['mouse_id'] == MOUSE_ID].reset_index(drop=True)
 print(f"LMI entries for {MOUSE_ID}: {len(lmi_df)}")
 
-image_masks  = get_image_mask(NWB_FILE, SEGMENTATION_INFO)
+with NWBSession(NWB_FILE) as nwb_session:
+    # (n_cells, height, width), read before the file closes.
+    image_masks = np.asarray(nwb_session.calcium_imaging.get_image_mask(SEGMENTATION_INFO)[:])
 ops          = np.load(OPS_PATH, allow_pickle=True)
 mean_img     = ops.item()['meanImg']
 

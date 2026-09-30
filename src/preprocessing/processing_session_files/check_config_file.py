@@ -1,42 +1,42 @@
+"""Check that the reward group recorded in each NWB file (wh_reward in the
+session metadata) matches the reward group in the session database.
+
+Prints the sessions where the two disagree (an empty table means none).
+"""
 import os
-import sys
 
-import yaml
 import pandas as pd
+from cicada_nwb import NWBSession
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
 from fast_learning import paths, database
-from nwb_wrappers import nwb_reader_functions as nwb_read
-
-
-# Path to the directory containing the processed data.
-processed_dir = paths.processed_dir
-nwb_dir = paths.nwb_dir
-db_path = paths.db_path
 
 
 # #############################################################################
-# Checking the yaml config files reward group match with the db.
+# Check that the NWB reward group matches the session database.
 # #############################################################################
 
-sessions, nwb_files, mice, db = database.select_sessions_from_db(db_path,
-                                            nwb_dir,
-                                            reward_group='R+'
-                                            )
+sessions, nwb_files, mice, db = database.select_sessions_from_db(
+    paths.db_path, paths.nwb_dir, exclude_cols=['exclude'])
 
 # Read groups from db.
-db_reward_groups = db[['subject_id', 'session_id', 'reward_group']].drop_duplicates()
+db_reward_groups = db[['mouse_id', 'session_id', 'reward_group']].drop_duplicates()
 
 # Read groups from nwb files.
-yaml_reward_groups = []
+nwb_reward_groups = []
+missing = []
 
 for session, nwb_file in zip(sessions, nwb_files):
-    metadata = nwb_read.get_session_metadata(nwb_file)
+    if not os.path.exists(nwb_file):
+        missing.append(session)
+        continue
+    with NWBSession(nwb_file) as nwb_session:
+        metadata = nwb_session.petersen.get_session_metadata()
     g = 'R+' if metadata['wh_reward'] == 1 else 'R-'
-    yaml_reward_groups.append([session[:5], session, g])
+    nwb_reward_groups.append([session[:5], session, g])
 
-yaml_reward_groups = pd.DataFrame(yaml_reward_groups, columns=['subject_id', 'session_id', 'reward_group'])
+nwb_reward_groups = pd.DataFrame(nwb_reward_groups, columns=['mouse_id', 'session_id', 'reward_group'])
 
-df = pd.merge(db_reward_groups, yaml_reward_groups, on=['subject_id', 'session_id'], suffixes=('_db', '_yaml'))
+df = pd.merge(db_reward_groups, nwb_reward_groups, on=['mouse_id', 'session_id'], suffixes=('_db', '_nwb'))
 
-df.loc[df.reward_group_db != df.reward_group_yaml, :]
+print(f'{len(nwb_reward_groups)} sessions checked, {len(missing)} without an NWB file.')
+print(df.loc[df.reward_group_db != df.reward_group_nwb, :])
