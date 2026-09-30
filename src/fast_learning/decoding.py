@@ -38,6 +38,7 @@ CLASSIFIER_WEIGHTS_CSV = os.path.join(RESULTS_DIR, 'classifier_weights.csv')
 # Data loading and processing
 # ============================================================================
 
+
 def load_and_process_data(
     select_lmi=False,
     projection_type=None,
@@ -75,8 +76,7 @@ def load_and_process_data(
         xarray = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_mapping_data.nc')
         # Manual baseline subtraction
         xarray = xarray - np.nanmean(
-            xarray.sel(time=slice(BASELINE_WIN[0], BASELINE_WIN[1])).values,
-            axis=2, keepdims=True
+            xarray.sel(time=slice(BASELINE_WIN[0], BASELINE_WIN[1])).values, axis=2, keepdims=True
         )
         rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
 
@@ -116,9 +116,14 @@ def load_and_process_data(
 # Fixed pre/post decoder
 # ============================================================================
 
+
 def train_and_save_decoder_weights(
-    vectors_rew, vectors_nonrew, mice_rew, mice_nonrew,
-    pre_days=[-2, -1], post_days=[1, 2],
+    vectors_rew,
+    vectors_nonrew,
+    mice_rew,
+    mice_nonrew,
+    pre_days=[-2, -1],
+    post_days=[1, 2],
     seed=42,
     results_dir=RESULTS_DIR,
 ):
@@ -147,8 +152,7 @@ def train_and_save_decoder_weights(
                 continue
 
             X_train = d.values[:, train_mask].T
-            y_train = np.array([0 if day in pre_days else 1
-                                 for day in day_per_trial[train_mask]])
+            y_train = np.array([0 if day in pre_days else 1 for day in day_per_trial[train_mask]])
 
             scaler = StandardScaler()
             X_train_scaled = scaler.fit_transform(X_train)
@@ -158,10 +162,8 @@ def train_and_save_decoder_weights(
             # Ensure post > pre in decision value
             pre_mask = np.isin(day_per_trial, pre_days)
             post_mask = np.isin(day_per_trial, post_days)
-            mean_dec_pre = np.mean(clf.decision_function(
-                scaler.transform(d.values[:, pre_mask].T)))
-            mean_dec_post = np.mean(clf.decision_function(
-                scaler.transform(d.values[:, post_mask].T)))
+            mean_dec_pre = np.mean(clf.decision_function(scaler.transform(d.values[:, pre_mask].T)))
+            mean_dec_post = np.mean(clf.decision_function(scaler.transform(d.values[:, post_mask].T)))
             sign_flip = -1 if mean_dec_pre > mean_dec_post else 1
 
             roi_ids = d['roi'].values if 'roi' in d.coords else d['cell'].values
@@ -172,8 +174,10 @@ def train_and_save_decoder_weights(
                 'reward_group': reward_group,
                 'roi': roi_ids,
             }
-            print(f'  {mouse} ({reward_group}): decoder trained '
-                  f'({X_train.shape[1]} cells, sign_flip={sign_flip})')
+            print(
+                f'  {mouse} ({reward_group}): decoder trained '
+                f'({X_train.shape[1]} cells, sign_flip={sign_flip})'
+            )
 
     os.makedirs(results_dir, exist_ok=True)
 
@@ -188,14 +192,16 @@ def train_and_save_decoder_weights(
     for mouse, w in weights.items():
         coefs = w['clf'].coef_.flatten()
         for roi, coef in zip(w['roi'], coefs):
-            rows.append({
-                'mouse_id': mouse,
-                'roi': roi,
-                'reward_group': w['reward_group'],
-                'classifier_weight_raw': coef,
-                'classifier_weight': coef * w['sign_flip'],
-                'sign_flip': w['sign_flip'],
-            })
+            rows.append(
+                {
+                    'mouse_id': mouse,
+                    'roi': roi,
+                    'reward_group': w['reward_group'],
+                    'classifier_weight_raw': coef,
+                    'classifier_weight': coef * w['sign_flip'],
+                    'sign_flip': w['sign_flip'],
+                }
+            )
     csv_path = os.path.join(results_dir, 'classifier_weights.csv')
     pd.DataFrame(rows).to_csv(csv_path, index=False)
     print(f'Classifier weights CSV saved: {csv_path}')

@@ -22,9 +22,9 @@ N_CORES = 35
 
 
 if __name__ == '__main__':
-    _, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir,
-                                                      two_p_imaging='yes',
-                                                      experimenters=['AR', 'GF', 'MI'])
+    _, _, mice, db = database.select_sessions_from_db(
+        paths.db_path, paths.nwb_dir, two_p_imaging='yes', experimenters=['AR', 'GF', 'MI']
+    )
     mice_by_group = {}
     for mouse_id in mice:
         rg = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)

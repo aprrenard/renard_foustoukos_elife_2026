@@ -33,6 +33,7 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 # Panel g
 # ============================================================================
 
+
 def panel_g_correlation_traces(
     r_plus_results,
     r_minus_results,
@@ -76,8 +77,16 @@ def panel_g_correlation_traces(
         ax = axes[i]
 
         if day not in results['days']:
-            ax.text(0.5, 0.5, 'No data', ha='center', va='center',
-                    transform=ax.transAxes, fontsize=10, color='gray')
+            ax.text(
+                0.5,
+                0.5,
+                'No data',
+                ha='center',
+                va='center',
+                transform=ax.transAxes,
+                fontsize=10,
+                color='gray',
+            )
             ax.set_ylabel(f'Day {day}', fontsize=9, fontweight='bold')
             ax.set_ylim(ylim)
             ax.spines['top'].set_visible(False)
@@ -152,17 +161,22 @@ def panel_g_correlation_traces(
         for event_idx in events_shifted:
             event_time = time_vec[int(event_idx)]
             if not np.isnan(event_time):
-                ax.axvline(event_time, color='red', linewidth=0.8, alpha=0.7,
-                           ymin=0.1, ymax=0.9)
+                ax.axvline(event_time, color='red', linewidth=0.8, alpha=0.7, ymin=0.1, ymax=0.9)
 
         ax.set_ylim(ylim)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.set_ylabel(f'Day {day}', fontsize=9, fontweight='bold')
-        ax.text(0.98, 0.98, f'n={total_events}',
-                transform=ax.transAxes, fontsize=7, ha='right', va='top',
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='white',
-                          edgecolor='gray', alpha=0.8))
+        ax.text(
+            0.98,
+            0.98,
+            f'n={total_events}',
+            transform=ax.transAxes,
+            fontsize=7,
+            ha='right',
+            va='top',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='gray', alpha=0.8),
+        )
         ax.tick_params(axis='both', labelsize=7)
         if i == len(days) - 1:
             ax.set_xlabel('Time (s)', fontsize=9)
@@ -183,8 +197,7 @@ if __name__ == '__main__':
     print(f"Loading reactivation results from: {RESULTS_FILE}")
     if not os.path.exists(RESULTS_FILE):
         raise FileNotFoundError(
-            f"Results file not found: {RESULTS_FILE}\n"
-            "Please run reactivation.py with mode='compute' first."
+            f"Results file not found: {RESULTS_FILE}\nPlease run reactivation.py with mode='compute' first."
         )
 
     with open(RESULTS_FILE, 'rb') as f:
@@ -194,7 +207,5 @@ if __name__ == '__main__':
     r_minus_results = results_data['r_minus_results']
     print(f"Loaded results for {len(r_plus_results)} R+ mice and {len(r_minus_results)} R- mice")
 
-    panel_g_correlation_traces(r_plus_results, r_minus_results,
-                               nan_gap=0, filename='figure_4g_no_gaps')
-    panel_g_correlation_traces(r_plus_results, r_minus_results,
-                               nan_gap=45, filename='figure_4g_with_gaps')
+    panel_g_correlation_traces(r_plus_results, r_minus_results, nan_gap=0, filename='figure_4g_no_gaps')
+    panel_g_correlation_traces(r_plus_results, r_minus_results, nan_gap=45, filename='figure_4g_with_gaps')

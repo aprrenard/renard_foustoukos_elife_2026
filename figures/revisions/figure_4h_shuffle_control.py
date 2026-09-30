@@ -74,14 +74,14 @@ REACTIVATION_RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 
 DAYS = [-2, -1, 0, 1, 2]
 N_SHUFFLES = 1000
-GLOBAL_SEED = 42          # fixed for reproducibility of this stochastic control
-PERCENTILE_TAG = 'p99'    # detection threshold variant to use (see plan)
+GLOBAL_SEED = 42  # fixed for reproducibility of this stochastic control
+PERCENTILE_TAG = 'p99'  # detection threshold variant to use (see plan)
 N_JOBS = 35
 
 REACTIVATION_RESULTS_FILE = os.path.join(
-    REACTIVATION_RESULTS_DIR, f'reactivation_results_{PERCENTILE_TAG}.pkl')
-OUTPUT_DIR = os.path.join(
-    paths.manuscript_output_dir, 'revisions', 'figure_4h_shuffle_control', 'output')
+    REACTIVATION_RESULTS_DIR, f'reactivation_results_{PERCENTILE_TAG}.pkl'
+)
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_4h_shuffle_control', 'output')
 
 
 # ============================================================================
@@ -94,15 +94,15 @@ _significance_stars = partial(significance_stars, na='n.a.')
 def _seed_for(mouse, day):
     """Deterministic per-(mouse, day) seed, independent of PYTHONHASHSEED."""
     key = f"{GLOBAL_SEED}_{mouse}_{day}".encode()
-    return zlib.crc32(key) % (2 ** 32)
+    return zlib.crc32(key) % (2**32)
 
 
 def _load_reactivation_results(results_file):
     """Load pre-computed reactivation results from pickle."""
     if not os.path.exists(results_file):
         raise FileNotFoundError(
-            f"Reactivation results file not found: {results_file}\n"
-            "Run pipeline/07_reactivations.py first.")
+            f"Reactivation results file not found: {results_file}\nRun pipeline/07_reactivations.py first."
+        )
     print(f"\nLoading reactivation events from: {results_file}")
     with open(results_file, 'rb') as f:
         data = pickle.load(f)
@@ -115,6 +115,7 @@ def _load_reactivation_results(results_file):
 # ============================================================================
 # Vectorized batch template correlation
 # ============================================================================
+
 
 def _compute_template_correlation_batch(data, template_matrix):
     """Vectorized version of compute_template_correlation for many templates
@@ -138,7 +139,8 @@ def _compute_template_correlation_batch(data, template_matrix):
 
     with np.errstate(divide='ignore', invalid='ignore'):
         correlations = (template_centered @ data_centered) / (
-            template_stds * data_stds[np.newaxis, :] * n_cells)
+            template_stds * data_stds[np.newaxis, :] * n_cells
+        )
 
     correlations = np.nan_to_num(correlations, nan=0.0, posinf=0.0, neginf=0.0)
     correlations[:, data_stds == 0] = 0
@@ -149,6 +151,7 @@ def _compute_template_correlation_batch(data, template_matrix):
 # ============================================================================
 # Per-mouse-day shuffle computation
 # ============================================================================
+
 
 def _compute_shuffled_rates_for_mouse_day(day_results, selected_trials, n_shuffles=N_SHUFFLES, seed=None):
     """Detect "reactivation" events with n_shuffles cell-identity-shuffled
@@ -165,15 +168,13 @@ def _compute_shuffled_rates_for_mouse_day(day_results, selected_trials, n_shuffl
     data = np.nan_to_num(selected_trials.values.reshape(n_cells, -1), nan=0.0)
 
     rng = np.random.default_rng(seed)
-    template_matrix = np.stack(
-        [rng.permutation(template) for _ in range(n_shuffles)], axis=0)
+    template_matrix = np.stack([rng.permutation(template) for _ in range(n_shuffles)], axis=0)
 
     corr_matrix = _compute_template_correlation_batch(data, template_matrix)
 
     shuffled_rates = np.empty(n_shuffles)
     for i in range(n_shuffles):
-        events = detect_reactivation_events(
-            corr_matrix[i], threshold, MIN_EVENT_DISTANCE_FRAMES, PROMINENCE)
+        events = detect_reactivation_events(corr_matrix[i], threshold, MIN_EVENT_DISTANCE_FRAMES, PROMINENCE)
         shuffled_rates[i] = len(events) / session_duration_min
 
     return shuffled_rates
@@ -193,20 +194,28 @@ def _process_mouse(mouse, results, n_shuffles):
             # All no-stim trials, full window: the selection of the p99 results file.
             selected_trials = load_selected_trials(mouse, day)
             shuffled_rates = _compute_shuffled_rates_for_mouse_day(
-                day_results, selected_trials, n_shuffles=n_shuffles, seed=seed)
+                day_results, selected_trials, n_shuffles=n_shuffles, seed=seed
+            )
         except Exception as e:
             print(f"  Warning: {mouse} day {day}: {e}")
             continue
 
         for i, rate in enumerate(shuffled_rates):
-            shuffle_rows.append({
-                'mouse_id': mouse, 'day': day, 'shuffle_idx': i,
-                'shuffled_event_frequency': rate,
-            })
-        real_rows.append({
-            'mouse_id': mouse, 'day': day,
-            'real_event_frequency': day_results['event_frequency'],
-        })
+            shuffle_rows.append(
+                {
+                    'mouse_id': mouse,
+                    'day': day,
+                    'shuffle_idx': i,
+                    'shuffled_event_frequency': rate,
+                }
+            )
+        real_rows.append(
+            {
+                'mouse_id': mouse,
+                'day': day,
+                'real_event_frequency': day_results['event_frequency'],
+            }
+        )
     return shuffle_rows, real_rows
 
 
@@ -214,8 +223,8 @@ def _process_mouse(mouse, results, n_shuffles):
 # Main compute pipeline
 # ============================================================================
 
-def compute_shuffle_control(r_plus_results, r_minus_results,
-                             n_shuffles=N_SHUFFLES, n_jobs=N_JOBS):
+
+def compute_shuffle_control(r_plus_results, r_minus_results, n_shuffles=N_SHUFFLES, n_jobs=N_JOBS):
     """Run the shuffle-detection pipeline for all mice in parallel.
 
     Returns (long_df, real_df):
@@ -234,12 +243,10 @@ def compute_shuffle_control(r_plus_results, r_minus_results,
         all_results[mouse] = res
 
     mice = list(all_results.keys())
-    print(f"\nComputing {n_shuffles} shuffled-template detections for "
-          f"{len(mice)} mice...")
+    print(f"\nComputing {n_shuffles} shuffled-template detections for {len(mice)} mice...")
 
     outputs = Parallel(n_jobs=n_jobs, verbose=10)(
-        delayed(_process_mouse)(mouse, all_results[mouse], n_shuffles)
-        for mouse in mice
+        delayed(_process_mouse)(mouse, all_results[mouse], n_shuffles) for mouse in mice
     )
 
     shuffle_rows, real_rows = [], []
@@ -265,25 +272,26 @@ def _compute_per_mouse_summary(long_df, real_df):
     rows = []
     real_lookup = real_df.set_index(['mouse_id', 'day'])['real_event_frequency']
 
-    for (mouse_id, reward_group, day), grp in long_df.groupby(
-            ['mouse_id', 'reward_group', 'day']):
+    for (mouse_id, reward_group, day), grp in long_df.groupby(['mouse_id', 'reward_group', 'day']):
         if (mouse_id, day) not in real_lookup.index:
             continue
         real = real_lookup.loc[(mouse_id, day)]
         shuffled = grp['shuffled_event_frequency'].values
         n = len(shuffled)
         mean_shuffled = float(np.mean(shuffled))
-        rows.append({
-            'mouse_id': mouse_id,
-            'reward_group': reward_group,
-            'day': day,
-            'real_event_frequency': float(real),
-            'mean_shuffled': mean_shuffled,
-            'sd_shuffled': float(np.std(shuffled, ddof=1)),
-            'specificity_index': float(real) - mean_shuffled,
-            'permutation_p': (1 + int(np.sum(shuffled >= real))) / (n + 1),
-            'n_shuffles': n,
-        })
+        rows.append(
+            {
+                'mouse_id': mouse_id,
+                'reward_group': reward_group,
+                'day': day,
+                'real_event_frequency': float(real),
+                'mean_shuffled': mean_shuffled,
+                'sd_shuffled': float(np.std(shuffled, ddof=1)),
+                'specificity_index': float(real) - mean_shuffled,
+                'permutation_p': (1 + int(np.sum(shuffled >= real))) / (n + 1),
+                'n_shuffles': n,
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -304,24 +312,29 @@ def _compute_group_stats(per_mouse_df):
             w_stat, p_value = wilcoxon(vals)
         except ValueError:
             w_stat, p_value = np.nan, np.nan
-        rows.append({
-            'reward_group': reward_group,
-            'day': day,
-            'mean_specificity_index': float(np.mean(vals)),
-            'median_specificity_index': float(np.median(vals)),
-            'w_stat': float(w_stat) if not np.isnan(w_stat) else np.nan,
-            'p_value': float(p_value) if not np.isnan(p_value) else np.nan,
-            'n_mice': n_mice,
-        })
-        print(f"  {reward_group} day {day}: median specificity index="
-              f"{np.median(vals):.4g}, W={w_stat:.3g}, p={p_value:.4g}, "
-              f"n_mice={n_mice}")
+        rows.append(
+            {
+                'reward_group': reward_group,
+                'day': day,
+                'mean_specificity_index': float(np.mean(vals)),
+                'median_specificity_index': float(np.median(vals)),
+                'w_stat': float(w_stat) if not np.isnan(w_stat) else np.nan,
+                'p_value': float(p_value) if not np.isnan(p_value) else np.nan,
+                'n_mice': n_mice,
+            }
+        )
+        print(
+            f"  {reward_group} day {day}: median specificity index="
+            f"{np.median(vals):.4g}, W={w_stat:.3g}, p={p_value:.4g}, "
+            f"n_mice={n_mice}"
+        )
     return pd.DataFrame(rows)
 
 
 # ============================================================================
 # Plot
 # ============================================================================
+
 
 def panel_4h_shuffle_control(
     long_df,
@@ -341,8 +354,7 @@ def panel_4h_shuffle_control(
     Saves:
         <filename>.svg -- figure
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep',
-                  font='sans-serif', font_scale=1)
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     days_sorted = sorted(DAYS)
     reward_groups = ['R+', 'R-']
@@ -356,29 +368,34 @@ def panel_4h_shuffle_control(
         for j, day in enumerate(days_sorted):
             ax = axes[i, j]
             pooled = long_df.loc[
-                (long_df['reward_group'] == rg) & (long_df['day'] == day),
-                'shuffled_event_frequency']
+                (long_df['reward_group'] == rg) & (long_df['day'] == day), 'shuffled_event_frequency'
+            ]
 
             if len(pooled) == 0:
                 ax.axis('off')
                 continue
 
-            sns.histplot(pooled, binwidth=binwidth, binrange=xlim, color=colors[rg],
-                         stat='probability', alpha=0.6, ax=ax)
+            sns.histplot(
+                pooled,
+                binwidth=binwidth,
+                binrange=xlim,
+                color=colors[rg],
+                stat='probability',
+                alpha=0.6,
+                ax=ax,
+            )
 
             real_mean = real_df.loc[
-                (real_df['reward_group'] == rg) & (real_df['day'] == day),
-                'real_event_frequency'].mean()
+                (real_df['reward_group'] == rg) & (real_df['day'] == day), 'real_event_frequency'
+            ].mean()
             ax.axvline(real_mean, color='black', linestyle='--', linewidth=1.5)
 
-            stat_row = group_stats_df[
-                (group_stats_df['reward_group'] == rg) & (group_stats_df['day'] == day)]
+            stat_row = group_stats_df[(group_stats_df['reward_group'] == rg) & (group_stats_df['day'] == day)]
             if not stat_row.empty:
                 p = stat_row.iloc[0]['p_value']
                 n_mice = int(stat_row.iloc[0]['n_mice'])
                 stars = _significance_stars(p)
-                ax.set_title(f'{rg}, day {day}\np={p:.3g} {stars} (n={n_mice} mice)',
-                             fontsize=8)
+                ax.set_title(f'{rg}, day {day}\np={p:.3g} {stars} (n={n_mice} mice)', fontsize=8)
             else:
                 ax.set_title(f'{rg}, day {day}\nn.a.', fontsize=8)
 
@@ -402,9 +419,11 @@ def panel_4h_shuffle_control(
 
 if __name__ == '__main__':
     import argparse
+
     parser = argparse.ArgumentParser(description='Figure 4h shuffled-template control.')
-    parser.add_argument('--recompute', action='store_true',
-                        help='rerun the shuffle detection even if its CSVs are cached')
+    parser.add_argument(
+        '--recompute', action='store_true', help='rerun the shuffle detection even if its CSVs are cached'
+    )
     args = parser.parse_args()
     print(f"Output directory: {OUTPUT_DIR}")
     print(f"Reactivation results: {REACTIVATION_RESULTS_FILE}")
@@ -416,8 +435,7 @@ if __name__ == '__main__':
     group_csv = os.path.join(OUTPUT_DIR, 'shuffle_control_group_stats.csv')
 
     if args.recompute or not all(os.path.exists(p) for p in [long_csv, per_mouse_csv, group_csv]):
-        r_plus_results, r_minus_results = _load_reactivation_results(
-            REACTIVATION_RESULTS_FILE)
+        r_plus_results, r_minus_results = _load_reactivation_results(REACTIVATION_RESULTS_FILE)
         long_df, real_df = compute_shuffle_control(r_plus_results, r_minus_results)
         long_df.to_csv(long_csv, index=False)
         print(f"Saved: {long_csv} ({len(long_df)} rows)")

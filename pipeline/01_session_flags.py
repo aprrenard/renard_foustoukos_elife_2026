@@ -17,6 +17,7 @@ Outputs: <processed_dir>/stop_flags/{stop_flags,trial_indices}_{end_session,sens
 Usage:
     python pipeline/01_session_flags.py
 """
+
 import os
 
 import yaml
@@ -49,11 +50,8 @@ def get_trial_table(nwb_file):
 
 # List nwb files.
 session_list, nwb_list, mice, db_filtered = database.select_sessions_from_db(
-                                                db_path,
-                                                nwb_dir,
-                                                two_p_imaging='yes',
-                                                sensory_mapping='yes',
-                                                exclude_cols=['exclude'])
+    db_path, nwb_dir, two_p_imaging='yes', sensory_mapping='yes', exclude_cols=['exclude']
+)
 
 stop_flags = {}
 trial_indices = {}
@@ -61,7 +59,6 @@ trial_count = []
 # mouse_ids = ['AR176', 'AR177', 'AR178', 'AR179', 'AR180', ]
 
 for nwb_file in nwb_list:
-
     mouse_id = nwb_file[-25:-20]
     # if mouse_id not in mouse_ids:
     #     continue
@@ -71,10 +68,10 @@ for nwb_file in nwb_list:
 
     # Beginning of the whisker sensory mapping block.
     # Find final segment of one's in the whisker_stim column.
-    
+
     start = table.whisker_stim != table.whisker_stim.shift()
     start = int(start.cumsum().idxmax())
-    
+
     # Exceptions.
     if session_id == 'AR132_20240427_122605':
         start = 571
@@ -106,17 +103,21 @@ for nwb_file in nwb_list:
         start = 333
     if session_id == 'AR144_20240522_190834':
         start = 341
-        
+
     # Select the index that leaves 50 whisker misses.
     try:
-        start = table.loc[(table.whisker_stim == 1) & (table.lick_flag == 0) & (table.index >= start)].iloc[-50:].index[0]
-        stop = start + 49   # Because the last trial is included with .loc.
+        start = (
+            table.loc[(table.whisker_stim == 1) & (table.lick_flag == 0) & (table.index >= start)]
+            .iloc[-50:]
+            .index[0]
+        )
+        stop = start + 49  # Because the last trial is included with .loc.
 
     # Cases with no whisker stim at the end (few excluded mice).
     except IndexError:
         start = table.index.max()
         stop = table.index.max()
-    
+
     stop_flags[session_id] = (int(start), int(stop))
 
     # Further exceptions where I included a trial with a lick to avoid
@@ -137,14 +138,18 @@ for nwb_file in nwb_list:
     trial_indices[session_id] = trial_ids
 
     # Count trial for sanity check.
-    n_wh_miss = table.loc[(table.trial_id >= start)
-                          & (table.trial_id <= stop)
-                          & (table.whisker_stim == 1)
-                          & (table.lick_flag == 0)].shape[0]
-    n_wh_hit = table.loc[(table.trial_id >= start)
-                         & (table.trial_id <= stop)
-                         & (table.whisker_stim == 1)
-                         & (table.lick_flag == 1)].shape[0]
+    n_wh_miss = table.loc[
+        (table.trial_id >= start)
+        & (table.trial_id <= stop)
+        & (table.whisker_stim == 1)
+        & (table.lick_flag == 0)
+    ].shape[0]
+    n_wh_hit = table.loc[
+        (table.trial_id >= start)
+        & (table.trial_id <= stop)
+        & (table.whisker_stim == 1)
+        & (table.lick_flag == 1)
+    ].shape[0]
     trial_count.append([mouse_id, session_id, start, stop, n_wh_miss, n_wh_hit])
 
 # Save yaml files. Written under the output root; the yaml files in
@@ -159,7 +164,9 @@ with open(yaml_save, 'w') as stream:
     yaml.safe_dump(trial_indices, stream)
 
 # Sanity check.
-trial_count = pd.DataFrame(trial_count, columns = ['mouse_id', 'session_id', 'start', 'stop', 'n_wh_miss', 'n_wh_hit'])
+trial_count = pd.DataFrame(
+    trial_count, columns=['mouse_id', 'session_id', 'start', 'stop', 'n_wh_miss', 'n_wh_hit']
+)
 
 nwb_file = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/NWB/AR127_20240221_133407.nwb'
 nwb_file = paths.adjust_path_to_host(nwb_file)
@@ -167,9 +174,9 @@ table = get_trial_table(nwb_file)
 table = table.reset_index()
 table = table.loc[(table.trial_id >= 250)]
 plt.figure()
-plt.scatter(table.loc[table.auditory_stim==1, 'trial_id'], table.loc[table.auditory_stim==1, 'lick_flag'])
-plt.scatter(table.loc[table.whisker_stim==1, 'trial_id'], table.loc[table.whisker_stim==1, 'lick_flag'])
-plt.scatter(table.loc[table.no_stim==1, 'trial_id'], table.loc[table.no_stim==1, 'lick_flag'])
+plt.scatter(table.loc[table.auditory_stim == 1, 'trial_id'], table.loc[table.auditory_stim == 1, 'lick_flag'])
+plt.scatter(table.loc[table.whisker_stim == 1, 'trial_id'], table.loc[table.whisker_stim == 1, 'lick_flag'])
+plt.scatter(table.loc[table.no_stim == 1, 'trial_id'], table.loc[table.no_stim == 1, 'lick_flag'])
 
 
 # =============================================================================
@@ -181,7 +188,7 @@ plt.scatter(table.loc[table.no_stim==1, 'trial_id'], table.loc[table.no_stim==1,
 
 # List nwb files.
 nwb_list = database.read_excel_db(db_path)
-nwb_list = nwb_list.loc[(nwb_list['exclude']!='exclude')]
+nwb_list = nwb_list.loc[(nwb_list['exclude'] != 'exclude')]
 nwb_list = list(nwb_list.session_id)
 nwb_list = [os.path.join(nwb_dir, f + '.nwb') for f in nwb_list]
 # The database also lists sessions without an NWB file; skip them.
@@ -194,7 +201,6 @@ trial_indices = {}
 # mouse_ids = ['AR176', 'AR177', 'AR178', 'AR179', 'AR180', ]
 
 for nwb_file in nwb_list:
-
     mouse_id = nwb_file[-25:-20]
     # if mouse_id not in mouse_ids:
     #     continue
@@ -211,29 +217,29 @@ for nwb_file in nwb_list:
         continue
 
     # Get index after which no more than two hits until session end.
-    two_hits_left = table.loc[table.auditory_stim==1, 'lick_flag']
+    two_hits_left = table.loc[table.auditory_stim == 1, 'lick_flag']
     two_hits_left = (two_hits_left.cumsum() >= (two_hits_left.sum() - 2)).idxmax()
     # Find three auditory misses in a row.
-    three_aud_misses = table.loc[table.auditory_stim==1, 'lick_flag']
+    three_aud_misses = table.loc[table.auditory_stim == 1, 'lick_flag']
     three_aud_misses = three_aud_misses.rolling(window=3).sum() == 0
     # Stop flag is the first occurence of three auditory misses in a row
     # followed by no more than three hits in the rest of the session.
     # In case no three auditory misses keep the whole session.
     if three_aud_misses.sum() == 0:
-        stop = table.loc[table.auditory_stim==1, 'trial_id'].idxmax()
+        stop = table.loc[table.auditory_stim == 1, 'trial_id'].idxmax()
     else:
-        stop = three_aud_misses.loc[three_aud_misses.index>two_hits_left].idxmax()
+        stop = three_aud_misses.loc[three_aud_misses.index > two_hits_left].idxmax()
         # Stop three trials before the three auditory misses.
         position = three_aud_misses.index.get_loc(stop)
         stop = three_aud_misses.index[position - 3]
-        
+
     # Exceptions.
     if session_id == 'AR115_20231116_142507':
         stop = 35
     stop_flags[session_id] = (0, int(stop))
 
     # Get the indices of those trials.
-    trial_ids = table.loc[(table.index<=stop), 'trial_id'].to_list()
+    trial_ids = table.loc[(table.index <= stop), 'trial_id'].to_list()
     trial_indices[session_id] = trial_ids
 
 # Save yaml files.

@@ -29,17 +29,16 @@ from fast_learning.plotting import save_figure
 # Parameters
 # ============================================================================
 
-SAMPLING_RATE  = 30
-WIN_SEC_AMP    = (0, 0.300)
-WIN_SEC_PSTH   = (-0.5, 1.5)
-BASELINE_WIN   = (0, 1)
+SAMPLING_RATE = 30
+WIN_SEC_AMP = (0, 0.300)
+WIN_SEC_PSTH = (-0.5, 1.5)
+BASELINE_WIN = (0, 1)
 if __name__ == '__main__':
-    BASELINE_WIN   = (int(BASELINE_WIN[0] * SAMPLING_RATE),
-                      int(BASELINE_WIN[1] * SAMPLING_RATE))
-    DAYS           = [-2, -1, 0, 1, 2]
-    DAYS_SELECTED  = [-2, -1, 1, 2]
-    MIN_CELLS      = 3
-    CELL_TYPES     = ['wS2', 'wM1']
+    BASELINE_WIN = (int(BASELINE_WIN[0] * SAMPLING_RATE), int(BASELINE_WIN[1] * SAMPLING_RATE))
+    DAYS = [-2, -1, 0, 1, 2]
+    DAYS_SELECTED = [-2, -1, 1, 2]
+    MIN_CELLS = 3
+    CELL_TYPES = ['wS2', 'wM1']
 
     # Colours: pre=grey, post per reward group
     COLORS = {
@@ -50,22 +49,20 @@ if __name__ == '__main__':
 
     OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
 
-
     # ============================================================================
     # Load imaging data
     # ============================================================================
 
-    _, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir,
-                                                 two_p_imaging='yes',
-                                                 experimenters=['AR', 'GF', 'MI'])
+    _, _, mice, db = database.select_sessions_from_db(
+        paths.db_path, paths.nwb_dir, two_p_imaging='yes', experimenters=['AR', 'GF', 'MI']
+    )
 
     avg_resp_list, psth_list = [], []
 
     for mouse_id in mice:
         reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
         folder = paths.tensor_dir
-        xarr = imaging.load_mouse_xarray(mouse_id, folder,
-                                                'tensor_xarray_mapping_data.nc')
+        xarr = imaging.load_mouse_xarray(mouse_id, folder, 'tensor_xarray_mapping_data.nc')
         xarr = imaging.subtract_baseline(xarr, 2, BASELINE_WIN)
 
         # Average response (amplitude window)
@@ -73,7 +70,7 @@ if __name__ == '__main__':
         avg = avg.sel(time=slice(WIN_SEC_AMP[0], WIN_SEC_AMP[1])).mean(dim='time')
         avg.name = 'average_response'
         avg = avg.to_dataframe().reset_index()
-        avg['mouse_id']     = mouse_id
+        avg['mouse_id'] = mouse_id
         avg['reward_group'] = reward_group
         avg_resp_list.append(avg)
 
@@ -83,37 +80,41 @@ if __name__ == '__main__':
         p = p.groupby('day').mean(dim='trial')
         p.name = 'psth'
         p = p.to_dataframe().reset_index()
-        p['mouse_id']     = mouse_id
+        p['mouse_id'] = mouse_id
         p['reward_group'] = reward_group
         psth_list.append(p)
 
     avg_resp = pd.concat(avg_resp_list, ignore_index=True)
-    psth     = pd.concat(psth_list,     ignore_index=True)
+    psth = pd.concat(psth_list, ignore_index=True)
 
     # Convert to % dF/F0 and tag learning period
     avg_resp['average_response'] *= 100
-    psth['psth']                 *= 100
-    psth['time']                  = psth['time'].round(4)
+    psth['psth'] *= 100
+    psth['time'] = psth['time'].round(4)
     avg_resp['learning_period'] = avg_resp['day'].map(lambda x: 'pre' if x in [-2, -1] else 'post')
-    psth['learning_period']     = psth['day'].map(lambda x: 'pre' if x in [-2, -1] else 'post')
-
+    psth['learning_period'] = psth['day'].map(lambda x: 'pre' if x in [-2, -1] else 'post')
 
     # ============================================================================
     # Aggregate per mouse, filter to projection cell types
     # ============================================================================
 
     avg_resp_filt = imaging.filter_data_by_cell_count(
-        avg_resp[avg_resp['day'].isin(DAYS_SELECTED)], MIN_CELLS)
-    psth_filt = imaging.filter_data_by_cell_count(
-        psth[psth['day'].isin(DAYS_SELECTED)], MIN_CELLS)
+        avg_resp[avg_resp['day'].isin(DAYS_SELECTED)], MIN_CELLS
+    )
+    psth_filt = imaging.filter_data_by_cell_count(psth[psth['day'].isin(DAYS_SELECTED)], MIN_CELLS)
 
-    data_avg_proj  = (avg_resp_filt[avg_resp_filt['cell_type'].isin(CELL_TYPES)]
-                      .groupby(['mouse_id', 'learning_period', 'reward_group', 'cell_type'])
-                      ['average_response'].mean().reset_index())
-    data_psth_proj = (psth_filt[psth_filt['cell_type'].isin(CELL_TYPES)]
-                      .groupby(['mouse_id', 'learning_period', 'reward_group', 'time', 'cell_type'])
-                      ['psth'].mean().reset_index())
-
+    data_avg_proj = (
+        avg_resp_filt[avg_resp_filt['cell_type'].isin(CELL_TYPES)]
+        .groupby(['mouse_id', 'learning_period', 'reward_group', 'cell_type'])['average_response']
+        .mean()
+        .reset_index()
+    )
+    data_psth_proj = (
+        psth_filt[psth_filt['cell_type'].isin(CELL_TYPES)]
+        .groupby(['mouse_id', 'learning_period', 'reward_group', 'time', 'cell_type'])['psth']
+        .mean()
+        .reset_index()
+    )
 
     # ============================================================================
     # Statistics: Wilcoxon signed-rank (pre vs post) per group × cell type
@@ -122,17 +123,16 @@ if __name__ == '__main__':
     stats_rows = []
     for rg in ['R+', 'R-']:
         for ct in CELL_TYPES:
-            sub = data_avg_proj[(data_avg_proj['reward_group'] == rg) &
-                                 (data_avg_proj['cell_type']   == ct)]
-            pre  = sub[sub['learning_period'] == 'pre'] .sort_values('mouse_id')['average_response']
+            sub = data_avg_proj[(data_avg_proj['reward_group'] == rg) & (data_avg_proj['cell_type'] == ct)]
+            pre = sub[sub['learning_period'] == 'pre'].sort_values('mouse_id')['average_response']
             post = sub[sub['learning_period'] == 'post'].sort_values('mouse_id')['average_response']
             stat, p = wilcoxon(pre.values, post.values)
-            stats_rows.append({'reward_group': rg, 'cell_type': ct,
-                               'test': 'Wilcoxon', 'statistic': stat, 'p_value': p})
+            stats_rows.append(
+                {'reward_group': rg, 'cell_type': ct, 'test': 'Wilcoxon', 'statistic': stat, 'p_value': p}
+            )
             print(f"{rg} {ct}: W={stat:.3f}, p={p:.4f}")
 
     stats_df = pd.DataFrame(stats_rows)
-
 
     # ============================================================================
     # Helper to plot one cell-type block (PSTH + bar, 2 reward groups)
@@ -146,11 +146,19 @@ if __name__ == '__main__':
 
             # PSTH panel
             ax_psth = axes[row, 0]
-            d = data_psth_proj[(data_psth_proj['reward_group'] == rg) &
-                                (data_psth_proj['cell_type']   == cell_type)]
-            sns.lineplot(data=d, x='time', y='psth', hue='learning_period',
-                         hue_order=['pre', 'post'], palette=sns.color_palette(pal),
-                         ax=ax_psth, legend=False)
+            d = data_psth_proj[
+                (data_psth_proj['reward_group'] == rg) & (data_psth_proj['cell_type'] == cell_type)
+            ]
+            sns.lineplot(
+                data=d,
+                x='time',
+                y='psth',
+                hue='learning_period',
+                hue_order=['pre', 'post'],
+                palette=sns.color_palette(pal),
+                ax=ax_psth,
+                legend=False,
+            )
             ax_psth.axvline(0, color='#FF9600', linestyle='-')
             ax_psth.set_ylabel('DF/F0 (%)')
             ax_psth.set_xlabel('Time (s)')
@@ -158,13 +166,27 @@ if __name__ == '__main__':
 
             # Bar panel
             ax_bar = axes[row, 1]
-            d = data_avg_proj[(data_avg_proj['reward_group'] == rg) &
-                               (data_avg_proj['cell_type']   == cell_type)]
-            sns.barplot(data=d, x='learning_period', y='average_response',
-                        order=['pre', 'post'], color=BAR_COLORS[rg], ax=ax_bar)
-            sns.swarmplot(data=d, x='learning_period', y='average_response',
-                          order=['pre', 'post'], color='black', alpha=0.5,
-                          size=4, ax=ax_bar)
+            d = data_avg_proj[
+                (data_avg_proj['reward_group'] == rg) & (data_avg_proj['cell_type'] == cell_type)
+            ]
+            sns.barplot(
+                data=d,
+                x='learning_period',
+                y='average_response',
+                order=['pre', 'post'],
+                color=BAR_COLORS[rg],
+                ax=ax_bar,
+            )
+            sns.swarmplot(
+                data=d,
+                x='learning_period',
+                y='average_response',
+                order=['pre', 'post'],
+                color='black',
+                alpha=0.5,
+                size=4,
+                ax=ax_bar,
+            )
             ax_bar.set_ylim(-2, 15)
             ax_bar.set_ylabel('Average response (% dF/F0)')
             ax_bar.set_xlabel('')
@@ -174,14 +196,12 @@ if __name__ == '__main__':
         plt.tight_layout()
         return fig
 
-
     # ============================================================================
     # Produce figures
     # ============================================================================
 
     fig_wS2 = plot_cell_type('wS2', 'wS2')
     fig_wM1 = plot_cell_type('wM1', 'wM1')
-
 
     # ============================================================================
     # Save

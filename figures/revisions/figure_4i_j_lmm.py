@@ -57,7 +57,7 @@ from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.stats import significance_stars as _significance_stars
 
 DAYS = [-2, -1, 0, 1, 2]
-SELECTION = 'allnostim'     # trial selection of the reactivation events (see figure_4i_j.py)
+SELECTION = 'allnostim'  # trial selection of the reactivation events (see figure_4i_j.py)
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_4i_j_lmm', 'output')
 
@@ -65,6 +65,7 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_4i_j
 # ============================================================================
 # Mixed-effects model helpers
 # ============================================================================
+
 
 def _fit_lmm_4i(df, group_col='mouse_id'):
     """Fit participation_rate ~ lmi + (1 | mouse_id).
@@ -134,6 +135,7 @@ def _fit_permouse_slope_test(mouse_day_data):
 # Panel i: scatter of day-0 participation rate vs LMI, LMM stats
 # ============================================================================
 
+
 def panel_i_participation_vs_lmi_lmm(
     merged_df,
     output_dir=OUTPUT_DIR,
@@ -151,8 +153,7 @@ def panel_i_participation_vs_lmi_lmm(
         <filename>.svg        - figure
         <filename>_stats.csv  - per-reward-group LMM slope, CI, p-value, ICC
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep',
-                  font='sans-serif', font_scale=1)
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     df = merged_df.dropna(subset=['lmi', 'learning_rate']).copy()
     if 'reliable_learning' in df.columns:
@@ -170,8 +171,7 @@ def panel_i_participation_vs_lmi_lmm(
         y = grp['learning_rate'].values
         n_mice = grp['mouse_id'].nunique()
 
-        ax.scatter(x, y, color=rg_colors[rg], s=4, alpha=0.4, linewidths=0,
-                   rasterized=True)
+        ax.scatter(x, y, color=rg_colors[rg], s=4, alpha=0.4, linewidths=0, rasterized=True)
 
         if len(grp) >= 3 and n_mice >= 2:
             result, icc = _fit_lmm_4i(grp)
@@ -182,35 +182,42 @@ def panel_i_participation_vs_lmi_lmm(
             ci_low, ci_high = result.conf_int().loc['lmi']
 
             x_line = np.linspace(x.min(), x.max(), 200)
-            ax.plot(x_line, slope * x_line + intercept,
-                    color='black', linewidth=1.2, zorder=5)
+            ax.plot(x_line, slope * x_line + intercept, color='black', linewidth=1.2, zorder=5)
             stars = _significance_stars(p_value)
-            ax.text(0.05, 0.95,
-                    f'LMM slope = {slope:.3f} [{ci_low:.3f}, {ci_high:.3f}]\n'
-                    f'p = {p_value:.3g} {stars}  (ICC={icc:.2f})',
-                    transform=ax.transAxes, va='top', ha='left', fontsize=8)
-            stats_rows.append({
-                'reward_group': rg,
-                'n_cells': len(x),
-                'n_mice': n_mice,
-                'lmm_slope': slope,
-                'lmm_se': se,
-                'lmm_ci_low': ci_low,
-                'lmm_ci_high': ci_high,
-                'lmm_p': p_value,
-                'significance': stars,
-                'icc_mouse': icc,
-                'converged': result.converged,
-            })
-            print(f"  LMM {rg} learning_rate~lmi: slope={slope:.4g}, "
-                  f"p={p_value:.4g}, ICC={icc:.3f}, converged={result.converged}")
+            ax.text(
+                0.05,
+                0.95,
+                f'LMM slope = {slope:.3f} [{ci_low:.3f}, {ci_high:.3f}]\n'
+                f'p = {p_value:.3g} {stars}  (ICC={icc:.2f})',
+                transform=ax.transAxes,
+                va='top',
+                ha='left',
+                fontsize=8,
+            )
+            stats_rows.append(
+                {
+                    'reward_group': rg,
+                    'n_cells': len(x),
+                    'n_mice': n_mice,
+                    'lmm_slope': slope,
+                    'lmm_se': se,
+                    'lmm_ci_low': ci_low,
+                    'lmm_ci_high': ci_high,
+                    'lmm_p': p_value,
+                    'significance': stars,
+                    'icc_mouse': icc,
+                    'converged': result.converged,
+                }
+            )
+            print(
+                f"  LMM {rg} learning_rate~lmi: slope={slope:.4g}, "
+                f"p={p_value:.4g}, ICC={icc:.3f}, converged={result.converged}"
+            )
         else:
-            print(f"  Skipping LMM for {rg}: insufficient data "
-                  f"(n_cells={len(grp)}, n_mice={n_mice})")
+            print(f"  Skipping LMM for {rg}: insufficient data (n_cells={len(grp)}, n_mice={n_mice})")
 
         ax.axvline(x=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
-        ax.set_title(f'{rg}  (n = {len(grp)} cells, {n_mice} mice)',
-                     fontsize=10, fontweight='bold')
+        ax.set_title(f'{rg}  (n = {len(grp)} cells, {n_mice} mice)', fontsize=10, fontweight='bold')
         ax.set_xlabel('LMI', fontsize=9)
         ax.set_ylabel('Participation rate (day 0)' if i == 0 else '', fontsize=9)
         ax.tick_params(labelsize=8)
@@ -222,14 +229,14 @@ def panel_i_participation_vs_lmi_lmm(
     plt.close()
     print(f"Panel i (LMM) saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 
-    pd.DataFrame(stats_rows).to_csv(
-        os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
+    pd.DataFrame(stats_rows).to_csv(os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
     print(f"Panel i (LMM) stats saved: {output_dir}")
 
 
 # ============================================================================
 # Panel j: participation rate across days (LMI+ vs LMI-)
 # ============================================================================
+
 
 def panel_j_participation_across_days_lmm(
     merged_df,
@@ -257,8 +264,7 @@ def panel_j_participation_across_days_lmm(
         <filename>_data.csv    - per-mouse x day x LMI-category averages (plotted)
         <filename>_stats.csv   - per-mouse day-slope Wilcoxon signed-rank test per (reward_group, lmi_category)
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep',
-                  font='sans-serif', font_scale=1)
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     days_sorted = sorted(DAYS)
     lmi_categories = ['positive', 'negative']
@@ -275,18 +281,14 @@ def panel_j_participation_across_days_lmm(
         day_data = day_data[day_data['reliable']]
 
     mouse_day_avg = (
-        day_data
-        .groupby(['mouse_id', 'reward_group', 'lmi_category', 'day'],
-                 observed=True)['participation_rate']
+        day_data.groupby(['mouse_id', 'reward_group', 'lmi_category', 'day'], observed=True)[
+            'participation_rate'
+        ]
         .mean()
         .reset_index()
     )
 
-    cell_counts = (
-        lmi_cells.groupby(['reward_group', 'lmi_category'], observed=True)
-        .size()
-        .to_dict()
-    )
+    cell_counts = lmi_cells.groupby(['reward_group', 'lmi_category'], observed=True).size().to_dict()
 
     # Per-mouse day-slope test within each (reward_group, lmi_category); n = mice
     all_stats_rows = []
@@ -294,30 +296,33 @@ def panel_j_participation_across_days_lmm(
     for rg in reward_groups:
         for cat in lmi_categories:
             grp_mouse_day = mouse_day_avg[
-                (mouse_day_avg['reward_group'] == rg) &
-                (mouse_day_avg['lmi_category'] == cat)
+                (mouse_day_avg['reward_group'] == rg) & (mouse_day_avg['lmi_category'] == cat)
             ]
             test = _fit_permouse_slope_test(grp_mouse_day)
             if test is None:
                 print(f"  Skipping {rg} {cat} LMI: too few mice with >=2 days")
                 continue
             slopes_by_rg[rg][cat] = test
-            all_stats_rows.append({
-                'reward_group': rg,
-                'lmi_category': cat,
-                'test': 'Per-mouse day slope, Wilcoxon signed-rank (n=mice)',
-                'mean_day_slope': test['mean_slope'],
-                'median_day_slope': test['median_slope'],
-                'sd_day_slope': test['sd_slope'],
-                'w_stat': test['w_stat'],
-                'p_value': test['p_value'],
-                'significance': _significance_stars(test['p_value']),
-                'n_mice': test['n_mice'],
-                'n_cells': cell_counts.get((rg, cat), 0),
-            })
-            print(f"  {rg} {cat} LMI: median day slope={test['median_slope']:.4g}, "
-                  f"W={test['w_stat']:.3g}, "
-                  f"p={test['p_value']:.4g}, n_mice={test['n_mice']}")
+            all_stats_rows.append(
+                {
+                    'reward_group': rg,
+                    'lmi_category': cat,
+                    'test': 'Per-mouse day slope, Wilcoxon signed-rank (n=mice)',
+                    'mean_day_slope': test['mean_slope'],
+                    'median_day_slope': test['median_slope'],
+                    'sd_day_slope': test['sd_slope'],
+                    'w_stat': test['w_stat'],
+                    'p_value': test['p_value'],
+                    'significance': _significance_stars(test['p_value']),
+                    'n_mice': test['n_mice'],
+                    'n_cells': cell_counts.get((rg, cat), 0),
+                }
+            )
+            print(
+                f"  {rg} {cat} LMI: median day slope={test['median_slope']:.4g}, "
+                f"W={test['w_stat']:.3g}, "
+                f"p={test['p_value']:.4g}, n_mice={test['n_mice']}"
+            )
 
     fig, axes = plt.subplots(1, 2, figsize=(9, 4), sharey=True)
     plot_data_rows = []
@@ -327,10 +332,19 @@ def panel_j_participation_across_days_lmm(
         grp = mouse_day_avg[mouse_day_avg['reward_group'] == rg]
 
         sns.barplot(
-            data=grp, x='day', y='participation_rate', hue='lmi_category',
-            hue_order=lmi_categories, palette=cat_colors, order=days_sorted,
-            estimator=np.mean, errorbar=('ci', 95), capsize=0,
-            err_kws={'linewidth': 1.5}, alpha=0.7, ax=ax,
+            data=grp,
+            x='day',
+            y='participation_rate',
+            hue='lmi_category',
+            hue_order=lmi_categories,
+            palette=cat_colors,
+            order=days_sorted,
+            estimator=np.mean,
+            errorbar=('ci', 95),
+            capsize=0,
+            err_kws={'linewidth': 1.5},
+            alpha=0.7,
+            ax=ax,
         )
         for patch in ax.patches:
             patch.set_edgecolor('black')
@@ -342,19 +356,24 @@ def panel_j_participation_across_days_lmm(
                 text = f'{cat_labels[cat]}: n.a.'
             else:
                 stars = _significance_stars(s['p_value'])
-                text = (f"{cat_labels[cat]} day slope: p={s['p_value']:.3g} {stars} "
-                        f"(n={s['n_mice']} mice)")
-            ax.text(0.02, 0.97 - j * 0.09, text,
-                    transform=ax.transAxes, va='top', ha='left',
-                    fontsize=7, color=cat_colors[cat])
+                text = f"{cat_labels[cat]} day slope: p={s['p_value']:.3g} {stars} (n={s['n_mice']} mice)"
+            ax.text(
+                0.02,
+                0.97 - j * 0.09,
+                text,
+                transform=ax.transAxes,
+                va='top',
+                ha='left',
+                fontsize=7,
+                color=cat_colors[cat],
+            )
 
         n_pos = cell_counts.get((rg, 'positive'), 0)
         n_neg = cell_counts.get((rg, 'negative'), 0)
-        ax.set_title(f'{rg}  (LMI+: {n_pos} cells | LMI-: {n_neg} cells)',
-                     fontsize=9, fontweight='bold')
+        ax.set_title(f'{rg}  (LMI+: {n_pos} cells | LMI-: {n_neg} cells)', fontsize=9, fontweight='bold')
         ax.set_xlabel('Day', fontsize=9)
         ax.set_ylabel('Participation rate' if i == 0 else '', fontsize=9)
-        ax.set_ylim(0, .4)
+        ax.set_ylim(0, 0.4)
         ax.tick_params(labelsize=8)
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles, [cat_labels[lab] for lab in labels], fontsize=8)
@@ -369,9 +388,9 @@ def panel_j_participation_across_days_lmm(
     print(f"Panel j saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 
     pd.concat(plot_data_rows, ignore_index=True).to_csv(
-        os.path.join(output_dir, f'{filename}_data.csv'), index=False)
-    pd.DataFrame(all_stats_rows).to_csv(
-        os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
+        os.path.join(output_dir, f'{filename}_data.csv'), index=False
+    )
+    pd.DataFrame(all_stats_rows).to_csv(os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
     print(f"Panel j data/stats saved: {output_dir}")
 
 
@@ -387,10 +406,12 @@ if __name__ == '__main__':
         tag = participation.thr_tag(participation_threshold)
         print(f"\n--- participation_threshold={participation_threshold} ({tag}) ---")
         merged_df, per_day_df = participation.load_participation(participation_threshold, SELECTION)
-        print(f"Dataset: {len(merged_df)} cells, {len(per_day_df)} cell-day records, "
-              f"{merged_df['mouse_id'].nunique()} mice")
+        print(
+            f"Dataset: {len(merged_df)} cells, {len(per_day_df)} cell-day records, "
+            f"{merged_df['mouse_id'].nunique()} mice"
+        )
 
-        panel_i_participation_vs_lmi_lmm(
-            merged_df, filename=f'figure_4i_lmm_{SELECTION}_{tag}')
+        panel_i_participation_vs_lmi_lmm(merged_df, filename=f'figure_4i_lmm_{SELECTION}_{tag}')
         panel_j_participation_across_days_lmm(
-            merged_df, per_day_df, filename=f'figure_4j_lmm_{SELECTION}_{tag}')
+            merged_df, per_day_df, filename=f'figure_4j_lmm_{SELECTION}_{tag}'
+        )

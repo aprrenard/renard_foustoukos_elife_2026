@@ -27,21 +27,21 @@ from fast_learning.plotting import save_figure, lmi_cmap
 # Parameters.
 # #############################################################################
 
-MOUSE_ID        = 'GF314'
-NWB_FILE        = os.path.join(paths.nwb_dir, 'GF314_28112020_171800.nwb')
+MOUSE_ID = 'GF314'
+NWB_FILE = os.path.join(paths.nwb_dir, 'GF314_28112020_171800.nwb')
 # suite2p ops file is an input stored next to the pre-refactor tensors.
-OPS_PATH        = os.path.join(os.path.dirname(paths.tensor_dir), 'GF314_ops.npy')
+OPS_PATH = os.path.join(os.path.dirname(paths.tensor_dir), 'GF314_ops.npy')
 SEGMENTATION_INFO = ['ophys', 'all_cells', 'my_plane_segmentation']
 
-sampling_rate   = 30
-day_for_trials  = 2
-trials_range    = (10, 16)   # (start, stop) indices into the day's trials
-SELECTED_ROIS   = [192, 105, 10, 189, 186, 50, 3, 190, 48]  # plotting order
-nan_gap         = 60         # NaN frames inserted between trials
-offset_step     = 400        # % dF/F vertical offset between cells
+sampling_rate = 30
+day_for_trials = 2
+trials_range = (10, 16)  # (start, stop) indices into the day's trials
+SELECTED_ROIS = [192, 105, 10, 189, 186, 50, 3, 190, 48]  # plotting order
+nan_gap = 60  # NaN frames inserted between trials
+offset_step = 400  # % dF/F vertical offset between cells
 
 file_name = 'tensor_xarray_mapping_data.nc'
-folder    = paths.tensor_dir
+folder = paths.tensor_dir
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
 
@@ -65,62 +65,60 @@ if __name__ == '__main__':
     with NWBSession(NWB_FILE) as nwb_session:
         # (n_cells, height, width), read before the file closes.
         image_masks = np.asarray(nwb_session.calcium_imaging.get_image_mask(SEGMENTATION_INFO)[:])
-    ops          = np.load(OPS_PATH, allow_pickle=True)
-    mean_img     = ops.item()['meanImg']
+    ops = np.load(OPS_PATH, allow_pickle=True)
+    mean_img = ops.item()['meanImg']
 
-    lmi_values   = lmi_df['lmi'].values
-    roi_indices  = lmi_df['roi'].values.astype(int)
+    lmi_values = lmi_df['lmi'].values
+    roi_indices = lmi_df['roi'].values.astype(int)
 
-    lmi_abs_max  = np.nanmax(np.abs(lmi_values))
-    norm         = mcolors.Normalize(vmin=-lmi_abs_max, vmax=lmi_abs_max)
+    lmi_abs_max = np.nanmax(np.abs(lmi_values))
+    norm = mcolors.Normalize(vmin=-lmi_abs_max, vmax=lmi_abs_max)
 
     overlay = np.zeros((*mean_img.shape, 4), dtype=float)
     for roi, lmi_val in zip(roi_indices, lmi_values):
         if np.isnan(lmi_val):
             continue
-        mask   = image_masks[roi]
-        rgba   = lmi_cmap(norm(lmi_val))
+        mask = image_masks[roi]
+        rgba = lmi_cmap(norm(lmi_val))
         overlay[mask > 0] = rgba
-
 
     # #############################################################################
     # Load calcium data and select cells by ROI.
     # #############################################################################
 
-    xarr     = imaging.load_mouse_xarray(MOUSE_ID, folder, file_name, subtracted=False)
+    xarr = imaging.load_mouse_xarray(MOUSE_ID, folder, file_name, subtracted=False)
     xarr_day = xarr.sel(trial=xarr['day'] == day_for_trials)
 
     if xarr_day.sizes['trial'] < trials_range[1]:
-        raise ValueError(
-            f"Not enough trials: {xarr_day.sizes['trial']} < {trials_range[1]}"
-        )
+        raise ValueError(f"Not enough trials: {xarr_day.sizes['trial']} < {trials_range[1]}")
 
-    trial_indices = xarr_day['trial'][trials_range[0]:trials_range[1]].values
+    trial_indices = xarr_day['trial'][trials_range[0] : trials_range[1]].values
     n_trials_plot = len(trial_indices)
 
     # Map ROI id → positional index in the xarray cell dimension
     roi_to_idx = {int(r): i for i, r in enumerate(xarr_day['cell'].values)}
-    top_cells   = pd.DataFrame({
-        'roi':      SELECTED_ROIS,
-        'cell_idx': [roi_to_idx[r] for r in SELECTED_ROIS],
-    })
+    top_cells = pd.DataFrame(
+        {
+            'roi': SELECTED_ROIS,
+            'cell_idx': [roi_to_idx[r] for r in SELECTED_ROIS],
+        }
+    )
 
     print(f"Plotting {len(top_cells)} selected ROIs (day {day_for_trials}):")
     for i, (_, cell) in enumerate(top_cells.iterrows()):
-        print(f"  {i+1}. ROI {int(cell['roi'])}")
-
+        print(f"  {i + 1}. ROI {int(cell['roi'])}")
 
     # #############################################################################
     # Build concatenated traces.
     # #############################################################################
 
     concatenated_traces = []
-    time_vec            = None
+    time_vec = None
 
     for _, cell in top_cells.iterrows():
-        cell_idx   = int(cell['cell_idx'])
-        xarr_cell  = xarr_day.isel(cell=cell_idx).sel(trial=trial_indices)
-        traces     = xarr_cell.values * 100   # trials × time → % dF/F
+        cell_idx = int(cell['cell_idx'])
+        xarr_cell = xarr_day.isel(cell=cell_idx).sel(trial=trial_indices)
+        traces = xarr_cell.values * 100  # trials × time → % dF/F
 
         n_trials, n_timepoints_per_trial = traces.shape
         parts = []
@@ -131,11 +129,11 @@ if __name__ == '__main__':
         concatenated_traces.append(np.concatenate(parts))
 
         if time_vec is None:
-            time_vec       = xarr_cell['time'].values
-            n_timepoints   = n_timepoints_per_trial
+            time_vec = xarr_cell['time'].values
+            n_timepoints = n_timepoints_per_trial
 
     trial_duration = n_timepoints / sampling_rate
-    gap_duration   = nan_gap / sampling_rate
+    gap_duration = nan_gap / sampling_rate
 
     time_parts = []
     for t in range(n_trials_plot):
@@ -144,28 +142,27 @@ if __name__ == '__main__':
             time_parts.append(np.full(nan_gap, np.nan))
     t_full = np.concatenate(time_parts)
 
-
     # #############################################################################
     # Figure layout.
     # #############################################################################
 
     fig = plt.figure(figsize=(12, 7))
-    gs  = gridspec.GridSpec(
-        1, 3,
+    gs = gridspec.GridSpec(
+        1,
+        3,
         figure=fig,
         width_ratios=[10, 0.4, 4],
         wspace=0.08,
     )
 
-    ax_fov   = fig.add_subplot(gs[0, 0])
-    ax_cbar  = fig.add_subplot(gs[0, 1])
+    ax_fov = fig.add_subplot(gs[0, 0])
+    ax_cbar = fig.add_subplot(gs[0, 1])
     ax_trans = fig.add_subplot(gs[0, 2])
-
 
     # ---- FOV panel ----
 
     ax_fov.imshow(mean_img, cmap='gray', interpolation='none')
-    ax_fov.imshow(overlay,  interpolation='none', alpha=1)
+    ax_fov.imshow(overlay, interpolation='none', alpha=1)
     ax_fov.axis('off')
 
     # Colorbar
@@ -184,11 +181,15 @@ if __name__ == '__main__':
             continue
         cx, cy = xs.mean(), ys.mean()
         ax_fov.text(
-            cx, cy, str(roi_id),
-            color='white', fontsize=7, fontweight='bold',
-            ha='center', va='center',
+            cx,
+            cy,
+            str(roi_id),
+            color='white',
+            fontsize=7,
+            fontweight='bold',
+            ha='center',
+            va='center',
         )
-
 
     # ---- Calcium transients panel ----
 
@@ -211,7 +212,6 @@ if __name__ == '__main__':
     ax_trans.tick_params(axis='x', labelsize=8)
     ax_trans.spines['top'].set_visible(False)
     ax_trans.spines['right'].set_visible(False)
-
 
     # #############################################################################
     # Save.

@@ -22,6 +22,7 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_1', 'output')
 # Main Panel Generation
 # ============================================================================
 
+
 def generate_panel(
     mouse_ids=['GF305', 'AR180'],
     days=[-2, -1, 0, 1, 2],
@@ -29,7 +30,7 @@ def generate_panel(
     table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
     save_path=OUTPUT_DIR,
     save_format='svg',
-    dpi=300
+    dpi=300,
 ):
     """
     Generate Figure 1 Panel b: Behavioral performance across learning days.
@@ -58,7 +59,7 @@ def generate_panel(
         palette='deep',
         font='sans-serif',
         font_scale=1,
-        rc={'xtick.major.width': 0.8, 'ytick.major.width': 0.8}
+        rc={'xtick.major.width': 0.8, 'ytick.major.width': 0.8},
     )
 
     # Generate figure for each mouse
@@ -102,9 +103,7 @@ def generate_panel(
         d = d.loc[d.day.isin(days)]
         d = d.loc[d.trial_id <= max_trials]
         all_data.append(d)
-    pd.concat(all_data, ignore_index=True).to_csv(
-        os.path.join(save_path, 'figure_1b_data.csv'), index=False
-    )
+    pd.concat(all_data, ignore_index=True).to_csv(os.path.join(save_path, 'figure_1b_data.csv'), index=False)
     print(f"Figure 1b data saved to: {os.path.join(save_path, 'figure_1b_data.csv')}")
 
 

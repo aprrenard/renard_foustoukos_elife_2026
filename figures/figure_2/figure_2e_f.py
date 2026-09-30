@@ -24,11 +24,12 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_2', 'output')
 # Panel e: Optogenetic inactivation across days
 # ============================================================================
 
+
 def panel_e_opto_timecourse(
     table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_opto_learning.csv'),
     save_path=OUTPUT_DIR,
     save_format='svg',
-    dpi=300
+    dpi=300,
 ):
     """
     Generate Figure 2 Panel e: Optogenetic inactivation timecourse.
@@ -52,7 +53,9 @@ def panel_e_opto_timecourse(
     nwb_dir = paths.nwb_dir
 
     fpS1_mice = database.select_mice_from_db(
-        db_path, nwb_dir, experimenters=None,
+        db_path,
+        nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude', 'opto_exclude'],
         optogenetic='yes',
         opto_inactivation_type='learning',
@@ -60,7 +63,9 @@ def panel_e_opto_timecourse(
     )
 
     wS1_mice = database.select_mice_from_db(
-        db_path, nwb_dir, experimenters=None,
+        db_path,
+        nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude', 'opto_exclude'],
         optogenetic='yes',
         opto_inactivation_type='learning',
@@ -73,34 +78,28 @@ def panel_e_opto_timecourse(
 
     # Get opto_day info from database
     _, _, _, db = database.select_sessions_from_db(
-        db_path, nwb_dir, experimenters=None,
+        db_path,
+        nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude', 'opto_exclude'],
         opto_inactivation_type=['learning'],
         opto_day=["pre_-2", "pre_-1", "opto", "recovery_1"],
     )
 
     table = pd.merge(
-        table,
-        db[['mouse_id', 'session_id', 'opto_day']],
-        on=['mouse_id', 'session_id'],
-        how='left'
+        table, db[['mouse_id', 'session_id', 'opto_day']], on=['mouse_id', 'session_id'], how='left'
     )
 
     # Define inactivation day labels
     inactivation_labels = ['pre_-2', 'pre_-1', 'opto', 'recovery_1']
 
     # Aggregate performance by session
-    data = table.groupby(
-        ['mouse_id', 'session_id', 'opto_day', 'area'],
-        as_index=False
-    )[['outcome_c', 'outcome_a', 'outcome_w']].agg('mean')
+    data = table.groupby(['mouse_id', 'session_id', 'opto_day', 'area'], as_index=False)[
+        ['outcome_c', 'outcome_a', 'outcome_w']
+    ].agg('mean')
 
     # Order data by inactivation labels
-    data['opto_day'] = pd.Categorical(
-        data['opto_day'],
-        categories=inactivation_labels,
-        ordered=True
-    )
+    data['opto_day'] = pd.Categorical(data['opto_day'], categories=inactivation_labels, ordered=True)
     data = data.sort_values(by=['mouse_id', 'opto_day'])
 
     # Convert performance to percentage
@@ -115,11 +114,7 @@ def panel_e_opto_timecourse(
         palette='deep',
         font='sans-serif',
         font_scale=1,
-        rc={
-            'pdf.fonttype': 42,
-            'ps.fonttype': 42,
-            'svg.fonttype': 'none'
-        }
+        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
     )
 
     # Create figure with two subplots
@@ -134,58 +129,109 @@ def panel_e_opto_timecourse(
     for imouse in wS1_mice:
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='opto_day', y='outcome_c', estimator=np.mean,
-            color=stim_palette[2], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='opto_day',
+            y='outcome_c',
+            estimator=np.mean,
+            color=stim_palette[2],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='opto_day', y='outcome_a', estimator=np.mean,
-            color=stim_palette[0], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='opto_day',
+            y='outcome_a',
+            estimator=np.mean,
+            color=stim_palette[0],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='opto_day', y='outcome_w', estimator=np.mean,
-            color=reward_palette[1], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='opto_day',
+            y='outcome_w',
+            estimator=np.mean,
+            color=reward_palette[1],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
 
     # Plot group averages
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
-        x='opto_day', y='outcome_c', order=inactivation_labels,
-        color=stim_palette[2], ax=ax, linewidth=2
+        x='opto_day',
+        y='outcome_c',
+        order=inactivation_labels,
+        color=stim_palette[2],
+        ax=ax,
+        linewidth=2,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
-        x='opto_day', y='outcome_a', order=inactivation_labels,
-        color=stim_palette[0], ax=ax, linewidth=2
+        x='opto_day',
+        y='outcome_a',
+        order=inactivation_labels,
+        color=stim_palette[0],
+        ax=ax,
+        linewidth=2,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
-        x='opto_day', y='outcome_w', order=inactivation_labels,
-        color=reward_palette[1], ax=ax, linewidth=2
+        x='opto_day',
+        y='outcome_w',
+        order=inactivation_labels,
+        color=reward_palette[1],
+        ax=ax,
+        linewidth=2,
     )
 
     # Add dots for individual points
     sns.stripplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
-        x='opto_day', y='outcome_c', order=inactivation_labels,
-        color=stim_palette[2], ax=ax, jitter=False,
-        dodge=True, alpha=0.5, size=4
+        x='opto_day',
+        y='outcome_c',
+        order=inactivation_labels,
+        color=stim_palette[2],
+        ax=ax,
+        jitter=False,
+        dodge=True,
+        alpha=0.5,
+        size=4,
     )
     sns.stripplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
-        x='opto_day', y='outcome_a', order=inactivation_labels,
-        color=stim_palette[0], ax=ax, jitter=False,
-        dodge=True, alpha=0.5, size=4
+        x='opto_day',
+        y='outcome_a',
+        order=inactivation_labels,
+        color=stim_palette[0],
+        ax=ax,
+        jitter=False,
+        dodge=True,
+        alpha=0.5,
+        size=4,
     )
     sns.stripplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
-        x='opto_day', y='outcome_w', order=inactivation_labels,
-        color=reward_palette[1], ax=ax, jitter=False,
-        dodge=True, alpha=0.5, size=4
+        x='opto_day',
+        y='outcome_w',
+        order=inactivation_labels,
+        color=reward_palette[1],
+        ax=ax,
+        jitter=False,
+        dodge=True,
+        alpha=0.5,
+        size=4,
     )
 
     ax.set_title('wS1')
@@ -199,38 +245,71 @@ def panel_e_opto_timecourse(
     for imouse in fpS1_mice:
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='opto_day', y='outcome_c', estimator=np.mean,
-            color=stim_palette[2], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='opto_day',
+            y='outcome_c',
+            estimator=np.mean,
+            color=stim_palette[2],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='opto_day', y='outcome_a', estimator=np.mean,
-            color=stim_palette[0], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='opto_day',
+            y='outcome_a',
+            estimator=np.mean,
+            color=stim_palette[0],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='opto_day', y='outcome_w', estimator=np.mean,
-            color=reward_palette[1], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='opto_day',
+            y='outcome_w',
+            estimator=np.mean,
+            color=reward_palette[1],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
 
     # Plot group averages
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(fpS1_mice)],
-        x='opto_day', y='outcome_c', order=inactivation_labels,
-        color=stim_palette[2], ax=ax, linewidth=2
+        x='opto_day',
+        y='outcome_c',
+        order=inactivation_labels,
+        color=stim_palette[2],
+        ax=ax,
+        linewidth=2,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(fpS1_mice)],
-        x='opto_day', y='outcome_a', order=inactivation_labels,
-        color=stim_palette[0], ax=ax, linewidth=2
+        x='opto_day',
+        y='outcome_a',
+        order=inactivation_labels,
+        color=stim_palette[0],
+        ax=ax,
+        linewidth=2,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(fpS1_mice)],
-        x='opto_day', y='outcome_w', order=inactivation_labels,
-        color=reward_palette[1], ax=ax, linewidth=2
+        x='opto_day',
+        y='outcome_w',
+        order=inactivation_labels,
+        color=reward_palette[1],
+        ax=ax,
+        linewidth=2,
     )
 
     ax.set_title('fpS1')
@@ -265,6 +344,7 @@ def panel_e_opto_timecourse(
 # Panel f: Bar plot quantification for days 0 and +1
 # ============================================================================
 
+
 def panel_f_opto_barplot(
     data=None,
     table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_opto_learning.csv'),
@@ -272,7 +352,7 @@ def panel_f_opto_barplot(
     day_labels=['D0', 'D+1'],
     save_path=OUTPUT_DIR,
     save_format='svg',
-    dpi=300
+    dpi=300,
 ):
     """
     Generate Figure 2 Panel f: Bar plot comparison of wS1 vs fpS1.
@@ -300,7 +380,9 @@ def panel_f_opto_barplot(
         nwb_dir = paths.nwb_dir
 
         fpS1_mice = database.select_mice_from_db(
-            db_path, nwb_dir, experimenters=None,
+            db_path,
+            nwb_dir,
+            experimenters=None,
             exclude_cols=['exclude', 'opto_exclude'],
             optogenetic='yes',
             opto_inactivation_type='learning',
@@ -308,7 +390,9 @@ def panel_f_opto_barplot(
         )
 
         wS1_mice = database.select_mice_from_db(
-            db_path, nwb_dir, experimenters=None,
+            db_path,
+            nwb_dir,
+            experimenters=None,
             exclude_cols=['exclude', 'opto_exclude'],
             optogenetic='yes',
             opto_inactivation_type='learning',
@@ -319,31 +403,25 @@ def panel_f_opto_barplot(
         table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
 
         _, _, _, db = database.select_sessions_from_db(
-            db_path, nwb_dir, experimenters=None,
+            db_path,
+            nwb_dir,
+            experimenters=None,
             exclude_cols=['exclude', 'opto_exclude'],
             opto_inactivation_type=['learning'],
             opto_day=["pre_-2", "pre_-1", "opto", "recovery_1"],
         )
 
         table = pd.merge(
-            table,
-            db[['mouse_id', 'session_id', 'opto_day']],
-            on=['mouse_id', 'session_id'],
-            how='left'
+            table, db[['mouse_id', 'session_id', 'opto_day']], on=['mouse_id', 'session_id'], how='left'
         )
 
         inactivation_labels = ['pre_-2', 'pre_-1', 'opto', 'recovery_1']
 
-        data = table.groupby(
-            ['mouse_id', 'session_id', 'opto_day', 'area'],
-            as_index=False
-        )[['outcome_c', 'outcome_a', 'outcome_w']].agg('mean')
+        data = table.groupby(['mouse_id', 'session_id', 'opto_day', 'area'], as_index=False)[
+            ['outcome_c', 'outcome_a', 'outcome_w']
+        ].agg('mean')
 
-        data['opto_day'] = pd.Categorical(
-            data['opto_day'],
-            categories=inactivation_labels,
-            ordered=True
-        )
+        data['opto_day'] = pd.Categorical(data['opto_day'], categories=inactivation_labels, ordered=True)
         data = data.sort_values(by=['mouse_id', 'opto_day'])
 
         data['outcome_c'] = data['outcome_c'] * 100
@@ -352,18 +430,10 @@ def panel_f_opto_barplot(
 
     # Filter for days of interest
     day_data = data[data['opto_day'].isin(days_of_interest)].copy()
-    day_data['day_label'] = day_data['opto_day'].map(
-        dict(zip(days_of_interest, day_labels))
-    )
+    day_data['day_label'] = day_data['opto_day'].map(dict(zip(days_of_interest, day_labels)))
 
     # Set plotting theme
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        palette='deep',
-        font='sans-serif',
-        font_scale=1
-    )
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     # Create figure
     plt.figure(figsize=(8, 6))
@@ -378,7 +448,7 @@ def panel_f_opto_barplot(
         width=0.3,
         dodge=True,
         order=day_labels,
-        hue_order=['wS1', 'fpS1']
+        hue_order=['wS1', 'fpS1'],
     )
 
     # Swarm plot for individual mice
@@ -391,7 +461,7 @@ def panel_f_opto_barplot(
         color='black',
         alpha=0.6,
         order=day_labels,
-        hue_order=['wS1', 'fpS1']
+        hue_order=['wS1', 'fpS1'],
     )
 
     # Formatting
@@ -408,10 +478,7 @@ def panel_f_opto_barplot(
         group_wS1 = df_day[df_day['area'] == 'wS1']['outcome_w']
         group_fpS1 = df_day[df_day['area'] == 'fpS1']['outcome_w']
 
-        stat, p_value = mannwhitneyu(
-            group_wS1, group_fpS1,
-            alternative='two-sided'
-        )
+        stat, p_value = mannwhitneyu(group_wS1, group_fpS1, alternative='two-sided')
         stats.append({'day': label, 'statistic': stat, 'p_value': p_value})
 
         # Add significance stars to the plot
@@ -420,18 +487,14 @@ def panel_f_opto_barplot(
         ypos = 95
 
         if p_value < 0.001:
-            plt.text(xpos, ypos, '***', ha='center', va='bottom',
-                    color='black', fontsize=14)
+            plt.text(xpos, ypos, '***', ha='center', va='bottom', color='black', fontsize=14)
         elif p_value < 0.01:
-            plt.text(xpos, ypos, '**', ha='center', va='bottom',
-                    color='black', fontsize=14)
+            plt.text(xpos, ypos, '**', ha='center', va='bottom', color='black', fontsize=14)
         elif p_value < 0.05:
-            plt.text(xpos, ypos, '*', ha='center', va='bottom',
-                    color='black', fontsize=14)
+            plt.text(xpos, ypos, '*', ha='center', va='bottom', color='black', fontsize=14)
 
         # Add p-value text
-        plt.text(xpos, 90, f'p={p_value:.3g}', ha='center', va='bottom',
-                color='black', fontsize=10)
+        plt.text(xpos, 90, f'p={p_value:.3g}', ha='center', va='bottom', color='black', fontsize=10)
 
     # Save figure and data
     os.makedirs(save_path, exist_ok=True)

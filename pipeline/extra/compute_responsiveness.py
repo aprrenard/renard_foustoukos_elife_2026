@@ -1,5 +1,4 @@
-"""This script generates PSTH numpy arrays from lists of NWB files.
-"""
+"""This script generates PSTH numpy arrays from lists of NWB files."""
 
 import os
 
@@ -23,16 +22,16 @@ def test_response(data, trial_selection, response_win, baseline_win, method='man
     # If no trials of that type, return nan for all cells.
     if data.shape[1] == 0:
         return np.full(data.shape[0], np.nan)
-    
+
     # Select time window.
-    response = data.sel(time=slice(*response_win)).mean(dim='time')    
+    response = data.sel(time=slice(*response_win)).mean(dim='time')
     baseline = data.sel(time=slice(*baseline_win)).mean(dim='time')
 
     # Test if response is significant for each cell.
     pval = np.zeros(response.shape[0])
     for cell in range(response.shape[0]):
         # Special case of a artefactual cell with 0 at all time points.
-        if (response[cell]==0).all() or (baseline[cell]==0).all():
+        if (response[cell] == 0).all() or (baseline[cell] == 0).all():
             pval[cell] = 1
             continue
         if method == 'mannwhitney':
@@ -40,7 +39,7 @@ def test_response(data, trial_selection, response_win, baseline_win, method='man
             _, p = stats.mannwhitneyu(response[cell], baseline[cell], alternative='greater')
             pval[cell] = p
             if np.isnan(p):
-                print(f'Cell {cell} has NaN values.')  
+                print(f'Cell {cell} has NaN values.')
         elif method == 'wilcoxon':
             _, p = stats.wilcoxon(response[cell], baseline[cell])
             pval[cell] = p
@@ -72,25 +71,31 @@ nwb_path = paths.nwb_dir
 processed_data_folder = paths.processed_dir
 
 # Get mice list.
-_, _, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
-                                                exclude_cols=['exclude', 'two_p_exclude'],
-                                                experimenters=['AR', 'GF', 'MI'],
-                                                day=days,
-                                                two_p_imaging='yes',)
+_, _, mice_list, _ = database.select_sessions_from_db(
+    db_path,
+    nwb_path,
+    exclude_cols=['exclude', 'two_p_exclude'],
+    experimenters=['AR', 'GF', 'MI'],
+    day=days,
+    two_p_imaging='yes',
+)
 
 df_aud = []
 df_wh = []
 df_map = []
 for mouse_id in mice_list:
-
     print(f'Testing responses of {mouse_id}')
-    data_learning = xr.open_dataarray(os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_learning_data.nc'))
-    data_mapping = xr.open_dataarray(os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_mapping_data.nc'))
+    data_learning = xr.open_dataarray(
+        os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_learning_data.nc')
+    )
+    data_mapping = xr.open_dataarray(
+        os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_mapping_data.nc')
+    )
     sessions = data_learning.attrs['session_ids']
     # # Substract baseline -- no need to do that for a Wilcoxon test.
     # data_learning = data_learning - np.nanmean(data_learning.sel(time=slice(*baseline_win)), axis=2, keepdims=True)
     # data_mapping = data_mapping - np.nanmean(data_mapping.sel(time=slice(*baseline_win)), axis=2, keepdims=True)
-    
+
     days = list(np.sort(np.unique(data_learning.day)))
 
     # Test auditory responses for each day.
@@ -100,27 +105,54 @@ for mouse_id in mice_list:
         rois = data_learning.roi.values
         cell_types = data_learning.cell_type.values
         pval_aud = test_response(data_learning, trial_selection, response_win, baseline_win)
-        df_aud.append(pd.DataFrame({'mouse_id': mouse_id, 'session_id':session_id,
-                                'day': day, 'roi':rois, 'cell_type': cell_types,
-                                'pval_aud': pval_aud}))
+        df_aud.append(
+            pd.DataFrame(
+                {
+                    'mouse_id': mouse_id,
+                    'session_id': session_id,
+                    'day': day,
+                    'roi': rois,
+                    'cell_type': cell_types,
+                    'pval_aud': pval_aud,
+                }
+            )
+        )
 
     # Test whisker responses for each day.
     for day in days:
         session_id = sessions[days.index(day)]
         trial_selection = {'whisker_stim': 1, 'day': day}
         pval_wh = test_response(data_learning, trial_selection, response_win, baseline_win)
-        df_wh.append(pd.DataFrame({'mouse_id': mouse_id, 'session_id':session_id,
-                            'day': day, 'roi':rois, 'cell_type': cell_types,
-                            'pval_wh': pval_wh}))
+        df_wh.append(
+            pd.DataFrame(
+                {
+                    'mouse_id': mouse_id,
+                    'session_id': session_id,
+                    'day': day,
+                    'roi': rois,
+                    'cell_type': cell_types,
+                    'pval_wh': pval_wh,
+                }
+            )
+        )
 
     # Test whisker responses during baseline mapping trials.
     for day in days:
         session_id = sessions[days.index(day)]
         trial_selection = {'day': day}
         pval_map = test_response(data_mapping, trial_selection, response_win, baseline_win)
-        df_map.append(pd.DataFrame({'mouse_id': mouse_id, 'session_id':session_id,
-                            'day': day, 'roi':rois, 'cell_type': cell_types,
-                            'pval_mapping': pval_map}))
+        df_map.append(
+            pd.DataFrame(
+                {
+                    'mouse_id': mouse_id,
+                    'session_id': session_id,
+                    'day': day,
+                    'roi': rois,
+                    'cell_type': cell_types,
+                    'pval_mapping': pval_map,
+                }
+            )
+        )
 
 # Save test results in dataframe.
 df_aud = pd.concat(df_aud)
@@ -151,25 +183,31 @@ nwb_path = paths.nwb_dir
 processed_data_folder = paths.processed_dir
 
 # Get mice list.
-_, _, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
-                                                exclude_cols=['exclude', 'two_p_exclude'],
-                                                experimenters=['AR', 'GF', 'MI'],
-                                                day=days,
-                                                two_p_imaging='yes',)
+_, _, mice_list, _ = database.select_sessions_from_db(
+    db_path,
+    nwb_path,
+    exclude_cols=['exclude', 'two_p_exclude'],
+    experimenters=['AR', 'GF', 'MI'],
+    day=days,
+    two_p_imaging='yes',
+)
 
 df_aud = []
 df_wh = []
 df_map = []
 for mouse_id in mice_list:
-
     print(f'Testing responses of {mouse_id}')
-    data_learning = xr.open_dataarray(os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_learning_data.nc'))
-    data_mapping = xr.open_dataarray(os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_mapping_data.nc'))
+    data_learning = xr.open_dataarray(
+        os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_learning_data.nc')
+    )
+    data_mapping = xr.open_dataarray(
+        os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_mapping_data.nc')
+    )
     sessions = data_learning.attrs['session_ids']
     # # Substract baseline -- no need to do that for a Wilcoxon test.
     # data_learning = data_learning - np.nanmean(data_learning.sel(time=slice(*baseline_win)), axis=2, keepdims=True)
     # data_mapping = data_mapping - np.nanmean(data_mapping.sel(time=slice(*baseline_win)), axis=2, keepdims=True)
-    
+
     days = list(np.sort(np.unique(data_learning.day)))
 
     # Test auditory responses for each day.
@@ -177,23 +215,23 @@ for mouse_id in mice_list:
     rois = data_learning.roi.values
     cell_types = data_learning.cell_type.values
     pval_aud = test_response(data_learning, trial_selection, response_win, baseline_win)
-    df_aud.append(pd.DataFrame({'mouse_id': mouse_id,
-                            'roi':rois, 'cell_type': cell_types,
-                            'pval_aud': pval_aud}))
+    df_aud.append(
+        pd.DataFrame({'mouse_id': mouse_id, 'roi': rois, 'cell_type': cell_types, 'pval_aud': pval_aud})
+    )
 
     # Test whisker responses for each day.
     trial_selection = {'whisker_stim': 1}
     pval_wh = test_response(data_learning, trial_selection, response_win, baseline_win)
-    df_wh.append(pd.DataFrame({'mouse_id': mouse_id,
-                        'roi':rois, 'cell_type': cell_types,
-                        'pval_wh': pval_wh}))
+    df_wh.append(
+        pd.DataFrame({'mouse_id': mouse_id, 'roi': rois, 'cell_type': cell_types, 'pval_wh': pval_wh})
+    )
 
     # Test whisker responses during baseline mapping trials.
     trial_selection = {}
     pval_map = test_response(data_mapping, trial_selection, response_win, baseline_win)
-    df_map.append(pd.DataFrame({'mouse_id': mouse_id,
-                        'roi':rois, 'cell_type': cell_types,
-                        'pval_mapping': pval_map}))
+    df_map.append(
+        pd.DataFrame({'mouse_id': mouse_id, 'roi': rois, 'cell_type': cell_types, 'pval_mapping': pval_map})
+    )
 
 # Save test results in dataframe.
 df_aud = pd.concat(df_aud)
@@ -206,7 +244,9 @@ df['pval_wh'] = df['pval_wh'].astype(float)
 df['pval_mapping'] = df['pval_mapping'].astype(float)
 
 df = df.reset_index(drop=True)
-df.to_csv(os.path.join(processed_data_folder, f'response_test_results_alldaystogether_win_{response_length}ms.csv'))
+df.to_csv(
+    os.path.join(processed_data_folder, f'response_test_results_alldaystogether_win_{response_length}ms.csv')
+)
 
 
 # Test responsiveness of mapping trials using ROC analysis.
@@ -227,11 +267,14 @@ result_file = os.path.join(processed_data_folder, 'response_test_results_mapping
 
 # Get mice list.
 days = ['-2', '-1', '0', '+1', '+2']
-_, _, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
-                                                exclude_cols=['exclude', 'two_p_exclude'],
-                                                experimenters=['AR', 'GF', 'MI'],
-                                                day=days,
-                                                two_p_imaging='yes',)
+_, _, mice_list, _ = database.select_sessions_from_db(
+    db_path,
+    nwb_path,
+    exclude_cols=['exclude', 'two_p_exclude'],
+    experimenters=['AR', 'GF', 'MI'],
+    day=days,
+    two_p_imaging='yes',
+)
 
 # Load results if already computed.
 if not os.path.exists(result_file):
@@ -244,29 +287,37 @@ if not append_results:
 df = []
 
 for mouse_id in mice_list:
-    if df_results.loc[df_results.mouse_id==mouse_id].shape[0] > 0:
+    if df_results.loc[df_results.mouse_id == mouse_id].shape[0] > 0:
         print(f'Mouse {mouse_id} already done. Skipping.')
         continue
     print(f'Processing {mouse_id}')
-    data_mapping = xr.open_dataarray(os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_mapping_data.nc'))
+    data_mapping = xr.open_dataarray(
+        os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_mapping_data.nc')
+    )
 
     # Select time window.
-    response = data_mapping.sel(time=slice(*response_win)).mean(dim='time')    
+    response = data_mapping.sel(time=slice(*response_win)).mean(dim='time')
     baseline = data_mapping.sel(time=slice(*baseline_win)).mean(dim='time')
-    
+
     roc, roc_p = compute_roc(baseline, response, nshuffles=nshuffles)
-    df.append(pd.DataFrame({'mouse_id': mouse_id,
-                            'roi': data_mapping.roi.values,
-                            'cell_type': data_mapping.cell_type.values,
-                            'roc': roc, 'roc_p': roc_p}))
-if len(df)>0:
+    df.append(
+        pd.DataFrame(
+            {
+                'mouse_id': mouse_id,
+                'roi': data_mapping.roi.values,
+                'cell_type': data_mapping.cell_type.values,
+                'roc': roc,
+                'roc_p': roc_p,
+            }
+        )
+    )
+if len(df) > 0:
     df = pd.concat(df)
     df = df.reset_index(drop=True)
     df_results = pd.concat([df_results, df])
     df_results.to_csv(result_file)
 else:
     print('No new data to process.')
-
 
 
 # =============================================================================
@@ -294,11 +345,14 @@ result_file = os.path.join(processed_data_folder, 'roc_stimvsbaseline_results.cs
 
 # Get mice list.
 days = ['-2', '-1', '0', '+1', '+2']
-_, _, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
-                                                exclude_cols=['exclude', 'two_p_exclude'],
-                                                experimenters=['AR', 'GF', 'MI'],
-                                                day=days,
-                                                two_p_imaging='yes',)
+_, _, mice_list, _ = database.select_sessions_from_db(
+    db_path,
+    nwb_path,
+    exclude_cols=['exclude', 'two_p_exclude'],
+    experimenters=['AR', 'GF', 'MI'],
+    day=days,
+    two_p_imaging='yes',
+)
 
 # Load results if already computed.
 if not os.path.exists(result_file):
@@ -310,27 +364,33 @@ if not append_results:
 
 df = []
 for mouse_id in mice_list:
-    if df_results.loc[df_results.mouse_id==mouse_id].shape[0] > 0:
+    if df_results.loc[df_results.mouse_id == mouse_id].shape[0] > 0:
         print(f'Mouse {mouse_id} already done. Skipping.')
         continue
     print(f'Processing {mouse_id}')
-    data_mapping = xr.open_dataarray(os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_mapping_data.nc'))
-    
+    data_mapping = xr.open_dataarray(
+        os.path.join(processed_data_folder, 'mice', mouse_id, 'tensor_xarray_mapping_data.nc')
+    )
+
     # ROC analysis of baseline vs stim for each day
     for day in [-2, -1, 0, 1, 2]:
         data_day = data_mapping.sel(trial=data_mapping.coords['day'] == day)
         response = data_day.sel(time=slice(*response_win)).mean(dim='time')
         baseline = data_day.sel(time=slice(*baseline_win)).mean(dim='time')
         roc, roc_p = compute_roc(baseline, response, nshuffles=nshuffles, n_jobs=20)
-        df.append(pd.DataFrame({
-            'mouse_id': data_mapping.attrs.get('mouse_id', mouse_id),
-            'roi': data_mapping.roi.values,
-            'cell_type': data_mapping.cell_type.values,
-            'day': day,
-            'roc': roc,
-            'roc_p': roc_p
-        }))
-if len(df)>0:
+        df.append(
+            pd.DataFrame(
+                {
+                    'mouse_id': data_mapping.attrs.get('mouse_id', mouse_id),
+                    'roi': data_mapping.roi.values,
+                    'cell_type': data_mapping.cell_type.values,
+                    'day': day,
+                    'roc': roc,
+                    'roc_p': roc_p,
+                }
+            )
+        )
+if len(df) > 0:
     df = pd.concat(df)
     df = df.reset_index(drop=True)
     df_results = pd.concat([df_results, df])

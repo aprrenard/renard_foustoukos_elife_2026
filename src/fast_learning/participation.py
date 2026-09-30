@@ -39,15 +39,15 @@ LMI_NEGATIVE_THRESHOLD = 0.025
 
 # Circular-shift test (Supp. 4c)
 N_SHIFTS = 1000
-SHIFT_SEED = 0              # Base seed; each (mouse, day) gets its own stream
+SHIFT_SEED = 0  # Base seed; each (mouse, day) gets its own stream
 MIN_SHIFT_FRAMES = 0
-SIGNIFICANCE_PCTILE = 95    # top 5 % -> p < 0.05
+SIGNIFICANCE_PCTILE = 95  # top 5 % -> p < 0.05
 
 # Spontaneous transient detection (Supp. 4a-b)
 MIN_DISTANCE_MS = 200
 MIN_DISTANCE_FRAMES = int(MIN_DISTANCE_MS / 1000 * SAMPLING_RATE)
 PROMINENCE_TRANSIENT = 0.2
-N_STD_THRESHOLD = 3         # Per-cell threshold: N_STD_THRESHOLD * std(trace)
+N_STD_THRESHOLD = 3  # Per-cell threshold: N_STD_THRESHOLD * std(trace)
 SAVGOL_WINDOW = 10
 SAVGOL_ORDER = 2
 
@@ -59,7 +59,7 @@ SAVGOL_ORDER = 2
 RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 DAY0_CSV = os.path.join(RESULTS_DIR, 'supp4ab_lmi_data_day0.csv')
 BINARY_CSV = os.path.join(RESULTS_DIR, 'binary_participation_with_lmi.csv')
-PARTICIPATION_THRESHOLDS = [0.10, 0.20, 0.50]   # main value first, then robustness checks
+PARTICIPATION_THRESHOLDS = [0.10, 0.20, 0.50]  # main value first, then robustness checks
 
 
 def thr_tag(threshold):
@@ -88,8 +88,10 @@ def load_participation(threshold=PARTICIPATION_THRESHOLD, selection='allnostim')
     per_day_df = _read(rates_csv(threshold, selection))
     if 'lmi_category' not in merged_df.columns:
         merged_df = add_lmi_category(merged_df)
-    print(f"Loaded {len(merged_df)} cells and {len(per_day_df)} cell-day records "
-          f"({selection}, {thr_tag(threshold)}).")
+    print(
+        f"Loaded {len(merged_df)} cells and {len(per_day_df)} cell-day records "
+        f"({selection}, {thr_tag(threshold)})."
+    )
     return merged_df, per_day_df
 
 
@@ -109,9 +111,10 @@ def load_binary_participation():
 # Participation rates
 # ============================================================================
 
-def extract_event_responses(mouse, day, events,
-                            participation_threshold=PARTICIPATION_THRESHOLD,
-                            no_lick_only=False, time_window=None):
+
+def extract_event_responses(
+    mouse, day, events, participation_threshold=PARTICIPATION_THRESHOLD, no_lick_only=False, time_window=None
+):
     """Per-cell dF/F responses around the reactivation events of one mouse-day.
 
     The trial selection (no_lick_only, time_window) must be the one used to
@@ -123,10 +126,12 @@ def extract_event_responses(mouse, day, events,
     or no valid event.
     """
     xarr = imaging.load_mouse_xarray(
-        mouse, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=True)
+        mouse, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=True
+    )
     xarr_day = xarr.sel(trial=xarr['day'] == day)
     nostim, _ = reactivations.select_trials_by_type(
-        xarr_day, no_lick_only=no_lick_only, time_window=time_window)
+        xarr_day, no_lick_only=no_lick_only, time_window=time_window
+    )
 
     if len(nostim.trial) < MIN_NOSTIM_TRIALS:
         return None
@@ -139,36 +144,49 @@ def extract_event_responses(mouse, day, events,
     rows = []
     for event_idx in events:
         trial_idx = event_idx // n_timepoints
-        time_idx  = event_idx % n_timepoints
+        time_idx = event_idx % n_timepoints
         if time_idx < win or time_idx >= n_timepoints - win or trial_idx >= n_trials:
             continue
-        window_data  = data_3d[:, trial_idx, time_idx - win:time_idx + win + 1]
+        window_data = data_3d[:, trial_idx, time_idx - win : time_idx + win + 1]
         avg_response = np.mean(window_data, axis=1)
         participates = avg_response >= participation_threshold
         for icell in range(n_cells):
-            rows.append({
-                'mouse_id': mouse, 'day': day, 'roi': roi_list[icell],
-                'event_idx': event_idx, 'avg_response': float(avg_response[icell]),
-                'participates': bool(participates[icell]),
-            })
+            rows.append(
+                {
+                    'mouse_id': mouse,
+                    'day': day,
+                    'roi': roi_list[icell],
+                    'event_idx': event_idx,
+                    'avg_response': float(avg_response[icell]),
+                    'participates': bool(participates[icell]),
+                }
+            )
 
     return pd.DataFrame(rows) if rows else None
 
 
 def compute_participation_rate(responses_df):
     """Aggregate cell-event responses to per-cell, per-day participation rates."""
-    grouped = responses_df.groupby(['mouse_id', 'day', 'roi']).agg(
-        n_participations=('participates', 'sum'),
-        n_events=('participates', 'count'),
-    ).reset_index()
+    grouped = (
+        responses_df.groupby(['mouse_id', 'day', 'roi'])
+        .agg(
+            n_participations=('participates', 'sum'),
+            n_events=('participates', 'count'),
+        )
+        .reset_index()
+    )
     grouped['participation_rate'] = grouped['n_participations'] / grouped['n_events']
     grouped['reliable'] = grouped['n_events'] >= MIN_EVENTS_FOR_RELIABILITY
     return grouped
 
 
-def process_mouse_participation(mouse, mouse_results,
-                                participation_threshold=PARTICIPATION_THRESHOLD,
-                                no_lick_only=False, time_window=None):
+def process_mouse_participation(
+    mouse,
+    mouse_results,
+    participation_threshold=PARTICIPATION_THRESHOLD,
+    no_lick_only=False,
+    time_window=None,
+):
     """Participation rates across all days for one mouse.
 
     mouse_results is that mouse's entry of a reactivation results file.
@@ -181,8 +199,13 @@ def process_mouse_participation(mouse, mouse_results,
             continue
         try:
             resp_df = extract_event_responses(
-                mouse, day, events, participation_threshold=participation_threshold,
-                no_lick_only=no_lick_only, time_window=time_window)
+                mouse,
+                day,
+                events,
+                participation_threshold=participation_threshold,
+                no_lick_only=no_lick_only,
+                time_window=time_window,
+            )
             if resp_df is not None and len(resp_df) > 0:
                 all_responses.append(resp_df)
         except Exception as e:
@@ -216,17 +239,20 @@ def aggregate_across_days(participation_df_all):
         post_rate = post_data['participation_rate'].mean() if len(post_data) > 0 else np.nan
         reliable_post = post_data['reliable'].all() if len(post_data) > 0 else False
 
-        results.append({
-            'mouse_id': mouse_id, 'roi': roi,
-            'baseline_rate': baseline_rate,
-            'learning_rate': learning_rate,
-            'post_rate': post_rate,
-            'delta_learning': learning_rate - baseline_rate if not np.isnan(baseline_rate) else np.nan,
-            'delta_post': post_rate - baseline_rate if not np.isnan(baseline_rate) else np.nan,
-            'reliable_baseline': reliable_baseline,
-            'reliable_learning': reliable_learning,
-            'reliable_post': reliable_post,
-        })
+        results.append(
+            {
+                'mouse_id': mouse_id,
+                'roi': roi,
+                'baseline_rate': baseline_rate,
+                'learning_rate': learning_rate,
+                'post_rate': post_rate,
+                'delta_learning': learning_rate - baseline_rate if not np.isnan(baseline_rate) else np.nan,
+                'delta_post': post_rate - baseline_rate if not np.isnan(baseline_rate) else np.nan,
+                'reliable_baseline': reliable_baseline,
+                'reliable_learning': reliable_learning,
+                'reliable_post': reliable_post,
+            }
+        )
 
     return pd.DataFrame(results)
 
@@ -257,10 +283,12 @@ def merge_with_lmi(participation_df, lmi_df, reward_groups):
 
     merged_df = pd.merge(participation_df, lmi_df[cols], on=['mouse_id', 'roi'], how='inner')
 
-    print(f"\n  Merged: {len(merged_df)} cells total "
-          f"({(merged_df['lmi_category']=='positive').sum()} LMI+, "
-          f"{(merged_df['lmi_category']=='negative').sum()} LMI-, "
-          f"{(merged_df['lmi_category']=='neutral').sum()} neutral)")
+    print(
+        f"\n  Merged: {len(merged_df)} cells total "
+        f"({(merged_df['lmi_category'] == 'positive').sum()} LMI+, "
+        f"{(merged_df['lmi_category'] == 'negative').sum()} LMI-, "
+        f"{(merged_df['lmi_category'] == 'neutral').sum()} neutral)"
+    )
     return merged_df
 
 
@@ -268,29 +296,33 @@ def merge_with_lmi(participation_df, lmi_df, reward_groups):
 # Circular-shift test of participation (Supp. 4c)
 # ============================================================================
 
-def participation_from_3d(data_3d, events, n_timepoints, n_trials,
-                          participation_threshold=PARTICIPATION_THRESHOLD):
+
+def participation_from_3d(
+    data_3d, events, n_timepoints, n_trials, participation_threshold=PARTICIPATION_THRESHOLD
+):
     """Vectorised participation rate per cell.
 
     data_3d is (n_cells, n_trials, n_timepoints); events are frame indices in
     the flattened trial x time axis. Returns (rates or None, n_valid_events).
     """
     win = EVENT_WINDOW_FRAMES
-    valid = [ev for ev in events
-             if (ev % n_timepoints) >= win
-             and (ev % n_timepoints) < n_timepoints - win
-             and (ev // n_timepoints) < n_trials]
+    valid = [
+        ev
+        for ev in events
+        if (ev % n_timepoints) >= win
+        and (ev % n_timepoints) < n_timepoints - win
+        and (ev // n_timepoints) < n_trials
+    ]
     if not valid:
         return None, 0
 
-    t_idxs  = np.array([ev % n_timepoints  for ev in valid])
+    t_idxs = np.array([ev % n_timepoints for ev in valid])
     tr_idxs = np.array([ev // n_timepoints for ev in valid])
 
-    windows = np.stack([
-        data_3d[:, tr_idxs[i], t_idxs[i] - win:t_idxs[i] + win + 1]
-        for i in range(len(valid))
-    ])
-    avg   = np.mean(windows, axis=2)
+    windows = np.stack(
+        [data_3d[:, tr_idxs[i], t_idxs[i] - win : t_idxs[i] + win + 1] for i in range(len(valid))]
+    )
+    avg = np.mean(windows, axis=2)
     rates = np.mean(avg >= participation_threshold, axis=0)
     return rates, len(valid)
 
@@ -309,37 +341,37 @@ def participation_with_shifts(mouse, day, events, n_shifts=N_SHIFTS):
     """
     try:
         xr = imaging.load_mouse_xarray(
-            mouse, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=True)
+            mouse, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=True
+        )
         xr_day = xr.sel(trial=xr['day'] == day)
-        nostim  = xr_day.sel(trial=xr_day['no_stim'] == 1)
+        nostim = xr_day.sel(trial=xr_day['no_stim'] == 1)
 
         n_cells, n_trials, n_timepoints = nostim.shape
         if n_trials < MIN_NOSTIM_TRIALS:
             return None
 
-        data_3d  = np.nan_to_num(nostim.values, nan=0.0)
+        data_3d = np.nan_to_num(nostim.values, nan=0.0)
         roi_list = nostim['roi'].values
         n_frames = n_trials * n_timepoints
 
         if events is None or len(events) == 0:
             return None
 
-        real_rates, n_valid = participation_from_3d(
-            data_3d, events, n_timepoints, n_trials)
+        real_rates, n_valid = participation_from_3d(data_3d, events, n_timepoints, n_trials)
         if real_rates is None or n_valid < MIN_EVENTS_FOR_RELIABILITY:
             return None
 
-        data_flat  = data_3d.reshape(n_cells, n_frames)
+        data_flat = data_3d.reshape(n_cells, n_frames)
         null_rates = np.full((n_shifts, n_cells), np.nan)
         rng = np.random.default_rng([SHIFT_SEED, zlib.crc32(mouse.encode()), day + 10])
         for i_shift in range(n_shifts):
-            shift = (rng.integers(MIN_SHIFT_FRAMES + 1, n_frames)
-                     if MIN_SHIFT_FRAMES > 0
-                     else rng.integers(1, n_frames))
-            shifted_3d = np.roll(data_flat, shift, axis=1).reshape(
-                n_cells, n_trials, n_timepoints)
-            null_r, _ = participation_from_3d(
-                shifted_3d, events, n_timepoints, n_trials)
+            shift = (
+                rng.integers(MIN_SHIFT_FRAMES + 1, n_frames)
+                if MIN_SHIFT_FRAMES > 0
+                else rng.integers(1, n_frames)
+            )
+            shifted_3d = np.roll(data_flat, shift, axis=1).reshape(n_cells, n_trials, n_timepoints)
+            null_r, _ = participation_from_3d(shifted_3d, events, n_timepoints, n_trials)
             if null_r is not None:
                 null_rates[i_shift] = null_r
 
@@ -347,9 +379,13 @@ def participation_with_shifts(mouse, day, events, n_shifts=N_SHIFTS):
         significant = real_rates > threshold
 
         records = [
-            {'mouse_id': mouse, 'day': day, 'roi': roi_list[icell],
-             'participating': bool(significant[icell]),
-             'n_events': n_valid}
+            {
+                'mouse_id': mouse,
+                'day': day,
+                'roi': roi_list[icell],
+                'participating': bool(significant[icell]),
+                'n_events': n_valid,
+            }
             for icell in range(n_cells)
             if not np.isnan(real_rates[icell])
         ]
@@ -377,6 +413,7 @@ def process_mouse_circular_shift(mouse, mouse_results, n_shifts=N_SHIFTS):
 # Spontaneous transient frequency (Supp. 4a-b)
 # ============================================================================
 
+
 def detect_transients(cell_trace):
     """Peak indices of calcium transients in one cell trace.
 
@@ -400,7 +437,8 @@ def transient_freq_per_cell(mouse_id, day=0):
     transient_freq)."""
     try:
         xarr = imaging.load_mouse_xarray(
-            mouse_id, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=False)
+            mouse_id, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=False
+        )
     except Exception as e:
         print(f"  Warning: Could not load data for {mouse_id}: {e}")
         return pd.DataFrame()
@@ -418,9 +456,11 @@ def transient_freq_per_cell(mouse_id, day=0):
     rows = []
     for c in range(n_cells):
         n_peaks = len(detect_transients(data[c]))
-        rows.append({
-            'mouse_id': mouse_id,
-            'roi': roi_ids[c],
-            'transient_freq': n_peaks / session_duration_min,
-        })
+        rows.append(
+            {
+                'mouse_id': mouse_id,
+                'roi': roi_ids[c],
+                'transient_freq': n_peaks / session_duration_min,
+            }
+        )
     return pd.DataFrame(rows)

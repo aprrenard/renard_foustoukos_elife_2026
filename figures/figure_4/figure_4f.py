@@ -43,6 +43,7 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 # Panel f
 # ============================================================================
 
+
 def panel_f_reactivation_heatmap(
     r_plus_results,
     r_minus_results,
@@ -105,18 +106,13 @@ def panel_f_reactivation_heatmap(
 
     lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
     mouse_lmi = lmi_df[lmi_df['mouse_id'] == mouse].set_index('roi')
-    lmi_orig = np.array([
-        mouse_lmi.loc[r, 'lmi'] if r in mouse_lmi.index else np.nan
-        for r in roi_ids_orig
-    ])
+    lmi_orig = np.array([mouse_lmi.loc[r, 'lmi'] if r in mouse_lmi.index else np.nan for r in roi_ids_orig])
 
     part_df = pd.read_csv(participation.rates_csv())
-    mouse_part = (part_df[(part_df['mouse_id'] == mouse) & (part_df['day'] == day)]
-                  .set_index('roi'))
-    part_orig = np.array([
-        mouse_part.loc[r, 'participation_rate'] if r in mouse_part.index else np.nan
-        for r in roi_ids_orig
-    ])
+    mouse_part = part_df[(part_df['mouse_id'] == mouse) & (part_df['day'] == day)].set_index('roi')
+    part_orig = np.array(
+        [mouse_part.loc[r, 'participation_rate'] if r in mouse_part.index else np.nan for r in roi_ids_orig]
+    )
 
     # Sort cells
     if sort_by == 'participation':
@@ -151,7 +147,8 @@ def panel_f_reactivation_heatmap(
     # Build figure
     fig = plt.figure(figsize=(11, 6))
     gs = gridspec.GridSpec(
-        3, 5,
+        3,
+        5,
         figure=fig,
         width_ratios=[1, 1, 1, 14, 0.4],
         height_ratios=[3, 14, 0.8],
@@ -169,17 +166,25 @@ def panel_f_reactivation_heatmap(
     ax_cbar_tmpl = fig.add_subplot(gs[2, 1])
     ax_cbar_part = fig.add_subplot(gs[2, 2])
 
-    for _ax in [fig.add_subplot(gs[0, 0]), fig.add_subplot(gs[0, 1]),
-                fig.add_subplot(gs[0, 2]), fig.add_subplot(gs[0, 4]),
-                fig.add_subplot(gs[2, 3]), fig.add_subplot(gs[2, 4])]:
+    for _ax in [
+        fig.add_subplot(gs[0, 0]),
+        fig.add_subplot(gs[0, 1]),
+        fig.add_subplot(gs[0, 2]),
+        fig.add_subplot(gs[0, 4]),
+        fig.add_subplot(gs[2, 3]),
+        fig.add_subplot(gs[2, 4]),
+    ]:
         _ax.set_visible(False)
 
     # Heatmap
     ax_heatmap.imshow(
         neural_data_display,
-        aspect='auto', cmap=HEATMAP_CMAP,
-        vmin=vmin_act, vmax=vmax_act,
-        interpolation='none', origin='upper',
+        aspect='auto',
+        cmap=HEATMAP_CMAP,
+        vmin=vmin_act,
+        vmax=vmax_act,
+        interpolation='none',
+        origin='upper',
         extent=[0, n_frames / sampling_rate, n_cells - 0.5, -0.5],
     )
     ax_heatmap.set_xlabel('Time (s)', fontsize=9)
@@ -206,7 +211,9 @@ def panel_f_reactivation_heatmap(
     ax_events.spines['left'].set_visible(False)
     ax_events.set_title(
         f'{mouse} ({reward_group})  |  Day {day}  |  {len(events)} reactivations',
-        fontsize=10, fontweight='bold', pad=4,
+        fontsize=10,
+        fontweight='bold',
+        pad=4,
     )
     ax_heatmap.xaxis.set_major_locator(AutoLocator())
 
@@ -214,9 +221,9 @@ def panel_f_reactivation_heatmap(
         img = np.ma.masked_invalid(values.reshape(-1, 1))
         cmap_obj = plt.get_cmap(cmap).copy()
         cmap_obj.set_bad(color='lightgrey')
-        im = ax.imshow(img, aspect='auto', cmap=cmap_obj,
-                       vmin=vmin, vmax=vmax,
-                       interpolation='none', origin='upper')
+        im = ax.imshow(
+            img, aspect='auto', cmap=cmap_obj, vmin=vmin, vmax=vmax, interpolation='none', origin='upper'
+        )
         ax.set_xticks([])
         ax.set_yticks([])
         ax.set_xlabel(xlabel, fontsize=8)
@@ -224,8 +231,7 @@ def panel_f_reactivation_heatmap(
             sp.set_visible(False)
         return im
 
-    im_tmpl = _strip(ax_template, template_sorted, 'Reds',
-                     'Template', vmin=vmin_tmpl, vmax=vmax_tmpl)
+    im_tmpl = _strip(ax_template, template_sorted, 'Reds', 'Template', vmin=vmin_tmpl, vmax=vmax_tmpl)
     im_lmi = _strip(ax_lmi, lmi_values, HEATMAP_CMAP, 'LMI', vmin=-1, vmax=1)
     im_part = _strip(ax_part, part_values, 'Reds', 'Particip.\nrate', vmin=0, vmax=1)
 
@@ -241,9 +247,9 @@ def panel_f_reactivation_heatmap(
     ax_cbar.tick_params(labelsize=7)
 
     for im, cax, label, dmin, dmax in [
-        (im_lmi,  ax_cbar_lmi,  'LMI',  -1,            1),
+        (im_lmi, ax_cbar_lmi, 'LMI', -1, 1),
         (im_tmpl, ax_cbar_tmpl, 'dF/F', tmpl_data_min, tmpl_data_max),
-        (im_part, ax_cbar_part, 'Rate',  0,             1),
+        (im_part, ax_cbar_part, 'Rate', 0, 1),
     ]:
         cb = fig.colorbar(im, cax=cax, orientation='horizontal')
         cb.ax.set_xlim(dmin, dmax)
@@ -267,8 +273,7 @@ if __name__ == '__main__':
     print(f"Loading reactivation results from: {results_file}")
     if not os.path.exists(results_file):
         raise FileNotFoundError(
-            f"Results file not found: {results_file}\n"
-            "Please run reactivation.py with mode='compute' first."
+            f"Results file not found: {results_file}\nPlease run reactivation.py with mode='compute' first."
         )
 
     with open(results_file, 'rb') as f:
@@ -279,7 +284,8 @@ if __name__ == '__main__':
     print(f"Loaded results for {len(r_plus_results)} R+ mice and {len(r_minus_results)} R- mice")
 
     panel_f_reactivation_heatmap(
-        r_plus_results, r_minus_results,
+        r_plus_results,
+        r_minus_results,
         sort_by='participation',
         top_n=20,
         filename='figure_4f',

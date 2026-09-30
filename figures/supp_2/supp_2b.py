@@ -29,20 +29,20 @@ from fast_learning.plotting import save_figure
 
 # Example cells: (mouse_id, roi, label) — adjust to browse the LMI population.
 EXAMPLE_CELLS = [
-    ('GF306', 94,  'Negative LMI'),
-    ('GF334', 77,  'Best positive LMI'),
+    ('GF306', 94, 'Negative LMI'),
+    ('GF334', 77, 'Best positive LMI'),
     ('GF313', 137, 'Average positive LMI'),
 ]
 
 # Y-axis limits per mouse (% dF/F).
 YLIMS = {
-    'GF306': (-50,  250),
+    'GF306': (-50, 250),
     'GF334': (-100, 600),
-    'GF313': (-50,  400),
+    'GF313': (-50, 400),
 }
 
 WIN_SEC = (-0.5, 1.5)
-DAYS    = [-2, -1, 0, 1, 2]
+DAYS = [-2, -1, 0, 1, 2]
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_2', 'output')
 
@@ -62,9 +62,10 @@ if __name__ == '__main__':
 
     print("Selected cells:")
     for cell, label in cells:
-        print(f"  {label}: {cell['mouse_id']} ROI {int(cell['roi'])} "
-              f"| LMI = {cell['lmi']:.2f} (p = {cell['lmi_p']:.3f})")
-
+        print(
+            f"  {label}: {cell['mouse_id']} ROI {int(cell['roi'])} "
+            f"| LMI = {cell['lmi']:.2f} (p = {cell['lmi_p']:.3f})"
+        )
 
     # ============================================================================
     # Figure
@@ -76,11 +77,9 @@ if __name__ == '__main__':
 
     for i, (cell, label) in enumerate(cells):
         mouse_id = cell['mouse_id']
-        roi      = int(cell['roi'])
+        roi = int(cell['roi'])
 
-        xarr = imaging.load_mouse_xarray(
-            mouse_id, folder, 'tensor_xarray_mapping_data.nc', subtracted=True
-        )
+        xarr = imaging.load_mouse_xarray(mouse_id, folder, 'tensor_xarray_mapping_data.nc', subtracted=True)
         xarr = xarr.sel(cell=xarr['roi'].isin([roi])).sel(time=slice(*WIN_SEC))
 
         y_min, y_max = YLIMS[mouse_id]
@@ -95,8 +94,13 @@ if __name__ == '__main__':
 
             time = day_data.time.values
             for t in range(day_data.sizes['trial']):
-                ax.plot(time, day_data.isel(trial=t).squeeze().values * 100,
-                        color='gray', alpha=0.2, linewidth=0.5)
+                ax.plot(
+                    time,
+                    day_data.isel(trial=t).squeeze().values * 100,
+                    color='gray',
+                    alpha=0.2,
+                    linewidth=0.5,
+                )
 
             mean_trace = day_data.mean(dim='trial').squeeze().values * 100
             ax.plot(time, mean_trace, color='k', linewidth=1.5)
@@ -107,13 +111,11 @@ if __name__ == '__main__':
             if i == 0:
                 ax.set_title(f'Day {day:+d}')
 
-        row_label = (f'{label}\n{mouse_id} ROI {roi}\n'
-                     f'LMI = {cell["lmi"]:.2f}  p = {cell["lmi_p"]:.3f}')
+        row_label = f'{label}\n{mouse_id} ROI {roi}\nLMI = {cell["lmi"]:.2f}  p = {cell["lmi_p"]:.3f}'
         axes[i, 0].set_ylabel(row_label, fontsize=8)
 
     plt.tight_layout()
     sns.despine()
-
 
     # ============================================================================
     # Save
@@ -125,11 +127,18 @@ if __name__ == '__main__':
     print("\nSaved: supp_2b.svg")
 
     # Data: LMI values for the selected example cells
-    pd.DataFrame([
-        {'mouse_id': cell['mouse_id'], 'roi': int(cell['roi']),
-         'label': label, 'lmi': cell['lmi'], 'lmi_p': cell['lmi_p']}
-        for cell, label in cells
-    ]).to_csv(os.path.join(OUTPUT_DIR, 'supp_2b_data.csv'), index=False)
+    pd.DataFrame(
+        [
+            {
+                'mouse_id': cell['mouse_id'],
+                'roi': int(cell['roi']),
+                'label': label,
+                'lmi': cell['lmi'],
+                'lmi_p': cell['lmi_p'],
+            }
+            for cell, label in cells
+        ]
+    ).to_csv(os.path.join(OUTPUT_DIR, 'supp_2b_data.csv'), index=False)
     print("Saved: supp_2b_data.csv")
 
     plt.close()

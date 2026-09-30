@@ -24,11 +24,12 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_2', 'output')
 # Panel b: Muscimol inactivation across days
 # ============================================================================
 
+
 def panel_b_muscimol_timecourse(
     table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_muscimol.csv'),
     save_path=OUTPUT_DIR,
     save_format='svg',
-    dpi=300
+    dpi=300,
 ):
     """
     Generate Figure 2 Panel b: Muscimol inactivation timecourse.
@@ -52,7 +53,9 @@ def panel_b_muscimol_timecourse(
     nwb_dir = paths.nwb_dir
 
     fpS1_mice = database.select_mice_from_db(
-        db_path, nwb_dir, experimenters=None,
+        db_path,
+        nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude'],
         pharmacology='yes',
         pharma_inactivation_type='learning',
@@ -60,7 +63,9 @@ def panel_b_muscimol_timecourse(
     )
 
     wS1_mice = database.select_mice_from_db(
-        db_path, nwb_dir, experimenters=None,
+        db_path,
+        nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude'],
         pharmacology='yes',
         pharma_inactivation_type='learning',
@@ -73,40 +78,46 @@ def panel_b_muscimol_timecourse(
 
     # Get pharma_day info from database
     _, _, _, db = database.select_sessions_from_db(
-        db_path, nwb_dir, experimenters=None,
+        db_path,
+        nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude'],
         pharma_inactivation_type=['learning'],
-        pharma_day=["pre_-2", "pre_-1",
-                   "muscimol_1", "muscimol_2", "muscimol_3",
-                   "recovery_1", "recovery_2", "recovery_3"],
+        pharma_day=[
+            "pre_-2",
+            "pre_-1",
+            "muscimol_1",
+            "muscimol_2",
+            "muscimol_3",
+            "recovery_1",
+            "recovery_2",
+            "recovery_3",
+        ],
     )
 
     table = pd.merge(
-        table,
-        db[['mouse_id', 'session_id', 'pharma_day']],
-        on=['mouse_id', 'session_id'],
-        how='left'
+        table, db[['mouse_id', 'session_id', 'pharma_day']], on=['mouse_id', 'session_id'], how='left'
     )
 
     # Define inactivation day labels
     inactivation_labels = [
-        'pre_-2', 'pre_-1',
-        'muscimol_1', 'muscimol_2', 'muscimol_3',
-        'recovery_1', 'recovery_2', 'recovery_3'
+        'pre_-2',
+        'pre_-1',
+        'muscimol_1',
+        'muscimol_2',
+        'muscimol_3',
+        'recovery_1',
+        'recovery_2',
+        'recovery_3',
     ]
 
     # Aggregate performance by session
-    data = table.groupby(
-        ['mouse_id', 'session_id', 'pharma_day', 'area'],
-        as_index=False
-    )[['outcome_c', 'outcome_a', 'outcome_w']].agg('mean')
+    data = table.groupby(['mouse_id', 'session_id', 'pharma_day', 'area'], as_index=False)[
+        ['outcome_c', 'outcome_a', 'outcome_w']
+    ].agg('mean')
 
     # Order data by inactivation labels
-    data['pharma_day'] = pd.Categorical(
-        data['pharma_day'],
-        categories=inactivation_labels,
-        ordered=True
-    )
+    data['pharma_day'] = pd.Categorical(data['pharma_day'], categories=inactivation_labels, ordered=True)
     data = data.sort_values(by=['mouse_id', 'pharma_day'])
 
     # Convert performance to percentage
@@ -121,11 +132,7 @@ def panel_b_muscimol_timecourse(
         palette='deep',
         font='sans-serif',
         font_scale=1,
-        rc={
-            'pdf.fonttype': 42,
-            'ps.fonttype': 42,
-            'svg.fonttype': 'none'
-        }
+        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
     )
 
     # Create figure with two subplots
@@ -140,38 +147,71 @@ def panel_b_muscimol_timecourse(
     for imouse in wS1_mice:
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='pharma_day', y='outcome_c', estimator=np.mean,
-            color=stim_palette[2], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='pharma_day',
+            y='outcome_c',
+            estimator=np.mean,
+            color=stim_palette[2],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='pharma_day', y='outcome_a', estimator=np.mean,
-            color=stim_palette[0], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='pharma_day',
+            y='outcome_a',
+            estimator=np.mean,
+            color=stim_palette[0],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='pharma_day', y='outcome_w', estimator=np.mean,
-            color=reward_palette[1], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='pharma_day',
+            y='outcome_w',
+            estimator=np.mean,
+            color=reward_palette[1],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
 
     # Plot group averages
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
-        x='pharma_day', y='outcome_c', order=inactivation_labels,
-        color=stim_palette[2], ax=ax, linewidth=2
+        x='pharma_day',
+        y='outcome_c',
+        order=inactivation_labels,
+        color=stim_palette[2],
+        ax=ax,
+        linewidth=2,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
-        x='pharma_day', y='outcome_a', order=inactivation_labels,
-        color=stim_palette[0], ax=ax, linewidth=2
+        x='pharma_day',
+        y='outcome_a',
+        order=inactivation_labels,
+        color=stim_palette[0],
+        ax=ax,
+        linewidth=2,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
-        x='pharma_day', y='outcome_w', order=inactivation_labels,
-        color=reward_palette[1], ax=ax, linewidth=2
+        x='pharma_day',
+        y='outcome_w',
+        order=inactivation_labels,
+        color=reward_palette[1],
+        ax=ax,
+        linewidth=2,
     )
 
     ax.set_title('wS1')
@@ -185,38 +225,71 @@ def panel_b_muscimol_timecourse(
     for imouse in fpS1_mice:
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='pharma_day', y='outcome_c', estimator=np.mean,
-            color=stim_palette[2], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='pharma_day',
+            y='outcome_c',
+            estimator=np.mean,
+            color=stim_palette[2],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='pharma_day', y='outcome_a', estimator=np.mean,
-            color=stim_palette[0], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='pharma_day',
+            y='outcome_a',
+            estimator=np.mean,
+            color=stim_palette[0],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
-            x='pharma_day', y='outcome_w', estimator=np.mean,
-            color=reward_palette[1], alpha=0.6, legend=False,
-            ax=ax, marker=None, err_style='bars', linewidth=1
+            x='pharma_day',
+            y='outcome_w',
+            estimator=np.mean,
+            color=reward_palette[1],
+            alpha=0.6,
+            legend=False,
+            ax=ax,
+            marker=None,
+            err_style='bars',
+            linewidth=1,
         )
 
     # Plot group averages
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(fpS1_mice)],
-        x='pharma_day', y='outcome_c', order=inactivation_labels,
-        color=stim_palette[2], ax=ax, linewidth=2
+        x='pharma_day',
+        y='outcome_c',
+        order=inactivation_labels,
+        color=stim_palette[2],
+        ax=ax,
+        linewidth=2,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(fpS1_mice)],
-        x='pharma_day', y='outcome_a', order=inactivation_labels,
-        color=stim_palette[0], ax=ax, linewidth=2
+        x='pharma_day',
+        y='outcome_a',
+        order=inactivation_labels,
+        color=stim_palette[0],
+        ax=ax,
+        linewidth=2,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(fpS1_mice)],
-        x='pharma_day', y='outcome_w', order=inactivation_labels,
-        color=reward_palette[1], ax=ax, linewidth=2
+        x='pharma_day',
+        y='outcome_w',
+        order=inactivation_labels,
+        color=reward_palette[1],
+        ax=ax,
+        linewidth=2,
     )
 
     ax.set_title('fpS1')
@@ -251,6 +324,7 @@ def panel_b_muscimol_timecourse(
 # Panel c: Bar plot quantification for days 0, +1, +2
 # ============================================================================
 
+
 def panel_c_muscimol_barplot(
     data=None,
     table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_muscimol.csv'),
@@ -258,7 +332,7 @@ def panel_c_muscimol_barplot(
     day_labels=['D0', 'D+1', 'D+2'],
     save_path=OUTPUT_DIR,
     save_format='svg',
-    dpi=300
+    dpi=300,
 ):
     """
     Generate Figure 2 Panel c: Bar plot comparison of wS1 vs fpS1.
@@ -286,7 +360,9 @@ def panel_c_muscimol_barplot(
         nwb_dir = paths.nwb_dir
 
         fpS1_mice = database.select_mice_from_db(
-            db_path, nwb_dir, experimenters=None,
+            db_path,
+            nwb_dir,
+            experimenters=None,
             exclude_cols=['exclude'],
             pharmacology='yes',
             pharma_inactivation_type='learning',
@@ -294,7 +370,9 @@ def panel_c_muscimol_barplot(
         )
 
         wS1_mice = database.select_mice_from_db(
-            db_path, nwb_dir, experimenters=None,
+            db_path,
+            nwb_dir,
+            experimenters=None,
             exclude_cols=['exclude'],
             pharmacology='yes',
             pharma_inactivation_type='learning',
@@ -305,37 +383,43 @@ def panel_c_muscimol_barplot(
         table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
 
         _, _, _, db = database.select_sessions_from_db(
-            db_path, nwb_dir, experimenters=None,
+            db_path,
+            nwb_dir,
+            experimenters=None,
             exclude_cols=['exclude'],
             pharma_inactivation_type=['learning'],
-            pharma_day=["pre_-2", "pre_-1",
-                       "muscimol_1", "muscimol_2", "muscimol_3",
-                       "recovery_1", "recovery_2", "recovery_3"],
+            pharma_day=[
+                "pre_-2",
+                "pre_-1",
+                "muscimol_1",
+                "muscimol_2",
+                "muscimol_3",
+                "recovery_1",
+                "recovery_2",
+                "recovery_3",
+            ],
         )
 
         table = pd.merge(
-            table,
-            db[['mouse_id', 'session_id', 'pharma_day']],
-            on=['mouse_id', 'session_id'],
-            how='left'
+            table, db[['mouse_id', 'session_id', 'pharma_day']], on=['mouse_id', 'session_id'], how='left'
         )
 
         inactivation_labels = [
-            'pre_-2', 'pre_-1',
-            'muscimol_1', 'muscimol_2', 'muscimol_3',
-            'recovery_1', 'recovery_2', 'recovery_3'
+            'pre_-2',
+            'pre_-1',
+            'muscimol_1',
+            'muscimol_2',
+            'muscimol_3',
+            'recovery_1',
+            'recovery_2',
+            'recovery_3',
         ]
 
-        data = table.groupby(
-            ['mouse_id', 'session_id', 'pharma_day', 'area'],
-            as_index=False
-        )[['outcome_c', 'outcome_a', 'outcome_w']].agg('mean')
+        data = table.groupby(['mouse_id', 'session_id', 'pharma_day', 'area'], as_index=False)[
+            ['outcome_c', 'outcome_a', 'outcome_w']
+        ].agg('mean')
 
-        data['pharma_day'] = pd.Categorical(
-            data['pharma_day'],
-            categories=inactivation_labels,
-            ordered=True
-        )
+        data['pharma_day'] = pd.Categorical(data['pharma_day'], categories=inactivation_labels, ordered=True)
         data = data.sort_values(by=['mouse_id', 'pharma_day'])
 
         data['outcome_c'] = data['outcome_c'] * 100
@@ -344,18 +428,10 @@ def panel_c_muscimol_barplot(
 
     # Filter for days of interest
     day_data = data[data['pharma_day'].isin(days_of_interest)].copy()
-    day_data['day_label'] = day_data['pharma_day'].map(
-        dict(zip(days_of_interest, day_labels))
-    )
+    day_data['day_label'] = day_data['pharma_day'].map(dict(zip(days_of_interest, day_labels)))
 
     # Set plotting theme
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        palette='deep',
-        font='sans-serif',
-        font_scale=1
-    )
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     # Create figure
     plt.figure(figsize=(8, 6))
@@ -368,18 +444,12 @@ def panel_c_muscimol_barplot(
         hue='area',
         palette=[reward_palette[1]],
         width=0.3,
-        dodge=True
+        dodge=True,
     )
 
     # Swarm plot for individual mice
     sns.swarmplot(
-        data=day_data,
-        x='day_label',
-        y='outcome_w',
-        hue='area',
-        dodge=True,
-        color=stim_palette[2],
-        alpha=0.6
+        data=day_data, x='day_label', y='outcome_w', hue='area', dodge=True, color=stim_palette[2], alpha=0.6
     )
 
     # Formatting
@@ -396,10 +466,7 @@ def panel_c_muscimol_barplot(
         group_wS1 = df_day[df_day['area'] == 'wS1']['outcome_w']
         group_fpS1 = df_day[df_day['area'] == 'fpS1']['outcome_w']
 
-        stat, p_value = mannwhitneyu(
-            group_wS1, group_fpS1,
-            alternative='two-sided'
-        )
+        stat, p_value = mannwhitneyu(group_wS1, group_fpS1, alternative='two-sided')
         stats.append({'day': label, 'statistic': stat, 'p_value': p_value})
 
         # Add significance stars to the plot
@@ -408,18 +475,14 @@ def panel_c_muscimol_barplot(
         ypos = 95
 
         if p_value < 0.001:
-            plt.text(xpos, ypos, '***', ha='center', va='bottom',
-                    color='black', fontsize=14)
+            plt.text(xpos, ypos, '***', ha='center', va='bottom', color='black', fontsize=14)
         elif p_value < 0.01:
-            plt.text(xpos, ypos, '**', ha='center', va='bottom',
-                    color='black', fontsize=14)
+            plt.text(xpos, ypos, '**', ha='center', va='bottom', color='black', fontsize=14)
         elif p_value < 0.05:
-            plt.text(xpos, ypos, '*', ha='center', va='bottom',
-                    color='black', fontsize=14)
+            plt.text(xpos, ypos, '*', ha='center', va='bottom', color='black', fontsize=14)
 
         # Add p-value text
-        plt.text(xpos, 90, f'p={p_value:.3g}', ha='center', va='bottom',
-                color='black', fontsize=10)
+        plt.text(xpos, 90, f'p={p_value:.3g}', ha='center', va='bottom', color='black', fontsize=10)
 
     # Save figure and data
     os.makedirs(save_path, exist_ok=True)

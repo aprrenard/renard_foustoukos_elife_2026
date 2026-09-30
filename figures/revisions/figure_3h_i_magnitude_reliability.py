@@ -68,17 +68,19 @@ from fast_learning.stats import significance_stars as _significance_stars
 # Parameters
 # ============================================================================
 
-N_SPLITS = 100      # random splits averaged per (mouse, day) split-half estimate
-GLOBAL_SEED = 42    # fixed for reproducibility of this stochastic control
+N_SPLITS = 100  # random splits averaged per (mouse, day) split-half estimate
+GLOBAL_SEED = 42  # fixed for reproducibility of this stochastic control
 
 OUTPUT_DIR = os.path.join(
-    paths.manuscript_output_dir, 'revisions', 'figure_3h_i_magnitude_reliability', 'output')
+    paths.manuscript_output_dir, 'revisions', 'figure_3h_i_magnitude_reliability', 'output'
+)
 
 
 # ============================================================================
 # Data loading (mirrors figure_3h_j.py's load_and_process_data loop, but
 # additionally keeps the raw response vectors)
 # ============================================================================
+
 
 def _load_vectors_and_matrices(
     similarity_metric='cosine',
@@ -168,6 +170,7 @@ def _load_vectors_and_matrices(
 # New metric: mean response magnitude (L2 norm)
 # ============================================================================
 
+
 def _compute_response_magnitude_metrics(vectors, mice_ids, reward_group):
     """Mean L2 norm of the trial response vector, per day, per mouse.
 
@@ -194,6 +197,7 @@ def _compute_response_magnitude_metrics(vectors, mice_ids, reward_group):
 # New metric: within-day split-half reliability
 # ============================================================================
 
+
 def _split_half_cosine(day_data, n_splits, rng):
     """Split-half reliability for one day's trials: repeatedly split into two
     random halves, average the raw (un-normalized) trial vectors within each
@@ -208,7 +212,7 @@ def _split_half_cosine(day_data, n_splits, rng):
     sims = np.full(n_splits, np.nan)
     for s in range(n_splits):
         perm = rng.permutation(n_trials_day)
-        idx_a, idx_b = perm[:half], perm[half:2 * half]
+        idx_a, idx_b = perm[:half], perm[half : 2 * half]
         mean_a = day_data[:, idx_a].mean(axis=1)
         mean_b = day_data[:, idx_b].mean(axis=1)
         norm_a, norm_b = np.linalg.norm(mean_a), np.linalg.norm(mean_b)
@@ -217,8 +221,9 @@ def _split_half_cosine(day_data, n_splits, rng):
     return np.nanmean(sims)
 
 
-def _compute_split_half_reliability_metrics(vectors, mice_ids, reward_group,
-                                             n_splits=N_SPLITS, seed=GLOBAL_SEED):
+def _compute_split_half_reliability_metrics(
+    vectors, mice_ids, reward_group, n_splits=N_SPLITS, seed=GLOBAL_SEED
+):
     """Within-day split-half reliability, per day, per mouse.
 
     Compares two noise-reduced (20-trial-averaged) estimates of the same
@@ -234,8 +239,7 @@ def _compute_split_half_reliability_metrics(vectors, mice_ids, reward_group,
         row = {}
         for i, day in enumerate(DAYS):
             day_idx = np.arange(i * N_MAP_TRIALS, (i + 1) * N_MAP_TRIALS)
-            row[f'splithalf_day{day:+d}'] = _split_half_cosine(
-                data[:, day_idx], n_splits=n_splits, rng=rng)
+            row[f'splithalf_day{day:+d}'] = _split_half_cosine(data[:, day_idx], n_splits=n_splits, rng=rng)
         results.append(row)
     df = pd.DataFrame(results)
     df['reward_group'] = reward_group
@@ -248,6 +252,7 @@ def _compute_split_half_reliability_metrics(vectors, mice_ids, reward_group,
 # and reused to regenerate the existing within-day cosine metric for
 # direct side-by-side comparison)
 # ============================================================================
+
 
 def _panel_metric_across_days(
     metrics_combined,
@@ -276,7 +281,8 @@ def _panel_metric_across_days(
     long_df = metrics_combined.melt(
         id_vars=['mouse_id', 'reward_group'],
         value_vars=day_cols,
-        var_name='day_label', value_name='value',
+        var_name='day_label',
+        value_name='value',
     )
     long_df['day'] = long_df['day_label'].str.extract(r'day([+-]?\d+)').astype(int)
     long_df['day_label'] = pd.Categorical(long_df['day_label'], categories=day_cols, ordered=True)
@@ -285,11 +291,15 @@ def _panel_metric_across_days(
     anova_table = anova_lm(model, typ=2)
     stats_rows = []
     for term, row in anova_table.iterrows():
-        stats_rows.append({
-            'test': '2-way ANOVA', 'term': term,
-            'F': row.get('F', np.nan), 'p_value': row['PR(>F)'],
-            'significance': _significance_stars(row['PR(>F)']) if not np.isnan(row['PR(>F)']) else '',
-        })
+        stats_rows.append(
+            {
+                'test': '2-way ANOVA',
+                'term': term,
+                'F': row.get('F', np.nan),
+                'p_value': row['PR(>F)'],
+                'significance': _significance_stars(row['PR(>F)']) if not np.isnan(row['PR(>F)']) else '',
+            }
+        )
 
     stats_dict = {}
     for day in DAYS:
@@ -298,28 +308,46 @@ def _panel_metric_across_days(
         r_minus = metrics_combined.loc[metrics_combined['reward_group'] == 'R-', col].dropna()
         stat, p = mannwhitneyu(r_plus, r_minus, alternative='two-sided')
         stats_dict[day] = p
-        stats_rows.append({
-            'test': 'Mann-Whitney U (post-hoc)', 'term': f'R+ vs R- day {day:+d}',
-            'F': np.nan, 'p_value': p, 'significance': _significance_stars(p),
-        })
+        stats_rows.append(
+            {
+                'test': 'Mann-Whitney U (post-hoc)',
+                'term': f'R+ vs R- day {day:+d}',
+                'F': np.nan,
+                'p_value': p,
+                'significance': _significance_stars(p),
+            }
+        )
 
     fig, ax = plt.subplots(1, 1, figsize=(6, 5))
     sns.pointplot(
-        data=long_df, x='day_label', y='value', hue='reward_group',
-        palette=reward_palette[::-1], ax=ax, errorbar='ci',
-        markers='o', linestyles='-', markersize=8, linewidth=2,
+        data=long_df,
+        x='day_label',
+        y='value',
+        hue='reward_group',
+        palette=reward_palette[::-1],
+        ax=ax,
+        errorbar='ci',
+        markers='o',
+        linestyles='-',
+        markersize=8,
+        linewidth=2,
     )
     for mouse_id in metrics_combined['mouse_id'].unique():
         mouse_data = long_df[long_df['mouse_id'] == mouse_id].sort_values('day')
         rg = mouse_data['reward_group'].iloc[0]
         color = reward_palette[1] if rg == 'R+' else reward_palette[0]
-        ax.plot(range(len(DAYS)), mouse_data['value'].values, color=color,
-                alpha=0.3, linewidth=0.8, zorder=1)
+        ax.plot(range(len(DAYS)), mouse_data['value'].values, color=color, alpha=0.3, linewidth=0.8, zorder=1)
 
     ylim_top = float(long_df['value'].max()) * 1.2
     for day in DAYS:
-        ax.text(DAYS.index(day), ylim_top * 0.95, _significance_stars(stats_dict[day]),
-                ha='center', va='bottom', fontsize=9)
+        ax.text(
+            DAYS.index(day),
+            ylim_top * 0.95,
+            _significance_stars(stats_dict[day]),
+            ha='center',
+            va='bottom',
+            fontsize=9,
+        )
 
     ax.set_ylim(0, ylim_top)
     ax.set_xlabel('Day')
@@ -351,21 +379,24 @@ if __name__ == '__main__':
     PROJECTION_TYPE = None
 
     print("Loading data and computing similarity matrices + raw response vectors...")
-    (corr_matrices_rew, corr_matrices_nonrew, mice_rew, mice_nonrew,
-     vectors_rew, vectors_nonrew) = _load_vectors_and_matrices(
-        similarity_metric=CORRELATION_METHOD,
-        select_lmi=SELECT_LMI,
-        zscore=ZSCORE,
-        projection_type=PROJECTION_TYPE,
+    (corr_matrices_rew, corr_matrices_nonrew, mice_rew, mice_nonrew, vectors_rew, vectors_nonrew) = (
+        _load_vectors_and_matrices(
+            similarity_metric=CORRELATION_METHOD,
+            select_lmi=SELECT_LMI,
+            zscore=ZSCORE,
+            projection_type=PROJECTION_TYPE,
+        )
     )
 
-    print("\nRegenerating existing within-day cosine similarity (reference, unchanged) "
-          "for direct comparison...")
+    print(
+        "\nRegenerating existing within-day cosine similarity (reference, unchanged) for direct comparison..."
+    )
     within_day_rew = _compute_within_day_metrics(corr_matrices_rew, mice_rew, 'R+')
     within_day_nonrew = _compute_within_day_metrics(corr_matrices_nonrew, mice_nonrew, 'R-')
     within_day_combined = pd.concat([within_day_rew, within_day_nonrew], ignore_index=True)
     _panel_metric_across_days(
-        within_day_combined, value_prefix='within_',
+        within_day_combined,
+        value_prefix='within_',
         ylabel='Within-Day Cosine Similarity',
         title='Within-Day Similarity (reference, same as existing panel i)',
         filename='figure_3i_within_day_reference',
@@ -376,8 +407,10 @@ if __name__ == '__main__':
     mag_nonrew = _compute_response_magnitude_metrics(vectors_nonrew, mice_nonrew, 'R-')
     mag_combined = pd.concat([mag_rew, mag_nonrew], ignore_index=True)
     _panel_metric_across_days(
-        mag_combined, value_prefix='magnitude_',
-        ylabel='Mean Response L2 Norm', title='Response Magnitude Across Days',
+        mag_combined,
+        value_prefix='magnitude_',
+        ylabel='Mean Response L2 Norm',
+        title='Response Magnitude Across Days',
         filename='figure_3h_response_magnitude',
     )
 
@@ -386,8 +419,10 @@ if __name__ == '__main__':
     sh_nonrew = _compute_split_half_reliability_metrics(vectors_nonrew, mice_nonrew, 'R-')
     sh_combined = pd.concat([sh_rew, sh_nonrew], ignore_index=True)
     _panel_metric_across_days(
-        sh_combined, value_prefix='splithalf_',
-        ylabel='Split-Half Reliability (cosine)', title='Within-Day Split-Half Reliability',
+        sh_combined,
+        value_prefix='splithalf_',
+        ylabel='Split-Half Reliability (cosine)',
+        title='Within-Day Split-Half Reliability',
         filename='figure_3i_split_half_reliability',
     )
 

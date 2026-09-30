@@ -39,9 +39,9 @@ def _filter(db, exclude_cols, filters):
     return db
 
 
-def select_sessions_from_db(db_path, nwb_path, experimenters=None,
-                            exclude_cols=['exclude', 'two_p_exclude'],
-                            **filters):
+def select_sessions_from_db(
+    db_path, nwb_path, experimenters=None, exclude_cols=['exclude', 'two_p_exclude'], **filters
+):
     """Select sessions matching column filters.
 
     Args:
@@ -65,9 +65,9 @@ def select_sessions_from_db(db_path, nwb_path, experimenters=None,
     return session_list, nwb_paths, mice_list, db
 
 
-def select_mice_from_db(db_path, nwb_path, experimenters=None,
-                        exclude_cols=['exclude', 'two_p_exclude'],
-                        **filters):
+def select_mice_from_db(
+    db_path, nwb_path, experimenters=None, exclude_cols=['exclude', 'two_p_exclude'], **filters
+):
     """Select mice with at least one session matching the filters.
 
     Same arguments as select_sessions_from_db; returns a list of mouse ids.

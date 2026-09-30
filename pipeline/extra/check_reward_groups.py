@@ -3,6 +3,7 @@ session metadata) matches the reward group in the session database.
 
 Prints the sessions where the two disagree (an empty table means none).
 """
+
 import os
 
 import pandas as pd
@@ -16,7 +17,8 @@ from fast_learning import paths, database
 # #############################################################################
 
 sessions, nwb_files, mice, db = database.select_sessions_from_db(
-    paths.db_path, paths.nwb_dir, exclude_cols=['exclude'])
+    paths.db_path, paths.nwb_dir, exclude_cols=['exclude']
+)
 
 # Read groups from db.
 db_reward_groups = db[['mouse_id', 'session_id', 'reward_group']].drop_duplicates()

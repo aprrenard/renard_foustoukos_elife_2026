@@ -54,6 +54,7 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'supp_4a_b_l
 # Mixed-effects model helper
 # ============================================================================
 
+
 def _fit_lmm(formula, data, group_col='mouse_id'):
     """Fit a linear mixed-effects model with mouse_id as a random intercept."""
     model = MixedLM.from_formula(formula, groups=group_col, data=data)
@@ -63,6 +64,7 @@ def _fit_lmm(formula, data, group_col='mouse_id'):
 # ============================================================================
 # Panel 4a: participation rate vs transient frequency scatter (LMI color)
 # ============================================================================
+
 
 def panel_supp4a_scatter_lmm(
     data_csv_path,
@@ -80,13 +82,10 @@ def panel_supp4a_scatter_lmm(
         <filename>_stats.csv -- LMM slope, CI, p per reward group
     """
 
-    sns.set_theme(context='paper', style='ticks', palette='deep',
-                  font='sans-serif', font_scale=1)
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     merged = pd.read_csv(data_csv_path)
-    merged = merged.dropna(
-        subset=['lmi', 'transient_freq', 'participation_rate', 'reward_group']
-    )
+    merged = merged.dropna(subset=['lmi', 'transient_freq', 'participation_rate', 'reward_group'])
 
     lmi_abs_max = np.abs(merged['lmi']).max()
     norm = mcolors.TwoSlopeNorm(vmin=-lmi_abs_max, vcenter=0, vmax=lmi_abs_max)
@@ -100,15 +99,19 @@ def panel_supp4a_scatter_lmm(
         n_mice = gdata['mouse_id'].nunique()
 
         if len(gdata) < 3 or n_mice < 2:
-            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center',
-                    transform=ax.transAxes)
+            ax.text(0.5, 0.5, 'Insufficient data', ha='center', va='center', transform=ax.transAxes)
             ax.set_title(reward_group, fontweight='bold')
             continue
 
         sc = ax.scatter(
-            gdata['transient_freq'], gdata['participation_rate'],
-            c=gdata['lmi'], cmap=lmi_cmap, norm=norm,
-            alpha=0.6, s=15, linewidths=0,
+            gdata['transient_freq'],
+            gdata['participation_rate'],
+            c=gdata['lmi'],
+            cmap=lmi_cmap,
+            norm=norm,
+            alpha=0.6,
+            s=15,
+            linewidths=0,
         )
 
         result = _fit_lmm('participation_rate ~ transient_freq', gdata)
@@ -117,45 +120,50 @@ def panel_supp4a_scatter_lmm(
         p_value = result.pvalues['transient_freq']
         ci_low, ci_high = result.conf_int().loc['transient_freq']
 
-        x_range = np.linspace(
-            gdata['transient_freq'].min(), gdata['transient_freq'].max(), 100
-        )
+        x_range = np.linspace(gdata['transient_freq'].min(), gdata['transient_freq'].max(), 100)
         ax.plot(x_range, slope * x_range + intercept, 'k-', linewidth=1.5)
 
         stars = _significance_stars(p_value)
         ax.text(
-            0.05, 0.95,
+            0.05,
+            0.95,
             f'LMM slope = {slope:.3f} [{ci_low:.3f}, {ci_high:.3f}]\n'
             f'p = {p_value:.3g} {stars}\nn = {len(gdata)} cells, {n_mice} mice',
-            transform=ax.transAxes, fontsize=10, va='top',
+            transform=ax.transAxes,
+            fontsize=10,
+            va='top',
             bbox=dict(boxstyle='round', facecolor='white', alpha=0.9, edgecolor='gray'),
         )
 
         plt.colorbar(sc, ax=ax, label='LMI')
         ax.set_xlabel('Transient frequency (events/min)', fontweight='bold', fontsize=12)
         ax.set_ylabel('Participation rate' if i == 0 else '', fontweight='bold', fontsize=12)
-        ax.set_title(f'{reward_group}  (n={n_mice} mice, {len(gdata)} cells)',
-                     fontweight='bold', fontsize=13)
+        ax.set_title(f'{reward_group}  (n={n_mice} mice, {len(gdata)} cells)', fontweight='bold', fontsize=13)
         ax.grid(True, alpha=0.3)
         sns.despine(ax=ax)
 
-        stats_rows.append({
-            'reward_group': reward_group,
-            'test': 'LMM participation_rate ~ transient_freq + (1|mouse_id)',
-            'lmm_slope': slope,
-            'lmm_p': p_value,
-            'lmm_ci_low': ci_low,
-            'lmm_ci_high': ci_high,
-            'n_cells': len(gdata),
-            'n_mice': n_mice,
-            'converged': result.converged,
-        })
-        print(f"  {reward_group}: LMM slope={slope:.4g}, p={p_value:.4g}, "
-              f"n={len(gdata)} cells, {n_mice} mice, converged={result.converged}")
+        stats_rows.append(
+            {
+                'reward_group': reward_group,
+                'test': 'LMM participation_rate ~ transient_freq + (1|mouse_id)',
+                'lmm_slope': slope,
+                'lmm_p': p_value,
+                'lmm_ci_low': ci_low,
+                'lmm_ci_high': ci_high,
+                'n_cells': len(gdata),
+                'n_mice': n_mice,
+                'converged': result.converged,
+            }
+        )
+        print(
+            f"  {reward_group}: LMM slope={slope:.4g}, p={p_value:.4g}, "
+            f"n={len(gdata)} cells, {n_mice} mice, converged={result.converged}"
+        )
 
     fig.suptitle(
         'Participation Rate vs Transient Frequency (Day 0, colored by LMI) - LMM',
-        fontsize=13, fontweight='bold',
+        fontsize=13,
+        fontweight='bold',
     )
     plt.tight_layout()
 
@@ -165,15 +173,14 @@ def panel_supp4a_scatter_lmm(
     print(f"Panel saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 
     merged.to_csv(os.path.join(output_dir, f'{filename}_data.csv'), index=False)
-    pd.DataFrame(stats_rows).to_csv(
-        os.path.join(output_dir, f'{filename}_stats.csv'), index=False
-    )
+    pd.DataFrame(stats_rows).to_csv(os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
     print(f"Data/stats saved: {output_dir}")
 
 
 # ============================================================================
 # Panel 4b: LMI vs participation rate, raw and controlling for transient freq
 # ============================================================================
+
 
 def panel_supp4b_partial_corr_lmm(
     data_csv_path,
@@ -196,13 +203,10 @@ def panel_supp4b_partial_corr_lmm(
         <filename>_data.csv  -- data with residuals per reward group
         <filename>_stats.csv -- raw and partial LMM slope/CI/p per reward group
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep',
-                  font='sans-serif', font_scale=1)
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     merged = pd.read_csv(data_csv_path)
-    merged = merged.dropna(
-        subset=['lmi', 'participation_rate', 'transient_freq', 'reward_group']
-    )
+    merged = merged.dropna(subset=['lmi', 'participation_rate', 'transient_freq', 'reward_group'])
 
     group_colors = {'R+': reward_palette[1], 'R-': reward_palette[0]}
 
@@ -212,12 +216,15 @@ def panel_supp4b_partial_corr_lmm(
 
     def annotate(ax, label, slope, p_value, ci_low, ci_high):
         stars = _significance_stars(p_value)
-        ax.text(0.05, 0.95,
-                f'{label}\nslope = {slope:.3f} [{ci_low:.3f}, {ci_high:.3f}]\n'
-                f'p = {p_value:.3g} {stars}',
-                transform=ax.transAxes, fontsize=9, va='top',
-                bbox=dict(boxstyle='round', facecolor='white',
-                          alpha=0.9, edgecolor='gray'))
+        ax.text(
+            0.05,
+            0.95,
+            f'{label}\nslope = {slope:.3f} [{ci_low:.3f}, {ci_high:.3f}]\np = {p_value:.3g} {stars}',
+            transform=ax.transAxes,
+            fontsize=9,
+            va='top',
+            bbox=dict(boxstyle='round', facecolor='white', alpha=0.9, edgecolor='gray'),
+        )
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 10), sharey=True)
     stats_rows = []
@@ -230,9 +237,14 @@ def panel_supp4b_partial_corr_lmm(
 
         if len(gdata) < 5 or n_mice < 2:
             for col in range(2):
-                axes[row, col].text(0.5, 0.5, 'Insufficient data',
-                                     ha='center', va='center',
-                                     transform=axes[row, col].transAxes)
+                axes[row, col].text(
+                    0.5,
+                    0.5,
+                    'Insufficient data',
+                    ha='center',
+                    va='center',
+                    transform=axes[row, col].transAxes,
+                )
             continue
 
         result_raw = _fit_lmm('participation_rate ~ lmi', gdata)
@@ -245,21 +257,30 @@ def panel_supp4b_partial_corr_lmm(
         p_partial = result_partial.pvalues['lmi']
         ci_partial = result_partial.conf_int().loc['lmi']
 
-        print(f"  {reward_group}  raw LMM slope={slope_raw:.3f} p={p_raw:.4f} | "
-              f"partial LMM slope={slope_partial:.3f} p={p_partial:.4f}  "
-              f"(n={len(gdata)} cells, {n_mice} mice)")
+        print(
+            f"  {reward_group}  raw LMM slope={slope_raw:.3f} p={p_raw:.4f} | "
+            f"partial LMM slope={slope_partial:.3f} p={p_partial:.4f}  "
+            f"(n={len(gdata)} cells, {n_mice} mice)"
+        )
 
-        stats_rows.append({
-            'reward_group': reward_group,
-            'test': 'LMM (mouse_id random intercept)',
-            'raw_slope': slope_raw, 'raw_p': p_raw,
-            'raw_ci_low': ci_raw[0], 'raw_ci_high': ci_raw[1],
-            'partial_slope': slope_partial, 'partial_p': p_partial,
-            'partial_ci_low': ci_partial[0], 'partial_ci_high': ci_partial[1],
-            'n_cells': len(gdata), 'n_mice': n_mice,
-            'raw_converged': result_raw.converged,
-            'partial_converged': result_partial.converged,
-        })
+        stats_rows.append(
+            {
+                'reward_group': reward_group,
+                'test': 'LMM (mouse_id random intercept)',
+                'raw_slope': slope_raw,
+                'raw_p': p_raw,
+                'raw_ci_low': ci_raw[0],
+                'raw_ci_high': ci_raw[1],
+                'partial_slope': slope_partial,
+                'partial_p': p_partial,
+                'partial_ci_low': ci_partial[0],
+                'partial_ci_high': ci_partial[1],
+                'n_cells': len(gdata),
+                'n_mice': n_mice,
+                'raw_converged': result_raw.converged,
+                'partial_converged': result_partial.converged,
+            }
+        )
 
         # Residuals are kept only for the added-variable-plot visualization;
         # the reported statistics above come from the LMM fits, not from
@@ -274,21 +295,27 @@ def panel_supp4b_partial_corr_lmm(
         gdata['part_resid'] = part_resid
         data_rows.append(gdata)
 
-        for col, (x, y, label, slope, p_value, ci, xlabel, ylabel) in enumerate([
-            (lmi, part, 'Raw', slope_raw, p_raw, ci_raw,
-             'LMI', 'Participation rate'),
-            (lmi_resid, part_resid, 'Partial (ctrl transient freq)',
-             slope_partial, p_partial, ci_partial,
-             'LMI  (residual | transient freq)',
-             'Participation rate  (residual | transient freq)'),
-        ]):
+        for col, (x, y, label, slope, p_value, ci, xlabel, ylabel) in enumerate(
+            [
+                (lmi, part, 'Raw', slope_raw, p_raw, ci_raw, 'LMI', 'Participation rate'),
+                (
+                    lmi_resid,
+                    part_resid,
+                    'Partial (ctrl transient freq)',
+                    slope_partial,
+                    p_partial,
+                    ci_partial,
+                    'LMI  (residual | transient freq)',
+                    'Participation rate  (residual | transient freq)',
+                ),
+            ]
+        ):
             ax = axes[row, col]
             ax.scatter(x, y, color=color, alpha=0.3, s=10, linewidths=0)
 
             plot_slope, plot_intercept, _, _, _ = linregress(x, y)
             x_range = np.linspace(x.min(), x.max(), 100)
-            ax.plot(x_range, plot_slope * x_range + plot_intercept,
-                    color='black', linewidth=1.5)
+            ax.plot(x_range, plot_slope * x_range + plot_intercept, color='black', linewidth=1.5)
 
             ax.axvline(0, color='gray', linestyle='--', linewidth=0.7, alpha=0.5)
             ax.axhline(0, color='gray', linestyle='--', linewidth=0.7, alpha=0.5)
@@ -300,14 +327,16 @@ def panel_supp4b_partial_corr_lmm(
             title = 'Raw' if col == 0 else 'Partial  (ctrl transient freq)'
             ax.set_title(
                 f'{reward_group} - {title}  (n={len(lmi)} cells, {n_mice} mice)',
-                fontweight='bold', fontsize=12,
+                fontweight='bold',
+                fontsize=12,
             )
             ax.grid(True, alpha=0.3)
             sns.despine(ax=ax)
 
     fig.suptitle(
         'LMI vs Participation Rate: Raw and Partial (LMM, mouse random intercept)',
-        fontsize=13, fontweight='bold',
+        fontsize=13,
+        fontweight='bold',
     )
     plt.tight_layout()
 
@@ -319,9 +348,7 @@ def panel_supp4b_partial_corr_lmm(
     pd.concat(data_rows, ignore_index=True).to_csv(
         os.path.join(output_dir, f'{filename}_data.csv'), index=False
     )
-    pd.DataFrame(stats_rows).to_csv(
-        os.path.join(output_dir, f'{filename}_stats.csv'), index=False
-    )
+    pd.DataFrame(stats_rows).to_csv(os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
     print(f"Data/stats saved: {output_dir}")
 
 
@@ -332,7 +359,7 @@ def panel_supp4b_partial_corr_lmm(
 if __name__ == '__main__':
     print(f"Input:            {LMI_DATA_CSV}")
     print(f"Output directory: {OUTPUT_DIR}")
-    participation.load_day0()   # fails early if step 08 has not been run
+    participation.load_day0()  # fails early if step 08 has not been run
 
     print("\nPlotting panel supp_4a (LMM)...")
     panel_supp4a_scatter_lmm(LMI_DATA_CSV, filename='supp_4a_lmm')

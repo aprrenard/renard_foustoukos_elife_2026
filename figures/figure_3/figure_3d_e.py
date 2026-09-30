@@ -28,6 +28,7 @@ MIN_CELLS = 3
 # Data loading
 # ============================================================================
 
+
 def load_and_process_response_data(
     mice=None,
     days=[-2, -1, 0, 1, 2],
@@ -35,7 +36,7 @@ def load_and_process_response_data(
     win_sec_psth=(-0.5, 1.5),
     baseline_win=(0, 1),
     sampling_rate=30,
-    file_name='tensor_xarray_mapping_data.nc'
+    file_name='tensor_xarray_mapping_data.nc',
 ):
     """
     Load average response and PSTH data for pre/post learning comparison.
@@ -45,15 +46,10 @@ def load_and_process_response_data(
     """
     if mice is None:
         _, _, mice, _ = database.select_sessions_from_db(
-            paths.db_path, paths.nwb_dir,
-            two_p_imaging='yes',
-            experimenters=['AR', 'GF', 'MI']
+            paths.db_path, paths.nwb_dir, two_p_imaging='yes', experimenters=['AR', 'GF', 'MI']
         )
 
-    baseline_win_samples = (
-        int(baseline_win[0] * sampling_rate),
-        int(baseline_win[1] * sampling_rate)
-    )
+    baseline_win_samples = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * sampling_rate))
 
     avg_resp_list = []
     psth_list = []
@@ -91,12 +87,8 @@ def load_and_process_response_data(
     psth['psth'] *= 100
     psth['time'] = psth['time'].round(4)
 
-    avg_resp['learning_period'] = avg_resp['day'].map(
-        lambda x: 'pre' if x in [-2, -1] else 'post'
-    )
-    psth['learning_period'] = psth['day'].map(
-        lambda x: 'pre' if x in [-2, -1] else 'post'
-    )
+    avg_resp['learning_period'] = avg_resp['day'].map(lambda x: 'pre' if x in [-2, -1] else 'post')
+    psth['learning_period'] = psth['day'].map(lambda x: 'pre' if x in [-2, -1] else 'post')
 
     return avg_resp, psth
 
@@ -104,6 +96,7 @@ def load_and_process_response_data(
 # ============================================================================
 # Panel generation
 # ============================================================================
+
 
 def generate_panel(
     reward_group,
@@ -123,41 +116,31 @@ def generate_panel(
     color = '#1b9e77' if reward_group == 'R+' else '#c959af'
 
     # Select days and reward group
-    data_avg = avg_resp[avg_resp['day'].isin(DAYS_SELECTED) &
-                        (avg_resp['reward_group'] == reward_group)]
-    data_psth = psth[psth['day'].isin(DAYS_SELECTED) &
-                     (psth['reward_group'] == reward_group)]
+    data_avg = avg_resp[avg_resp['day'].isin(DAYS_SELECTED) & (avg_resp['reward_group'] == reward_group)]
+    data_psth = psth[psth['day'].isin(DAYS_SELECTED) & (psth['reward_group'] == reward_group)]
 
     # Filter by minimum cell count per mouse
-    data_avg  = imaging.filter_data_by_cell_count(data_avg, MIN_CELLS)
+    data_avg = imaging.filter_data_by_cell_count(data_avg, MIN_CELLS)
     data_psth = imaging.filter_data_by_cell_count(data_psth, MIN_CELLS)
 
     # Average across cells per mouse
-    mouse_avg = (
-        data_avg
-        .groupby(['mouse_id', 'learning_period'])['average_response']
-        .mean()
-        .reset_index()
-    )
-    mouse_psth = (
-        data_psth
-        .groupby(['mouse_id', 'learning_period', 'time'])['psth']
-        .mean()
-        .reset_index()
-    )
+    mouse_avg = data_avg.groupby(['mouse_id', 'learning_period'])['average_response'].mean().reset_index()
+    mouse_psth = data_psth.groupby(['mouse_id', 'learning_period', 'time'])['psth'].mean().reset_index()
 
-    sns.set_theme(context='paper', style='ticks', palette='deep',
-                  font='sans-serif', font_scale=1)
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     fig, axes = plt.subplots(1, 2, figsize=(6, 3))
 
     # PSTH
     sns.lineplot(
         data=mouse_psth,
-        x='time', y='psth',
-        hue='learning_period', hue_order=['pre', 'post'],
+        x='time',
+        y='psth',
+        hue='learning_period',
+        hue_order=['pre', 'post'],
         palette=['#a3a3a3', color],
-        ax=axes[0], legend=False,
+        ax=axes[0],
+        legend=False,
     )
     axes[0].axvline(0, color='orange', linestyle='-', linewidth=0.8)
     axes[0].set_xlabel('Time (s)')
@@ -167,16 +150,20 @@ def generate_panel(
     # Response amplitude
     sns.barplot(
         data=mouse_avg,
-        x='learning_period', y='average_response',
+        x='learning_period',
+        y='average_response',
         order=['pre', 'post'],
         color=color,
         ax=axes[1],
     )
     sns.swarmplot(
         data=mouse_avg,
-        x='learning_period', y='average_response',
+        x='learning_period',
+        y='average_response',
         order=['pre', 'post'],
-        color='black', alpha=0.7, size=4,
+        color='black',
+        alpha=0.7,
+        size=4,
         ax=axes[1],
     )
     axes[1].set_xlabel('Learning period')
@@ -198,21 +185,25 @@ def generate_panel(
     mouse_avg.to_csv(data_path, index=False)
 
     # Statistics: Wilcoxon signed-rank pre vs post
-    pre  = mouse_avg[mouse_avg['learning_period'] == 'pre']['average_response'].values
+    pre = mouse_avg[mouse_avg['learning_period'] == 'pre']['average_response'].values
     post = mouse_avg[mouse_avg['learning_period'] == 'post']['average_response'].values
     try:
         stat, p_value = wilcoxon(pre, post)
     except ValueError:
         stat, p_value = np.nan, np.nan
 
-    stats_df = pd.DataFrame([{
-        'reward_group': reward_group,
-        'test': 'Wilcoxon signed-rank',
-        'comparison': 'pre vs post',
-        'n_mice': len(pre),
-        'stat': stat,
-        'p_value': p_value,
-    }])
+    stats_df = pd.DataFrame(
+        [
+            {
+                'reward_group': reward_group,
+                'test': 'Wilcoxon signed-rank',
+                'comparison': 'pre vs post',
+                'n_mice': len(pre),
+                'stat': stat,
+                'p_value': p_value,
+            }
+        ]
+    )
     stats_path = os.path.join(save_path, f'{panel_name}_stats.csv')
     stats_df.to_csv(stats_path, index=False)
     print(f"Stats saved: {stats_path}")

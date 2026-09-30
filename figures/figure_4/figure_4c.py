@@ -29,7 +29,7 @@ from fast_learning.plotting import reward_palette, save_figure
 # Parameters
 # ============================================================================
 
-win = (0, 0.300)          # response window from stimulus onset (seconds)
+win = (0, 0.300)  # response window from stimulus onset (seconds)
 window_size = 10
 step_size = 1
 cut_n_trials = 100
@@ -48,13 +48,13 @@ if __name__ == '__main__':
         weights = pickle.load(f)
     print(f"Loaded decoder weights for {len(weights)} mice.")
 
-
     # ============================================================================
     # Load behaviour and Day-0 learning data
     # ============================================================================
 
-    bh_path = os.path.join(paths.processed_dir, 'behavior',
-                            'behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
+    bh_path = os.path.join(
+        paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
+    )
     table = pd.read_csv(bh_path)
     bh_df = table.loc[(table['day'] == 0) & (table['whisker_stim'] == 1)]
 
@@ -67,7 +67,6 @@ if __name__ == '__main__':
         xarr = xarr.sel(time=slice(win[0], win[1])).mean(dim='time')
         xarr = xarr.fillna(0)
         xarrays_learning[mouse] = xarr
-
 
     # ============================================================================
     # Apply decoder (sliding window)
@@ -84,17 +83,18 @@ if __name__ == '__main__':
             if X_win.shape[0] == 0:
                 continue
             dec_vals = clf.decision_function(scaler.transform(X_win))
-            results.append({
-                'mouse_id': mouse,
-                'reward_group': w['reward_group'],
-                'trial_center': start_idx + window_size // 2,
-                'mean_decision_value': np.mean(dec_vals) * sign_flip,
-            })
+            results.append(
+                {
+                    'mouse_id': mouse,
+                    'reward_group': w['reward_group'],
+                    'trial_center': start_idx + window_size // 2,
+                    'mean_decision_value': np.mean(dec_vals) * sign_flip,
+                }
+            )
 
     results_df = pd.concat([pd.DataFrame(results)], ignore_index=True)
     mice_rew = [m for m, w in weights.items() if w['reward_group'] == 'R+']
     mice_nonrew = [m for m, w in weights.items() if w['reward_group'] == 'R-']
-
 
     # ============================================================================
     # Figure
@@ -109,11 +109,10 @@ if __name__ == '__main__':
 
     # Row 1: behaviour
     for ax, data, color, title in [
-        (axes[0, 0], data_rew,    reward_palette[1], 'R+ mice'),
+        (axes[0, 0], data_rew, reward_palette[1], 'R+ mice'),
         (axes[0, 1], data_nonrew, reward_palette[0], 'R- mice'),
     ]:
-        sns.lineplot(data=data, x='trial_w', y='learning_curve_w',
-                     color=color, errorbar='ci', ax=ax)
+        sns.lineplot(data=data, x='trial_w', y='learning_curve_w', color=color, errorbar='ci', ax=ax)
         ax.set_xlabel('Trial within Day 0')
         ax.set_ylabel('Learning curve (w)')
         ax.set_title(title)
@@ -122,11 +121,18 @@ if __name__ == '__main__':
 
     # Row 2: decision values
     for ax, data, color, title in [
-        (axes[1, 0], results_rew,    reward_palette[1], 'R+ decoder value'),
+        (axes[1, 0], results_rew, reward_palette[1], 'R+ decoder value'),
         (axes[1, 1], results_nonrew, reward_palette[0], 'R- decoder value'),
     ]:
-        sns.lineplot(data=data, x='trial_center', y='mean_decision_value',
-                     estimator=np.mean, errorbar='ci', color=color, ax=ax)
+        sns.lineplot(
+            data=data,
+            x='trial_center',
+            y='mean_decision_value',
+            estimator=np.mean,
+            errorbar='ci',
+            color=color,
+            ax=ax,
+        )
         ax.axhline(y=0, color='black', linestyle='--', alpha=0.5)
         ax.set_xlabel('Trial within Day 0')
         ax.set_ylabel('Mean decision value')
@@ -135,7 +141,6 @@ if __name__ == '__main__':
 
     plt.tight_layout()
     sns.despine()
-
 
     # ============================================================================
     # Save

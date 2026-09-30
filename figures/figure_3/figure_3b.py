@@ -30,13 +30,11 @@ if __name__ == '__main__':
 
     OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
 
-
     # #############################################################################
     # Load LMI data.
     # #############################################################################
 
     lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
-
 
     # #############################################################################
     # Single session raster (all cells ordered by LMI).
@@ -52,7 +50,9 @@ if __name__ == '__main__':
 
     # Filter to significant LMI cells if requested
     if use_significant_only:
-        mouse_lmi = mouse_lmi.loc[(mouse_lmi['lmi_p'] >= 0.975) | (mouse_lmi['lmi_p'] <= 0.025)]  # Keep only lmi_p == 1 or lmi_p == -1
+        mouse_lmi = mouse_lmi.loc[
+            (mouse_lmi['lmi_p'] >= 0.975) | (mouse_lmi['lmi_p'] <= 0.025)
+        ]  # Keep only lmi_p == 1 or lmi_p == -1
 
     mouse_lmi = mouse_lmi.sort_values('lmi', ascending=False)  # Positive on top
     print(f"Found {len(mouse_lmi)} cells with LMI data for {session_mouse_id}")
@@ -88,12 +88,7 @@ if __name__ == '__main__':
     for day in days:
         day_data = session_df[session_df['day'] == day]
 
-        pivot = day_data.pivot_table(
-            index='cell_id',
-            columns='time',
-            values='psth',
-            aggfunc='mean'
-        )
+        pivot = day_data.pivot_table(index='cell_id', columns='time', values='psth', aggfunc='mean')
 
         # Reorder rows by LMI (positive on top)
         pivot = pivot.reindex(session_cell_order)
@@ -123,7 +118,7 @@ if __name__ == '__main__':
             vmin=session_vmin,
             vmax=session_vmax,
             extent=[session_time_points[0], session_time_points[-1], len(session_cell_order), 0],
-            interpolation='nearest'
+            interpolation='nearest',
         )
 
         # Add stimulus onset line
@@ -149,7 +144,6 @@ if __name__ == '__main__':
     cbar.ax.tick_params(labelsize=8)
 
     plt.tight_layout()
-
 
     # #############################################################################
     # Save.

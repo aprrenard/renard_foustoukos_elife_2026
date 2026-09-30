@@ -9,8 +9,6 @@ import xarray as xr
 from joblib import Parallel, delayed
 
 
-
-
 def load_session_2p_imaging(mouse_id, session_id, dir_path):
     array_path = os.path.join(dir_path, mouse_id, session_id, "tensor_4d.npy")
     tensor_metadata_path = os.path.join(dir_path, mouse_id, session_id, "tensor_4d_metadata.pickle")
@@ -64,8 +62,8 @@ def subtract_baseline(arr, time_axis, baseline_win):
     # with warnings.catch_warnings():
     #     warnings.simplefilter("ignore", category=RuntimeWarning)
     #     baseline = np.nanmean(arr[*slices], axis=time_axis, keepdims=True)
-    
-    baseline = np.nanmean(arr[:,:,baseline_win[0]:baseline_win[1]], axis=2, keepdims=True)
+
+    baseline = np.nanmean(arr[:, :, baseline_win[0] : baseline_win[1]], axis=2, keepdims=True)
     arr = arr - baseline
     return arr
 
@@ -120,17 +118,17 @@ def extract_trials(arr, metadata, trial_type, n_trials=None, repeat_last_trial=F
         print(f"Trial type '{trial_type}' is not present in the metadata.")
         return None
     data = arr[:, metadata['trial_types'].index(trial_type)]
-    
+
     if n_trials is not None:
         # Keep only the first n_trials.
         data = data[:, :n_trials]
         print(f'here {data.shape}')
     # Remove nan values at the end of the trial dimension.
-    data = data[:, ~np.isnan(data).all(axis=(0,2))]
+    data = data[:, ~np.isnan(data).all(axis=(0, 2))]
     if n_trials is not None and repeat_last_trial:
         # Repeat last trial if less than required number of trials.
         if data.shape[1] < n_trials:
-            data = np.concatenate([data, np.tile(data[:,[-1]], (1, n_trials - data.shape[1], 1))], axis=1)
+            data = np.concatenate([data, np.tile(data[:, [-1]], (1, n_trials - data.shape[1], 1))], axis=1)
     return data
 
 
@@ -151,7 +149,7 @@ def shape_features_matrix(mouse_list, session_list, data_dir, trial_type, n_tria
     Returns:
         _type_: _description_
     """
-    
+
     mice_dataset = []
     for mouse_id in mouse_list:
         # Get sessions for that mouse.
@@ -175,7 +173,7 @@ def shape_features_matrix(mouse_list, session_list, data_dir, trial_type, n_tria
     print('dataset shapes')
     for arr in mice_dataset:
         print(arr.shape)
-    
+
     X = np.concatenate(mice_dataset, axis=0)
 
     return X
@@ -206,7 +204,7 @@ def compute_roc(data_pre, data_post, nshuffles=1000, n_jobs=-1, return_shuffles=
         return auc(fpr, tpr)
 
     for icell in range(ncell):
-        print(f'ROC computation: {icell+1}/{ncell} cells', end='\r')
+        print(f'ROC computation: {icell + 1}/{ncell} cells', end='\r')
         X_pre = data_pre[icell]
         X_post = data_post[icell]
         X = np.r_[X_pre, X_post]
@@ -218,9 +216,9 @@ def compute_roc(data_pre, data_post, nshuffles=1000, n_jobs=-1, return_shuffles=
 
         # Parallelize shuffles
         if nshuffles:
-            roc_auc_shuffle = np.array(Parallel(n_jobs=n_jobs)(
-                delayed(shuffle_auc)(y, X, ishuffle) for ishuffle in range(nshuffles)
-            ))
+            roc_auc_shuffle = np.array(
+                Parallel(n_jobs=n_jobs)(delayed(shuffle_auc)(y, X, ishuffle) for ishuffle in range(nshuffles))
+            )
             lmi_p[icell] = percentileofscore(roc_auc_shuffle, roc_auc) / 100
             if return_shuffles:
                 lmi_shuffles[icell] = (roc_auc_shuffle - 0.5) * 2

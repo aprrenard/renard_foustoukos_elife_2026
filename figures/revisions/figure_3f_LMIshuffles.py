@@ -58,10 +58,10 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_3f_L
 # ============================================================================
 
 
-
 # ============================================================================
 # Null distribution computation
 # ============================================================================
+
 
 def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
     """Recompute LMI shuffles for every mouse, pooling per-cell per-shuffle
@@ -78,8 +78,13 @@ def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
     nwb_path = paths.nwb_dir
 
     _, _, mice_list, _ = database.select_sessions_from_db(
-        db_path, nwb_path, exclude_cols=['exclude', 'two_p_exclude'],
-        experimenters=['AR', 'GF', 'MI'], day=DAYS, two_p_imaging='yes')
+        db_path,
+        nwb_path,
+        exclude_cols=['exclude', 'two_p_exclude'],
+        experimenters=['AR', 'GF', 'MI'],
+        day=DAYS,
+        two_p_imaging='yes',
+    )
 
     rows = []
     for mouse_id in mice_list:
@@ -88,9 +93,11 @@ def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
 
         # Same loader as 05_lmi.py, so artefact cells are excluded.
         data_mapping = imaging.load_mouse_xarray(
-            mouse_id, paths.tensor_dir, 'tensor_xarray_mapping_data.nc', subtracted=False)
+            mouse_id, paths.tensor_dir, 'tensor_xarray_mapping_data.nc', subtracted=False
+        )
         data_mapping = data_mapping - np.nanmean(
-            data_mapping.sel(time=slice(*BASELINE_WIN)), axis=2, keepdims=True)
+            data_mapping.sel(time=slice(*BASELINE_WIN)), axis=2, keepdims=True
+        )
 
         data_pre = data_mapping.sel(trial=data_mapping.coords['day'].isin([-2, -1]))
         data_pre = data_pre.sel(time=slice(*RESPONSE_WIN)).mean(dim='time')
@@ -98,14 +105,19 @@ def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
         data_post = data_post.sel(time=slice(*RESPONSE_WIN)).mean(dim='time')
 
         _, _, lmi_shuffles = imaging.compute_roc(
-            data_pre, data_post, nshuffles=n_shuffles, return_shuffles=True)
+            data_pre, data_post, nshuffles=n_shuffles, return_shuffles=True
+        )
 
         # lmi_shuffles shape: (n_cells, n_shuffles) -- pool to long format.
-        rows.append(pd.DataFrame({
-            'mouse_id': mouse_id,
-            'reward_group': reward_group,
-            'null_lmi': lmi_shuffles.ravel(),
-        }))
+        rows.append(
+            pd.DataFrame(
+                {
+                    'mouse_id': mouse_id,
+                    'reward_group': reward_group,
+                    'null_lmi': lmi_shuffles.ravel(),
+                }
+            )
+        )
 
     null_df = pd.concat(rows, ignore_index=True)
     os.makedirs(PROCESSED_DATA_DIR, exist_ok=True)
@@ -117,8 +129,8 @@ def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
 def load_null_lmi_distribution():
     if not os.path.exists(NULL_LMI_CSV):
         raise FileNotFoundError(
-            f"Pre-computed null LMI data not found: {NULL_LMI_CSV}\n"
-            "Run with --recompute first.")
+            f"Pre-computed null LMI data not found: {NULL_LMI_CSV}\nRun with --recompute first."
+        )
     df = pd.read_csv(NULL_LMI_CSV)
     print(f"Loaded: {NULL_LMI_CSV}  ({len(df)} rows)")
     return df
@@ -133,11 +145,14 @@ def load_real_lmi():
     print(f"  DB two_p_imaging=='yes' mice ({len(mice)}): {sorted(mice)}")
     print(f"  Overlap: {len(lmi_mice & set(mice))} mice")
     for mouse in lmi_df['mouse_id'].unique():
-        lmi_df.loc[lmi_df['mouse_id'] == mouse, 'reward_group'] = \
-            database.get_mouse_reward_group_from_db(paths.db_path, mouse)
+        lmi_df.loc[lmi_df['mouse_id'] == mouse, 'reward_group'] = database.get_mouse_reward_group_from_db(
+            paths.db_path, mouse
+        )
     lmi_df = lmi_df.loc[lmi_df['mouse_id'].isin(mice)]
-    print(f"  lmi_df after DB filter: {len(lmi_df)} rows, "
-          f"reward_group counts: {lmi_df['reward_group'].value_counts(dropna=False).to_dict()}")
+    print(
+        f"  lmi_df after DB filter: {len(lmi_df)} rows, "
+        f"reward_group counts: {lmi_df['reward_group'].value_counts(dropna=False).to_dict()}"
+    )
     return lmi_df
 
 
@@ -145,8 +160,10 @@ def load_real_lmi():
 # Plot
 # ============================================================================
 
-def plot_lmi_vs_null(lmi_df, null_df, output_dir=OUTPUT_DIR,
-                      filename='supp_3_LMI_shuffles', save_format='svg', dpi=300):
+
+def plot_lmi_vs_null(
+    lmi_df, null_df, output_dir=OUTPUT_DIR, filename='supp_3_LMI_shuffles', save_format='svg', dpi=300
+):
     """Real LMI distribution overlaid with pooled shuffled-null LMI
     distribution, one panel per reward group.
 
@@ -154,8 +171,13 @@ def plot_lmi_vs_null(lmi_df, null_df, output_dir=OUTPUT_DIR,
         <filename>.svg        -- figure
         <filename>_stats.csv  -- per-group real vs. null spread comparison
     """
-    sns.set_theme(context='paper', style='ticks', font='sans-serif', font_scale=1,
-                  rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'})
+    sns.set_theme(
+        context='paper',
+        style='ticks',
+        font='sans-serif',
+        font_scale=1,
+        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
+    )
 
     reward_groups = ['R+', 'R-']
     rg_colors = {'R+': reward_palette[1], 'R-': reward_palette[0]}
@@ -168,28 +190,56 @@ def plot_lmi_vs_null(lmi_df, null_df, output_dir=OUTPUT_DIR,
         real_vals = lmi_df.loc[lmi_df['reward_group'] == rg, 'lmi'].dropna().values
         null_vals = null_df.loc[null_df['reward_group'] == rg, 'null_lmi'].dropna().values
 
-        sns.histplot(null_vals, bins=bin_edges, stat='probability', element='step',
-                     fill=False, color='dimgray', linewidth=1.2,
-                     label='Shuffled null', ax=ax)
-        sns.histplot(real_vals, bins=bin_edges, stat='probability', kde=True,
-                     color=rg_colors[rg], alpha=0.5, label='Real LMI', ax=ax)
+        sns.histplot(
+            null_vals,
+            bins=bin_edges,
+            stat='probability',
+            element='step',
+            fill=False,
+            color='dimgray',
+            linewidth=1.2,
+            label='Shuffled null',
+            ax=ax,
+        )
+        sns.histplot(
+            real_vals,
+            bins=bin_edges,
+            stat='probability',
+            kde=True,
+            color=rg_colors[rg],
+            alpha=0.5,
+            label='Real LMI',
+            ax=ax,
+        )
 
         ks_stat, ks_p = ks_2samp(real_vals, null_vals, alternative='two-sided')
         lev_stat, lev_p = levene(real_vals, null_vals)
         std_real, std_null = float(np.std(real_vals)), float(np.std(null_vals))
 
-        stats_rows.append({
-            'reward_group': rg,
-            'n_real': len(real_vals), 'n_null': len(null_vals),
-            'std_real': std_real, 'std_null': std_null,
-            'ks_statistic': ks_stat, 'ks_p_value': ks_p,
-            'levene_statistic': lev_stat, 'levene_p_value': lev_p,
-        })
+        stats_rows.append(
+            {
+                'reward_group': rg,
+                'n_real': len(real_vals),
+                'n_null': len(null_vals),
+                'std_real': std_real,
+                'std_null': std_null,
+                'ks_statistic': ks_stat,
+                'ks_p_value': ks_p,
+                'levene_statistic': lev_stat,
+                'levene_p_value': lev_p,
+            }
+        )
 
-        ax.text(0.02, 0.98,
-                f'std real = {std_real:.3f}\nstd null = {std_null:.3f}\n'
-                f"Levene p = {lev_p:.3g} {_significance_stars(lev_p)}",
-                transform=ax.transAxes, va='top', ha='left', fontsize=8)
+        ax.text(
+            0.02,
+            0.98,
+            f'std real = {std_real:.3f}\nstd null = {std_null:.3f}\n'
+            f"Levene p = {lev_p:.3g} {_significance_stars(lev_p)}",
+            transform=ax.transAxes,
+            va='top',
+            ha='left',
+            fontsize=8,
+        )
         ax.set_title(rg, fontsize=10, fontweight='bold')
         ax.set_xlim(-1, 1)
         ax.set_xlabel('LMI')
@@ -216,9 +266,11 @@ def plot_lmi_vs_null(lmi_df, null_df, output_dir=OUTPUT_DIR,
 
 if __name__ == '__main__':
     import argparse
+
     parser = argparse.ArgumentParser(description='Real vs shuffled-null LMI distributions.')
-    parser.add_argument('--recompute', action='store_true',
-                        help='recompute the null LMI distribution even if it is cached')
+    parser.add_argument(
+        '--recompute', action='store_true', help='recompute the null LMI distribution even if it is cached'
+    )
     args = parser.parse_args()
     print(f"Output directory: {OUTPUT_DIR}")
 

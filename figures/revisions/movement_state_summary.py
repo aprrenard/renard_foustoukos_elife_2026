@@ -77,20 +77,20 @@ DLC_DIR = '/mnt/lsens-analysis/Anthony_Renard/DLCTrialMatrices'
 # ============================================================================
 
 DAYS = [-2, -1, 0, 1, 2]
-WINDOW = (0.0, 1.0)              # post-stimulus window, seconds relative to stimulus onset
-BASELINE_WINDOW = (-2.0, 0.0)    # pre-stimulus baseline window
-NORMALISED = False               # per-session (v - mean) / (max - min), see load_dlc.py; off here
-MIN_TRIALS = 5                    # skip a mouse x day with fewer usable trials
+WINDOW = (0.0, 1.0)  # post-stimulus window, seconds relative to stimulus onset
+BASELINE_WINDOW = (-2.0, 0.0)  # pre-stimulus baseline window
+NORMALISED = False  # per-session (v - mean) / (max - min), see load_dlc.py; off here
+MIN_TRIALS = 5  # skip a mouse x day with fewer usable trials
 OUTPUT_DIR = os.path.join(paths.results_dir, 'behavior', 'passive_epoch_movement')
 
 # (value column, y-axis phrase, output filename suffix)
 STATS = [
-    ('mean',       'window mean',               'mean'),
-    ('peak',       'window peak',               'peak'),
-    ('baseline',   'pre-stim baseline',         'baseline'),
-    ('blsub_mean', 'baseline-subtracted mean',  'blsub_mean'),
-    ('blsub_peak', 'baseline-subtracted peak',  'blsub_peak'),
-    ('energy',     'RMS from baseline (motion energy)', 'energy'),
+    ('mean', 'window mean', 'mean'),
+    ('peak', 'window peak', 'peak'),
+    ('baseline', 'pre-stim baseline', 'baseline'),
+    ('blsub_mean', 'baseline-subtracted mean', 'blsub_mean'),
+    ('blsub_peak', 'baseline-subtracted peak', 'blsub_peak'),
+    ('energy', 'RMS from baseline (motion energy)', 'energy'),
 ]
 
 
@@ -98,12 +98,11 @@ STATS = [
 # Data
 # ============================================================================
 
+
 def discover_dlc_mice(dlc_dir=DLC_DIR):
     """Mouse ids for every '<mouse_id>_dlc.h5' file found in dlc_dir."""
     suffix = '_dlc.h5'
-    return sorted(
-        f[:-len(suffix)] for f in os.listdir(dlc_dir) if f.endswith(suffix)
-    )
+    return sorted(f[: -len(suffix)] for f in os.listdir(dlc_dir) if f.endswith(suffix))
 
 
 def _text(values):
@@ -173,8 +172,9 @@ def _load_dlc_h5(path, days=DAYS, normalised=NORMALISED):
     return traces_by_day, features, time
 
 
-def load_trial_metrics(mouse_id, dlc_dir=DLC_DIR, window=WINDOW,
-                        baseline_window=BASELINE_WINDOW, normalised=NORMALISED):
+def load_trial_metrics(
+    mouse_id, dlc_dir=DLC_DIR, window=WINDOW, baseline_window=BASELINE_WINDOW, normalised=NORMALISED
+):
     """Per-trial baseline mean, post-stimulus mean, post-stimulus peak, and
     post-stimulus RMS-from-baseline of each DLC feature, for every day
     available for this mouse.
@@ -209,16 +209,22 @@ def load_trial_metrics(mouse_id, dlc_dir=DLC_DIR, window=WINDOW,
         post_window = traces[:, :, win_mask]
         post_mean = post_window.mean(axis=2)
         post_peak = post_window.max(axis=2)
-        post_energy = np.sqrt(
-            np.mean((post_window - baseline_mean[:, :, None]) ** 2, axis=2))
+        post_energy = np.sqrt(np.mean((post_window - baseline_mean[:, :, None]) ** 2, axis=2))
         for i_feat, feature in enumerate(features):
-            for b, m, p, e in zip(baseline_mean[:, i_feat], post_mean[:, i_feat],
-                                   post_peak[:, i_feat], post_energy[:, i_feat]):
-                rows.append({
-                    'mouse_id': mouse_id, 'day': int(day), 'feature': feature,
-                    'baseline_mean': float(b), 'post_mean': float(m),
-                    'post_peak': float(p), 'post_energy': float(e),
-                })
+            for b, m, p, e in zip(
+                baseline_mean[:, i_feat], post_mean[:, i_feat], post_peak[:, i_feat], post_energy[:, i_feat]
+            ):
+                rows.append(
+                    {
+                        'mouse_id': mouse_id,
+                        'day': int(day),
+                        'feature': feature,
+                        'baseline_mean': float(b),
+                        'post_mean': float(m),
+                        'post_peak': float(p),
+                        'post_energy': float(e),
+                    }
+                )
     return pd.DataFrame(rows) if rows else None
 
 
@@ -274,9 +280,9 @@ def build_dataset(dlc_dir=DLC_DIR):
     print(f"Usable mice: {len(mice_used)} R+ ({list(mice_used)})")
 
     mouse_day_df = (
-        trial_df
-        .groupby(['mouse_id', 'reward_group', 'day', 'feature'])
-        [['baseline_mean', 'post_mean', 'post_peak', 'post_energy']]
+        trial_df.groupby(['mouse_id', 'reward_group', 'day', 'feature'])[
+            ['baseline_mean', 'post_mean', 'post_peak', 'post_energy']
+        ]
         .mean()
         .reset_index()
     )
@@ -290,8 +296,7 @@ def build_dataset(dlc_dir=DLC_DIR):
     return trial_df, mouse_day_df
 
 
-def build_trace_dataset(dlc_dir=DLC_DIR, normalised=NORMALISED,
-                         baseline_window=BASELINE_WINDOW):
+def build_trace_dataset(dlc_dir=DLC_DIR, normalised=NORMALISED, baseline_window=BASELINE_WINDOW):
     """Full time-course dataset for every R+ mouse with a DLC file and a
     reward_group entry in the session metadata database (same R+-only
     selection as build_dataset()).
@@ -338,10 +343,17 @@ def build_trace_dataset(dlc_dir=DLC_DIR, normalised=NORMALISED,
             corrected = traces - baseline
             mean_trace = corrected.mean(axis=0)  # (n_features, n_time)
             for i_feat, feature in enumerate(features):
-                trace_parts.append(pd.DataFrame({
-                    'mouse_id': mouse_id, 'day': int(day), 'feature': feature,
-                    'time': time, 'value': mean_trace[i_feat],
-                }))
+                trace_parts.append(
+                    pd.DataFrame(
+                        {
+                            'mouse_id': mouse_id,
+                            'day': int(day),
+                            'feature': feature,
+                            'time': time,
+                            'value': mean_trace[i_feat],
+                        }
+                    )
+                )
 
     if skipped:
         print(f"Skipped (not R+, no DLC data, or no reward_group in db): {skipped}")
@@ -358,6 +370,7 @@ def build_trace_dataset(dlc_dir=DLC_DIR, normalised=NORMALISED,
 # Plot
 # ============================================================================
 
+
 def _feature_labels(features):
     """Split '<part>_trace_<metric>' into (metric, part) for grid layout."""
     parsed = {}
@@ -370,12 +383,9 @@ def _feature_labels(features):
 def _ordered_parts(labels):
     """Body parts from a _feature_labels() dict, in a fixed display order."""
     parts = sorted({p for _, p in labels.values()})
-    order = [p for p in
-             ['tongue', 'whiskerend', 'nose', 'whiskerbase', 'jawend'] if p in parts]
+    order = [p for p in ['tongue', 'whiskerend', 'nose', 'whiskerbase', 'jawend'] if p in parts]
     order += [p for p in parts if p not in order]
     return order
-
-
 
 
 def _friedman_p(fdata, value_col, days_sorted):
@@ -400,10 +410,16 @@ def _friedman_p(fdata, value_col, days_sorted):
     return stat, p, n_mice
 
 
-def plot_movement_summary(mouse_day_df, value_col, stat_label, days=DAYS,
-                           output_dir=OUTPUT_DIR,
-                           filename='movement_state_summary',
-                           save_format='svg', dpi=300):
+def plot_movement_summary(
+    mouse_day_df,
+    value_col,
+    stat_label,
+    days=DAYS,
+    output_dir=OUTPUT_DIR,
+    filename='movement_state_summary',
+    save_format='svg',
+    dpi=300,
+):
     """Grid of panels (rows = speed/amp, columns = body part), each showing
     the R+ mean +/- 95% CI across mice per day, for one of the STATS value
     columns (mirrors behavior_state_summary.py's layout, minus the R+ vs R-
@@ -420,46 +436,58 @@ def plot_movement_summary(mouse_day_df, value_col, stat_label, days=DAYS,
                                   data table, since the test result depends
                                   on which value_col was tested)
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep',
-                  font='sans-serif', font_scale=1)
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     days_sorted = sorted(days)
     features = sorted(mouse_day_df['feature'].unique())
     labels = _feature_labels(features)
-    metrics = sorted({m for m, _ in labels.values()})           # ['amp', 'speed']
+    metrics = sorted({m for m, _ in labels.values()})  # ['amp', 'speed']
     part_order = _ordered_parts(labels)
 
-    fig, axes = plt.subplots(len(metrics), len(part_order),
-                              figsize=(4 * len(part_order), 4 * len(metrics)),
-                              sharex=True)
+    fig, axes = plt.subplots(
+        len(metrics), len(part_order), figsize=(4 * len(part_order), 4 * len(metrics)), sharex=True
+    )
     axes = np.atleast_2d(axes)
 
     stats_rows = []
     for i, metric in enumerate(metrics):
         for j, part in enumerate(part_order):
             ax = axes[i, j]
-            feature = next(
-                (f for f, (m, p) in labels.items() if m == metric and p == part),
-                None)
+            feature = next((f for f, (m, p) in labels.items() if m == metric and p == part), None)
             if feature is None:
                 ax.axis('off')
                 continue
 
             fdata = mouse_day_df[mouse_day_df['feature'] == feature]
-            sns.barplot(data=fdata, x='day', y=value_col,
-                        order=days_sorted, errorbar=('ci', 95),
-                        color=reward_palette[1], alpha=0.7, edgecolor='black',
-                        ax=ax)
+            sns.barplot(
+                data=fdata,
+                x='day',
+                y=value_col,
+                order=days_sorted,
+                errorbar=('ci', 95),
+                color=reward_palette[1],
+                alpha=0.7,
+                edgecolor='black',
+                ax=ax,
+            )
 
             stat, p, n_mice = _friedman_p(fdata, value_col, days_sorted)
             stars = _significance_stars(p) if not np.isnan(p) else 'n.a.'
             p_text = f'p={p:.3g} {stars}' if not np.isnan(p) else 'n.a.'
-            stats_rows.append({
-                'feature': feature, 'metric': metric, 'part': part,
-                'stat_col': value_col, 'test': 'Friedman', 'effect': 'day',
-                'statistic': stat, 'p_value': p, 'n_mice': n_mice,
-                'significance': stars,
-            })
+            stats_rows.append(
+                {
+                    'feature': feature,
+                    'metric': metric,
+                    'part': part,
+                    'stat_col': value_col,
+                    'test': 'Friedman',
+                    'effect': 'day',
+                    'statistic': stat,
+                    'p_value': p,
+                    'n_mice': n_mice,
+                    'significance': stars,
+                }
+            )
 
             metric_label = {'amp': 'Amplitude', 'speed': 'Speed'}.get(metric, metric)
             unit = '(normalized, a.u.)' if NORMALISED else '(raw px)'
@@ -475,8 +503,7 @@ def plot_movement_summary(mouse_day_df, value_col, stat_label, days=DAYS,
     plt.close()
     print(f"Figure saved to: {os.path.join(output_dir, filename + '.' + save_format)}")
 
-    pd.DataFrame(stats_rows).to_csv(
-        os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
+    pd.DataFrame(stats_rows).to_csv(os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
     print(f"Stats saved to: {output_dir}")
 
 
@@ -497,9 +524,9 @@ def _mean_ci_by_time(day_data, ci_level=0.95):
     return mean.index.values, mean.values, (mean - half_width).values, (mean + half_width).values
 
 
-def plot_body_part_traces(trace_df, part, days=DAYS,
-                           output_dir=OUTPUT_DIR, filename=None,
-                           save_format='svg', dpi=300):
+def plot_body_part_traces(
+    trace_df, part, days=DAYS, output_dir=OUTPUT_DIR, filename=None, save_format='svg', dpi=300
+):
     """One body part's full time-course: 2 rows (amplitude, speed) x 5
     columns (days), each panel the R+ mean +/- 95% CI trace across mice
     (mirrors figure_3c.py's per-day PSTH layout). Traces are per-trial
@@ -507,17 +534,20 @@ def plot_body_part_traces(trace_df, part, days=DAYS,
 
     Saves <filename>.svg (defaults to 'movement_trace_<part>').
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep',
-                  font='sans-serif', font_scale=1)
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     days_sorted = sorted(days)
     labels = _feature_labels(trace_df['feature'].unique())
     available = set(labels.values())  # {(metric, part), ...}
     metrics_order = [m for m in ('amp', 'speed') if (m, part) in available]
 
-    fig, axes = plt.subplots(len(metrics_order), len(days_sorted),
-                              figsize=(3.2 * len(days_sorted), 3.2 * len(metrics_order)),
-                              sharex=True, sharey='row')
+    fig, axes = plt.subplots(
+        len(metrics_order),
+        len(days_sorted),
+        figsize=(3.2 * len(days_sorted), 3.2 * len(metrics_order)),
+        sharex=True,
+        sharey='row',
+    )
     axes = np.atleast_2d(axes)
 
     for i, metric in enumerate(metrics_order):
@@ -535,16 +565,14 @@ def plot_body_part_traces(trace_df, part, days=DAYS,
 
             time_vals, mean_vals, lo, hi = _mean_ci_by_time(day_data)
             ax.plot(time_vals, mean_vals, color=reward_palette[1])
-            ax.fill_between(time_vals, lo, hi, color=reward_palette[1], alpha=0.3,
-                             linewidth=0)
+            ax.fill_between(time_vals, lo, hi, color=reward_palette[1], alpha=0.3, linewidth=0)
             ax.axhline(0, color='gray', linestyle='--', linewidth=0.7, alpha=0.6)
             ax.axvline(0, color='#FF9600', linestyle='-', linewidth=1)
 
             if i == 0:
                 ax.set_title(f'Day {day:+d}', fontsize=10, fontweight='bold')
             ax.set_xlabel('Time (s)' if i == len(metrics_order) - 1 else '', fontsize=9)
-            ax.set_ylabel(f'{metric_label} (Δ baseline) {unit}' if j == 0 else '',
-                          fontsize=9)
+            ax.set_ylabel(f'{metric_label} (Δ baseline) {unit}' if j == 0 else '', fontsize=9)
             sns.despine(ax=ax)
 
     fig.suptitle(part, fontsize=12, fontweight='bold')
@@ -564,18 +592,17 @@ def plot_body_part_traces(trace_df, part, days=DAYS,
 if __name__ == '__main__':
     print("Loading DLC movement data...")
     trial_df, mouse_day_df = build_dataset()
-    print(f"\n{len(mouse_day_df)} mouse x day x feature rows, "
-          f"{mouse_day_df['mouse_id'].nunique()} mice")
+    print(f"\n{len(mouse_day_df)} mouse x day x feature rows, {mouse_day_df['mouse_id'].nunique()} mice")
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    mouse_day_df.to_csv(
-        os.path.join(OUTPUT_DIR, 'movement_state_summary_data.csv'), index=False)
+    mouse_day_df.to_csv(os.path.join(OUTPUT_DIR, 'movement_state_summary_data.csv'), index=False)
     print(f"Data saved to: {OUTPUT_DIR}")
 
     for value_col, stat_label, suffix in STATS:
         print(f"\nPlotting: {stat_label} ({value_col})")
-        plot_movement_summary(mouse_day_df, value_col, stat_label,
-                               filename=f'movement_state_summary_{suffix}')
+        plot_movement_summary(
+            mouse_day_df, value_col, stat_label, filename=f'movement_state_summary_{suffix}'
+        )
 
     print("\n=== Mean per day (whisker base speed, no baseline correction) ===")
     example = mouse_day_df[mouse_day_df['feature'] == 'whiskerbase_trace_speed']

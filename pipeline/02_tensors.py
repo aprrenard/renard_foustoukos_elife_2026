@@ -44,11 +44,14 @@ stop_flag_sensory_map_yaml = paths.stop_flags_sensory_map_yaml
 processed_data_dir = paths.processed_dir
 
 days = ['-2', '-1', '0', '+1', '+2']
-_, nwb_list, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
-                                                exclude_cols=['exclude', 'two_p_exclude'],
-                                                experimenters=['AR', 'GF', 'MI'],
-                                                day=days,
-                                                two_p_imaging='yes')
+_, nwb_list, mice_list, _ = database.select_sessions_from_db(
+    db_path,
+    nwb_path,
+    exclude_cols=['exclude', 'two_p_exclude'],
+    experimenters=['AR', 'GF', 'MI'],
+    day=days,
+    two_p_imaging='yes',
+)
 
 with open(trial_indices_yaml, 'r') as stream:
     trial_indices = yaml.load(stream, yaml.Loader)
@@ -67,7 +70,7 @@ for mouse in mice_list:
     # if os.path.exists(save_path_data):
     #     continue
     session_nwb = [nwb for nwb in nwb_list if mouse in nwb]
-    
+
     # Get data and metadata for each session.
     sessions = []
     data = []
@@ -75,29 +78,24 @@ for mouse in mice_list:
     kept_trial_ids = []  # (session_id, trial_id) kept per session, in tensor order
 
     for nwb_file in session_nwb:
-
         session_id = nwb_file[-25:-4]
         sessions.append(session_id)
 
         # Parameters for tensor array.
         cell_types = ['na', 'wM1', 'wS2']
         rrs_keys = ['ophys', 'fluorescence_all_cells', 'dff']
-        time_range = (2,7)
+        time_range = (2, 7)
         epoch_name = None
         trial_selection = None
 
-        idx_selection = trial_indices.loc[trial_indices.session_id==session_id, 'trial_idx'].values[0]
+        idx_selection = trial_indices.loc[trial_indices.session_id == session_id, 'trial_idx'].values[0]
         # idx_sensory_map = trial_indices_sensory_map.loc[trial_indices_sensory_map.session_id==session_id, 'trial_idx'].values[0]
 
         # Generate a 3d array containing all trial types.
         print(f'Processing {session_id} {trial_selection}')
-        traces, metadata = make_events_aligned_array_3d(nwb_file,
-                                                        rrs_keys,
-                                                        time_range,
-                                                        trial_selection,
-                                                        epoch_name,
-                                                        cell_types,
-                                                        idx_selection)
+        traces, metadata = make_events_aligned_array_3d(
+            nwb_file, rrs_keys, time_range, trial_selection, epoch_name, cell_types, idx_selection
+        )
 
         # Drop trials whose event window extends beyond the recording
         # boundary (align_array_to_events leaves these entirely NaN across
@@ -108,15 +106,13 @@ for mouse in mice_list:
         # by position, so it must exactly match which trials survive here.
         all_nan_trials = np.isnan(traces).all(axis=(0, 2))
         if all_nan_trials.any():
-            print(f'  Dropping {all_nan_trials.sum()} trial(s) with event '
-                  f'window beyond recording boundary.')
+            print(f'  Dropping {all_nan_trials.sum()} trial(s) with event window beyond recording boundary.')
             traces = traces[:, ~all_nan_trials, :]
             metadata['trials'] = metadata['trials'][~all_nan_trials]
 
         data.append(traces)
         metadatas.append(metadata)
-        kept_trial_ids.append(pd.DataFrame({
-            'session_id': session_id, 'trial_id': metadata['trials']}))
+        kept_trial_ids.append(pd.DataFrame({'session_id': session_id, 'trial_id': metadata['trials']}))
 
     # Sessions are concatenated on the trial dim. Different sessions can
     # yield a slightly different number of timepoints (per-session sampling
@@ -125,8 +121,10 @@ for mouse in mice_list:
     n_t_per_session = [d.shape[2] for d in data]
     min_n_t = min(n_t_per_session)
     if len(set(n_t_per_session)) > 1:
-        print(f'  Truncating sessions to common length: {min_n_t} timepoints '
-              f'(session lengths: {n_t_per_session})')
+        print(
+            f'  Truncating sessions to common length: {min_n_t} timepoints '
+            f'(session lengths: {n_t_per_session})'
+        )
         data = [d[:, :, :min_n_t] for d in data]
     tensor = np.concatenate(data, axis=1)
     kept_trial_ids = pd.concat(kept_trial_ids, ignore_index=True)
@@ -136,22 +134,28 @@ for mouse in mice_list:
     # (same session_id/trial_id, same order -- required since it gets
     # assigned onto the 'trial' dim by position, not by an explicit join).
     print('Make behavior table')
-    behav_table = make_behavior_table(session_nwb, sessions, db_path,
-                                      cut_session=True,
-                                      stop_flag_yaml=stop_flag_yaml,
-                                      trial_indices_yaml=trial_indices_yaml)
+    behav_table = make_behavior_table(
+        session_nwb,
+        sessions,
+        db_path,
+        cut_session=True,
+        stop_flag_yaml=stop_flag_yaml,
+        trial_indices_yaml=trial_indices_yaml,
+    )
     behav_table = behav_table.set_index(['session_id', 'trial_id'])
-    behav_table = behav_table.loc[
-        list(kept_trial_ids.itertuples(index=False, name=None))
-    ].reset_index()
+    behav_table = behav_table.loc[list(kept_trial_ids.itertuples(index=False, name=None))].reset_index()
 
     time = np.linspace(-time_range[0], time_range[1], tensor.shape[2])
     # Create xarray.
-    ds = xr.DataArray(tensor, dims=['cell', 'trial', 'time'],
-                        coords={'roi': ('cell', metadata['rois']),
-                                'cell_type': ('cell', metadata['cell_types']),
-                                'time': time,
-                                })
+    ds = xr.DataArray(
+        tensor,
+        dims=['cell', 'trial', 'time'],
+        coords={
+            'roi': ('cell', metadata['rois']),
+            'cell_type': ('cell', metadata['cell_types']),
+            'time': time,
+        },
+    )
     for col in behav_table.columns:
         ds[col] = ('trial', behav_table[col].values)
     ds.attrs['session_ids'] = sessions
@@ -174,11 +178,14 @@ stop_flag_sensory_map_yaml = paths.stop_flags_sensory_map_yaml
 processed_data_dir = paths.processed_dir
 
 days = ['-2', '-1', '0', '+1', '+2']
-_, nwb_list, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
-                                                exclude_cols=['exclude', 'two_p_exclude'],
-                                                experimenters=['AR', 'GF', 'MI'],
-                                                day=days,
-                                                two_p_imaging='yes',)
+_, nwb_list, mice_list, _ = database.select_sessions_from_db(
+    db_path,
+    nwb_path,
+    exclude_cols=['exclude', 'two_p_exclude'],
+    experimenters=['AR', 'GF', 'MI'],
+    day=days,
+    two_p_imaging='yes',
+)
 
 # For "non motivated" sensory mapping trials at the end of the session.
 with open(trial_indices_sensory_map_yaml, 'r') as stream:
@@ -196,7 +203,7 @@ for mouse in mice_list:
     # if os.path.exists(save_path_data):
     #     continue
     session_nwb = [nwb for nwb in nwb_list if mouse in nwb]
-    
+
     # Get data and metadata for each session.
     sessions = []
     data = []
@@ -204,28 +211,23 @@ for mouse in mice_list:
     behavior_days = []
 
     for nwb_file in session_nwb:
-        
         session_id = nwb_file[-25:-4]
         sessions.append(session_id)
-        
+
         # Parameters for tensor array.
         cell_types = ['na', 'wM1', 'wS2']
         rrs_keys = ['ophys', 'fluorescence_all_cells', 'dff']
-        time_range = (2,7)
+        time_range = (2, 7)
         epoch_name = None
         trial_selection = None
 
-        idx_selection = trial_indices.loc[trial_indices.session_id==session_id, 'trial_idx'].values[0]
+        idx_selection = trial_indices.loc[trial_indices.session_id == session_id, 'trial_idx'].values[0]
 
         # Generate a 3d array containing all trial types.
         print(f'Processing {session_id} {trial_selection}')
-        traces, metadata = make_events_aligned_array_3d(nwb_file,
-                                                        rrs_keys,
-                                                        time_range,
-                                                        trial_selection,
-                                                        epoch_name,
-                                                        cell_types,
-                                                        idx_selection)
+        traces, metadata = make_events_aligned_array_3d(
+            nwb_file, rrs_keys, time_range, trial_selection, epoch_name, cell_types, idx_selection
+        )
 
         print(f'{np.isnan(traces).sum()} nan values in tensor.')
 
@@ -236,8 +238,7 @@ for mouse in mice_list:
         # end of the session. Same idiom as imaging.extract_trials().
         all_nan_trials = np.isnan(traces).all(axis=(0, 2))
         if all_nan_trials.any():
-            print(f'  Dropping {all_nan_trials.sum()} trial(s) with event '
-                  f'window beyond recording boundary.')
+            print(f'  Dropping {all_nan_trials.sum()} trial(s) with event window beyond recording boundary.')
             traces = traces[:, ~all_nan_trials, :]
 
         data.append(traces)
@@ -248,7 +249,7 @@ for mouse in mice_list:
         with NWBSession(nwb_file) as nwb_session:
             _, d = nwb_session.petersen.get_bhv_type_and_training_day_index()
         behavior_days.extend([d for _ in range(traces.shape[1])])
-        
+
     # Sessions are concatenated on the trial dim. Different sessions can
     # yield a slightly different number of timepoints (per-session sampling
     # rate jitter rounds differently in align_array_to_timestamps), so
@@ -256,19 +257,25 @@ for mouse in mice_list:
     n_t_per_session = [d.shape[2] for d in data]
     min_n_t = min(n_t_per_session)
     if len(set(n_t_per_session)) > 1:
-        print(f'  Truncating sessions to common length: {min_n_t} timepoints '
-              f'(session lengths: {n_t_per_session})')
+        print(
+            f'  Truncating sessions to common length: {min_n_t} timepoints '
+            f'(session lengths: {n_t_per_session})'
+        )
         data = [d[:, :, :min_n_t] for d in data]
     tensor = np.concatenate(data, axis=1)
 
     time = np.linspace(-time_range[0], time_range[1], tensor.shape[2])
     # Create xarray.
-    ds = xr.DataArray(tensor, dims=['cell', 'trial', 'time'],
-                        coords={'roi': ('cell', metadata['rois']),
-                                'cell_type': ('cell', metadata['cell_types']),
-                                'time': time,
-                                'day': ('trial', behavior_days),
-                                })
+    ds = xr.DataArray(
+        tensor,
+        dims=['cell', 'trial', 'time'],
+        coords={
+            'roi': ('cell', metadata['rois']),
+            'cell_type': ('cell', metadata['cell_types']),
+            'time': time,
+            'day': ('trial', behavior_days),
+        },
+    )
     ds.attrs['session_ids'] = sessions
     ds.attrs['mouse_id'] = mouse
 
@@ -292,11 +299,14 @@ sampling_rate = 30  # Hz, for imaging data.
 baseline_win = (0, 1)
 baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * sampling_rate))
 
-_, nwb_list, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
-                                                exclude_cols=['exclude', 'two_p_exclude'],
-                                                experimenters=['AR', 'GF', 'MI'],
-                                                day=days,
-                                                two_p_imaging='yes')
+_, nwb_list, mice_list, _ = database.select_sessions_from_db(
+    db_path,
+    nwb_path,
+    exclude_cols=['exclude', 'two_p_exclude'],
+    experimenters=['AR', 'GF', 'MI'],
+    day=days,
+    two_p_imaging='yes',
+)
 
 # mice_list = ['GF305',]
 for mouse_id in mice_list:
@@ -331,11 +341,14 @@ nwb_path = paths.nwb_dir
 processed_dir = os.path.join(paths.processed_dir, 'mice')
 
 days = ['-2', '-1', '0', '+1', '+2']
-_, _, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
-                                                exclude_cols=['exclude', 'two_p_exclude'],
-                                                experimenters=['AR', 'GF', 'MI'],
-                                                day=days,
-                                                two_p_imaging='yes',)
+_, _, mice_list, _ = database.select_sessions_from_db(
+    db_path,
+    nwb_path,
+    exclude_cols=['exclude', 'two_p_exclude'],
+    experimenters=['AR', 'GF', 'MI'],
+    day=days,
+    two_p_imaging='yes',
+)
 
 # mouse = 'GF305'
 # mice_list = mice_list[-8:]
@@ -351,10 +364,10 @@ for mouse in mice_list:
     stim_onset = xarray.coords['stim_onset'].values
     reaction_time = lick_times - stim_onset
     # GF333 and GF334 have a few strange reaction times.
-    reaction_time[reaction_time>=1.25] = np.nan
+    reaction_time[reaction_time >= 1.25] = np.nan
     # plt.plot(reaction_time)
     # plt.show()
-        
+
     # Create a new xarray for lick-aligned traces
     time = xarray.coords['time'].values
     aligned_time = np.linspace(-1, 5, 180)
@@ -365,11 +378,11 @@ for mouse in mice_list:
         # Trials with no lick are set to nan.
         if np.isnan(lick_onset):
             aligned_traces.append(np.full((xarray.shape[0], 180), np.nan))
-            continue 
-        lick_onset_idx =  (np.abs(time - lick_onset)).argmin()
+            continue
+        lick_onset_idx = (np.abs(time - lick_onset)).argmin()
         data = xarray[:, itrial, :].values
-        aligned_data = data[:, lick_onset_idx-30:lick_onset_idx+150]
-        
+        aligned_data = data[:, lick_onset_idx - 30 : lick_onset_idx + 150]
+
         # Two samples missing sometimes for late licks.
         if aligned_data.shape[1] < 180:
             pad_width = 180 - aligned_data.shape[1]
@@ -379,11 +392,14 @@ for mouse in mice_list:
 
     aligned_traces = np.stack(aligned_traces, axis=1)
     aligned_traces.shape
-    aligned_xarray = xr.DataArray(aligned_traces,
-                                dims=['cell', 'trial', 'time'],
-                                coords={'time': ('time', aligned_time),
-                                        'reaction_time': ('trial', reaction_time),}
-                                )
+    aligned_xarray = xr.DataArray(
+        aligned_traces,
+        dims=['cell', 'trial', 'time'],
+        coords={
+            'time': ('time', aligned_time),
+            'reaction_time': ('trial', reaction_time),
+        },
+    )
 
     # Add all other coordinates from the original xarray
     for coord in xarray.coords:

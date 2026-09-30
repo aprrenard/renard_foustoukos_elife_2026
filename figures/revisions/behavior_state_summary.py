@@ -40,11 +40,10 @@ DAYS = [-2, -1, 0, 1, 2]
 OUTPUT_DIR = os.path.join(paths.results_dir, 'behavior', 'session_state_check')
 
 
-
-
 # ============================================================================
 # Data
 # ============================================================================
+
 
 def load_behavior_table():
     """Fresh trial table for the imaging cohort (same selection pattern as
@@ -53,20 +52,30 @@ def load_behavior_table():
     nwb_dir = paths.nwb_dir
 
     mice_imaging = database.select_mice_from_db(
-        db_path, nwb_dir, experimenters=None,
+        db_path,
+        nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude', 'two_p_exclude'],
-        optogenetic=['no', np.nan], pharmacology=['no', np.nan],
+        optogenetic=['no', np.nan],
+        pharmacology=['no', np.nan],
         two_p_imaging='yes',
     )
     session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
-        db_path, nwb_dir, experimenters=None,
+        db_path,
+        nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude', 'two_p_exclude'],
-        day=["-2", "-1", '0', '+1', '+2'], mouse_id=mice_imaging,
+        day=["-2", "-1", '0', '+1', '+2'],
+        mouse_id=mice_imaging,
     )
     table = make_behavior_table(
-        nwb_list, session_list, db_path, cut_session=True,
+        nwb_list,
+        session_list,
+        db_path,
+        cut_session=True,
         stop_flag_yaml=paths.stop_flags_yaml,
-        trial_indices_yaml=paths.trial_indices_yaml)
+        trial_indices_yaml=paths.trial_indices_yaml,
+    )
     return table
 
 
@@ -74,8 +83,7 @@ def compute_session_summary(table):
     """One row per (mouse_id, session_id, day, reward_group):
     n_trials, session_duration_min, total_reward_uL."""
     rows = []
-    for (mouse, session, day, rg), g in table.groupby(
-            ['mouse_id', 'session_id', 'day', 'reward_group']):
+    for (mouse, session, day, rg), g in table.groupby(['mouse_id', 'session_id', 'day', 'reward_group']):
         n_trials = len(g)
         duration_min = (g['start_time'].max() - g['start_time'].min()) / 60
 
@@ -85,12 +93,17 @@ def compute_session_summary(table):
             wh_hits = int(((g['whisker_stim'] == 1) & (g['lick_flag'] == 1)).sum())
         reward_uL = REWARD_UL_PER_TRIAL * (aud_hits + wh_hits)
 
-        rows.append({
-            'mouse_id': mouse, 'session_id': session, 'day': day,
-            'reward_group': rg, 'n_trials': n_trials,
-            'session_duration_min': duration_min,
-            'total_reward_uL': reward_uL,
-        })
+        rows.append(
+            {
+                'mouse_id': mouse,
+                'session_id': session,
+                'day': day,
+                'reward_group': rg,
+                'n_trials': n_trials,
+                'session_duration_min': duration_min,
+                'total_reward_uL': reward_uL,
+            }
+        )
 
     return pd.DataFrame(rows)
 
@@ -106,9 +119,9 @@ METRICS = [
 ]
 
 
-def plot_session_summary(df, days=DAYS, output_dir=OUTPUT_DIR,
-                          filename='session_state_summary',
-                          save_format='svg', dpi=300):
+def plot_session_summary(
+    df, days=DAYS, output_dir=OUTPUT_DIR, filename='session_state_summary', save_format='svg', dpi=300
+):
     """Bar plot of each metric across days, R+ vs R-, with Mann-Whitney U
     per day (mirrors figure_4h.py's panel_h_reactivation_rate pattern).
 
@@ -117,8 +130,7 @@ def plot_session_summary(df, days=DAYS, output_dir=OUTPUT_DIR,
         <filename>_data.csv   -- per-session summary table
         <filename>_stats.csv  -- Mann-Whitney U results per day per metric
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep',
-                  font='sans-serif', font_scale=1)
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     days_sorted = sorted(days)
     fig, axes = plt.subplots(1, len(METRICS), figsize=(5 * len(METRICS), 4))
@@ -135,21 +147,35 @@ def plot_session_summary(df, days=DAYS, output_dir=OUTPUT_DIR,
             else:
                 stat, p = np.nan, 1.0
             p_values.append(p)
-            stats_rows.append({
-                'metric': metric, 'test': 'Mann-Whitney U', 'day': day,
-                'R+_n': len(r_plus_vals), 'R-_n': len(r_minus_vals),
-                'R+_mean': np.nanmean(r_plus_vals) if len(r_plus_vals) else np.nan,
-                'R-_mean': np.nanmean(r_minus_vals) if len(r_minus_vals) else np.nan,
-                'statistic': stat, 'p_value': p,
-                'significance': _significance_stars(p),
-            })
+            stats_rows.append(
+                {
+                    'metric': metric,
+                    'test': 'Mann-Whitney U',
+                    'day': day,
+                    'R+_n': len(r_plus_vals),
+                    'R-_n': len(r_minus_vals),
+                    'R+_mean': np.nanmean(r_plus_vals) if len(r_plus_vals) else np.nan,
+                    'R-_mean': np.nanmean(r_minus_vals) if len(r_minus_vals) else np.nan,
+                    'statistic': stat,
+                    'p_value': p,
+                    'significance': _significance_stars(p),
+                }
+            )
         all_stats_rows.extend(stats_rows)
 
-        sns.barplot(data=df, x='day', y=metric, hue='reward_group',
-                    order=days_sorted, errorbar=('ci', 95),
-                    palette={'R+': reward_palette[1], 'R-': reward_palette[0]},
-                    hue_order=['R+', 'R-'],
-                    alpha=0.7, edgecolor='black', ax=ax)
+        sns.barplot(
+            data=df,
+            x='day',
+            y=metric,
+            hue='reward_group',
+            order=days_sorted,
+            errorbar=('ci', 95),
+            palette={'R+': reward_palette[1], 'R-': reward_palette[0]},
+            hue_order=['R+', 'R-'],
+            alpha=0.7,
+            edgecolor='black',
+            ax=ax,
+        )
 
         y_max = df[metric].max()
         y_range = y_max * 0.05
@@ -159,8 +185,16 @@ def plot_session_summary(df, days=DAYS, output_dir=OUTPUT_DIR,
             if stars != 'n.s.':
                 r_plus_vals = df[(df['day'] == day) & (df['reward_group'] == 'R+')][metric].dropna()
                 r_minus_vals = df[(df['day'] == day) & (df['reward_group'] == 'R-')][metric].dropna()
-                ci_plus = r_plus_vals.mean() + 1.96 * r_plus_vals.std() / np.sqrt(len(r_plus_vals)) if len(r_plus_vals) > 0 else 0
-                ci_minus = r_minus_vals.mean() + 1.96 * r_minus_vals.std() / np.sqrt(len(r_minus_vals)) if len(r_minus_vals) > 0 else 0
+                ci_plus = (
+                    r_plus_vals.mean() + 1.96 * r_plus_vals.std() / np.sqrt(len(r_plus_vals))
+                    if len(r_plus_vals) > 0
+                    else 0
+                )
+                ci_minus = (
+                    r_minus_vals.mean() + 1.96 * r_minus_vals.std() / np.sqrt(len(r_minus_vals))
+                    if len(r_minus_vals) > 0
+                    else 0
+                )
                 y1 = max(ci_plus, ci_minus)
                 y2 = y1 + y_range
                 x1, x2 = day_idx - width / 2, day_idx + width / 2
@@ -180,8 +214,7 @@ def plot_session_summary(df, days=DAYS, output_dir=OUTPUT_DIR,
     print(f"Figure saved to: {os.path.join(output_dir, filename + '.' + save_format)}")
 
     df.to_csv(os.path.join(output_dir, f'{filename}_data.csv'), index=False)
-    pd.DataFrame(all_stats_rows).to_csv(
-        os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
+    pd.DataFrame(all_stats_rows).to_csv(os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
     print(f"Data/stats saved to: {output_dir}")
 
 
@@ -192,9 +225,11 @@ def plot_session_summary(df, days=DAYS, output_dir=OUTPUT_DIR,
 if __name__ == '__main__':
     print("Loading behavior table for imaging cohort...")
     table = load_behavior_table()
-    print(f"Loaded {len(table)} trials across "
-          f"{table['session_id'].nunique()} sessions, "
-          f"{table['mouse_id'].nunique()} mice")
+    print(
+        f"Loaded {len(table)} trials across "
+        f"{table['session_id'].nunique()} sessions, "
+        f"{table['mouse_id'].nunique()} mice"
+    )
 
     summary_df = compute_session_summary(table)
     print(f"\nSummary: {len(summary_df)} sessions")
@@ -202,6 +237,8 @@ if __name__ == '__main__':
     plot_session_summary(summary_df)
 
     print("\n=== Mean per day / reward group ===")
-    print(summary_df.groupby(['day', 'reward_group'])[
-        ['n_trials', 'session_duration_min', 'total_reward_uL']
-    ].mean().to_string())
+    print(
+        summary_df.groupby(['day', 'reward_group'])[['n_trials', 'session_duration_min', 'total_reward_uL']]
+        .mean()
+        .to_string()
+    )

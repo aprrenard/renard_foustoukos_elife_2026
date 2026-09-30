@@ -23,24 +23,23 @@ from fast_learning.plotting import reward_palette, save_figure
 # ============================================================================
 
 SAMPLING_RATE = 30
-WIN_SEC       = (-0.5, 1.5)
-BASELINE_WIN  = (0, 1)
+WIN_SEC = (-0.5, 1.5)
+BASELINE_WIN = (0, 1)
 if __name__ == '__main__':
-    BASELINE_WIN  = (int(BASELINE_WIN[0] * SAMPLING_RATE), int(BASELINE_WIN[1] * SAMPLING_RATE))
-    DAYS          = [-2, -1, 0, 1, 2]
-    CELL_TYPES    = ['wS2', 'wM1']
-    MIN_CELLS     = 3   # minimum cells per mouse to include that mouse
+    BASELINE_WIN = (int(BASELINE_WIN[0] * SAMPLING_RATE), int(BASELINE_WIN[1] * SAMPLING_RATE))
+    DAYS = [-2, -1, 0, 1, 2]
+    CELL_TYPES = ['wS2', 'wM1']
+    MIN_CELLS = 3  # minimum cells per mouse to include that mouse
 
     OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
-
 
     # ============================================================================
     # Load and process imaging data
     # ============================================================================
 
-    _, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir,
-                                                 two_p_imaging='yes',
-                                                 experimenters=['AR', 'GF', 'MI'])
+    _, _, mice, db = database.select_sessions_from_db(
+        paths.db_path, paths.nwb_dir, two_p_imaging='yes', experimenters=['AR', 'GF', 'MI']
+    )
 
     psth_records = []
     for mouse_id in mice:
@@ -54,12 +53,11 @@ if __name__ == '__main__':
 
         xarr.name = 'psth'
         df = xarr.to_dataframe().reset_index()
-        df['mouse_id']     = mouse_id
+        df['mouse_id'] = mouse_id
         df['reward_group'] = reward_group
         psth_records.append(df)
 
     psth = pd.concat(psth_records, ignore_index=True)
-
 
     # ============================================================================
     # Aggregate: per-mouse mean per cell type, then convert to % dF/F0
@@ -68,33 +66,44 @@ if __name__ == '__main__':
     psth_filtered = imaging.filter_data_by_cell_count(psth, MIN_CELLS)
 
     data_ctype = psth_filtered[psth_filtered['cell_type'].isin(CELL_TYPES)].copy()
-    data_ctype = (data_ctype
-                  .groupby(['mouse_id', 'day', 'reward_group', 'time', 'cell_type'])['psth']
-                  .mean()
-                  .reset_index())
+    data_ctype = (
+        data_ctype.groupby(['mouse_id', 'day', 'reward_group', 'time', 'cell_type'])['psth']
+        .mean()
+        .reset_index()
+    )
     data_ctype['psth'] = data_ctype['psth'] * 100
     data_ctype['time'] = data_ctype['time'].round(4)
-
 
     # ============================================================================
     # Figure
     # ============================================================================
 
-    sns.set_theme(context='paper', style='ticks', font='sans-serif', font_scale=1,
-                  rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'})
+    sns.set_theme(
+        context='paper',
+        style='ticks',
+        font='sans-serif',
+        font_scale=1,
+        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
+    )
 
-    fig, axes = plt.subplots(len(CELL_TYPES), len(DAYS),
-                              figsize=(18, 10), sharey=True)
+    fig, axes = plt.subplots(len(CELL_TYPES), len(DAYS), figsize=(18, 10), sharey=True)
 
     for i, cell_type in enumerate(CELL_TYPES):
         for j, day in enumerate(DAYS):
             ax = axes[i, j]
-            d = data_ctype[(data_ctype['cell_type'] == cell_type) &
-                           (data_ctype['day'] == day)]
-            sns.lineplot(data=d, x='time', y='psth', errorbar='ci',
-                         hue='reward_group', hue_order=['R-', 'R+'],
-                         palette=reward_palette, estimator='mean',
-                         ax=ax, legend=False)
+            d = data_ctype[(data_ctype['cell_type'] == cell_type) & (data_ctype['day'] == day)]
+            sns.lineplot(
+                data=d,
+                x='time',
+                y='psth',
+                errorbar='ci',
+                hue='reward_group',
+                hue_order=['R-', 'R+'],
+                palette=reward_palette,
+                estimator='mean',
+                ax=ax,
+                legend=False,
+            )
             ax.axvline(0, color='#FF9600', linestyle='-')
             ax.set_title(f'{cell_type} — Day {day:+d}')
             ax.set_ylabel('DF/F0 (%)' if j == 0 else '')
@@ -103,7 +112,6 @@ if __name__ == '__main__':
     plt.ylim(-1, 16)
     plt.tight_layout()
     sns.despine()
-
 
     # ============================================================================
     # Save

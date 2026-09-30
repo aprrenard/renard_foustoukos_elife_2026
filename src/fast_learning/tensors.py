@@ -33,8 +33,9 @@ def _select_events(session, trial_selection, epoch_name, trial_idx):
     return events, trial_ids
 
 
-def make_events_aligned_array_3d(nwb_path, rrs_keys, time_range, trial_selection,
-                                  epoch_name, cell_types, trial_idx_table=None):
+def make_events_aligned_array_3d(
+    nwb_path, rrs_keys, time_range, trial_selection, epoch_name, cell_types, trial_idx_table=None
+):
     """Generate, for a single nwb file, a 3d array of activity aligned on
     trial-table events. Cell types are stacked along the first dimension.
 
@@ -73,7 +74,8 @@ def make_events_aligned_array_3d(nwb_path, rrs_keys, time_range, trial_selection
             if cell_type in cell_type_dict:
                 rois = cell_type_dict[cell_type]
                 activity_aligned = align_array_to_timestamps(
-                    activity[rois], events, activity_ts, window_s=time_range)
+                    activity[rois], events, activity_ts, window_s=time_range
+                )
                 ct_arrays.append(activity_aligned)
                 metadata['mice'].extend([mouse_id] * activity_aligned.shape[0])
                 metadata['rois'].extend(rois)

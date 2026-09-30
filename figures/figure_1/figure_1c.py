@@ -24,11 +24,12 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_1', 'output')
 # Panel c (left): Performance across training days
 # ============================================================================
 
+
 def panel_c_left_performance_across_days(
     table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
     save_path=OUTPUT_DIR,
     save_format='svg',
-    dpi=300
+    dpi=300,
 ):
     """
     Generate Figure 1 Panel c (left): Performance across training days.
@@ -52,14 +53,14 @@ def panel_c_left_performance_across_days(
     table.loc[table.day.isin([-2, -1]), 'hr_w'] = np.nan
 
     # Average performance per session
-    table_agg = table.groupby(
-        ['mouse_id', 'session_id', 'reward_group', 'day'],
-        as_index=False
-    )[['outcome_c', 'outcome_a', 'outcome_w']].agg(np.mean)
+    table_agg = table.groupby(['mouse_id', 'session_id', 'reward_group', 'day'], as_index=False)[
+        ['outcome_c', 'outcome_a', 'outcome_w']
+    ].agg(np.mean)
 
     # Convert performance to percentage
-    table_agg[['outcome_c', 'outcome_a', 'outcome_w']] = \
+    table_agg[['outcome_c', 'outcome_a', 'outcome_w']] = (
         table_agg[['outcome_c', 'outcome_a', 'outcome_w']] * 100
+    )
 
     # Convert day to string for categorical plotting
     table_agg['day'] = table_agg['day'].astype(str)
@@ -76,8 +77,8 @@ def panel_c_left_performance_across_days(
             'ytick.major.width': 1,
             'pdf.fonttype': 42,
             'ps.fonttype': 42,
-            'svg.fonttype': 'none'
-        }
+            'svg.fonttype': 'none',
+        },
     )
 
     # Create figure
@@ -86,42 +87,90 @@ def panel_c_left_performance_across_days(
 
     # Plot individual mouse traces (thin lines)
     sns.lineplot(
-        data=table_agg, x='day', y='outcome_c', units='mouse_id',
-        estimator=None, hue="reward_group", hue_order=['R-', 'R+'],
-        palette=behavior_palette[4:6], alpha=0.4, legend=False,
-        ax=ax, marker=None, linewidth=1
+        data=table_agg,
+        x='day',
+        y='outcome_c',
+        units='mouse_id',
+        estimator=None,
+        hue="reward_group",
+        hue_order=['R-', 'R+'],
+        palette=behavior_palette[4:6],
+        alpha=0.4,
+        legend=False,
+        ax=ax,
+        marker=None,
+        linewidth=1,
     )
     sns.lineplot(
-        data=table_agg, x='day', y='outcome_a', units='mouse_id',
-        estimator=None, hue="reward_group", hue_order=['R-', 'R+'],
-        palette=behavior_palette[0:2], alpha=0.4, legend=False,
-        ax=ax, marker=None, linewidth=1
+        data=table_agg,
+        x='day',
+        y='outcome_a',
+        units='mouse_id',
+        estimator=None,
+        hue="reward_group",
+        hue_order=['R-', 'R+'],
+        palette=behavior_palette[0:2],
+        alpha=0.4,
+        legend=False,
+        ax=ax,
+        marker=None,
+        linewidth=1,
     )
     sns.lineplot(
-        data=table_agg, x='day', y='outcome_w', units='mouse_id',
-        estimator=None, hue="reward_group", hue_order=['R-', 'R+'],
-        palette=behavior_palette[2:4], alpha=0.4, legend=False,
-        ax=ax, marker=None, linewidth=1
+        data=table_agg,
+        x='day',
+        y='outcome_w',
+        units='mouse_id',
+        estimator=None,
+        hue="reward_group",
+        hue_order=['R-', 'R+'],
+        palette=behavior_palette[2:4],
+        alpha=0.4,
+        legend=False,
+        ax=ax,
+        marker=None,
+        linewidth=1,
     )
 
     # Plot group averages (thick lines with markers)
     sns.pointplot(
-        data=table_agg, x='day', y='outcome_c', estimator=np.mean,
-        palette=behavior_palette[4:6], hue="reward_group",
-        hue_order=['R-', 'R+'], alpha=1, legend=True,
-        ax=ax, linewidth=2
+        data=table_agg,
+        x='day',
+        y='outcome_c',
+        estimator=np.mean,
+        palette=behavior_palette[4:6],
+        hue="reward_group",
+        hue_order=['R-', 'R+'],
+        alpha=1,
+        legend=True,
+        ax=ax,
+        linewidth=2,
     )
     sns.pointplot(
-        data=table_agg, x='day', y='outcome_a', estimator=np.mean,
-        palette=behavior_palette[0:2], hue="reward_group",
-        hue_order=['R-', 'R+'], alpha=1, legend=True,
-        ax=ax, linewidth=2
+        data=table_agg,
+        x='day',
+        y='outcome_a',
+        estimator=np.mean,
+        palette=behavior_palette[0:2],
+        hue="reward_group",
+        hue_order=['R-', 'R+'],
+        alpha=1,
+        legend=True,
+        ax=ax,
+        linewidth=2,
     )
     sns.pointplot(
-        data=table_agg, x='day', y='outcome_w', estimator=np.mean,
-        palette=behavior_palette[2:4], hue="reward_group",
-        hue_order=['R-', 'R+'], alpha=1, legend=True,
-        ax=ax, linewidth=2
+        data=table_agg,
+        x='day',
+        y='outcome_w',
+        estimator=np.mean,
+        palette=behavior_palette[2:4],
+        hue="reward_group",
+        hue_order=['R-', 'R+'],
+        alpha=1,
+        legend=True,
+        ax=ax,
+        linewidth=2,
     )
 
     # Formatting
@@ -153,12 +202,13 @@ def panel_c_left_performance_across_days(
 # Panel c (right): Performance comparison for days 0, +1, +2
 # ============================================================================
 
+
 def panel_c_right_performance_barplot(
     table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
     days_of_interest=[0, 1, 2],
     save_path=OUTPUT_DIR,
     save_format='svg',
-    dpi=300
+    dpi=300,
 ):
     """
     Generate Figure 1 Panel c (right): Performance comparison with statistics.
@@ -183,23 +233,21 @@ def panel_c_right_performance_barplot(
     table.loc[table.day.isin([-2, -1]), 'hr_w'] = np.nan
 
     # Average performance per session
-    table_agg = table.groupby(
-        ['mouse_id', 'session_id', 'reward_group', 'day'],
-        as_index=False
-    )[['outcome_c', 'outcome_a', 'outcome_w']].agg(np.mean)
+    table_agg = table.groupby(['mouse_id', 'session_id', 'reward_group', 'day'], as_index=False)[
+        ['outcome_c', 'outcome_a', 'outcome_w']
+    ].agg(np.mean)
 
     # Convert performance to percentage
-    table_agg[['outcome_c', 'outcome_a', 'outcome_w']] = \
+    table_agg[['outcome_c', 'outcome_a', 'outcome_w']] = (
         table_agg[['outcome_c', 'outcome_a', 'outcome_w']] * 100
+    )
 
     # Convert day to string for categorical plotting
     table_agg['day'] = table_agg['day'].astype(str)
 
     # Select data for days of interest
     day_data = table_agg[table_agg['day'].isin([str(d) for d in days_of_interest])]
-    avg_performance = day_data.groupby(
-        ['day', 'mouse_id', 'reward_group']
-    )['outcome_w'].mean().reset_index()
+    avg_performance = day_data.groupby(['day', 'mouse_id', 'reward_group'])['outcome_w'].mean().reset_index()
 
     # Set plotting theme
     sns.set_theme(
@@ -208,11 +256,7 @@ def panel_c_right_performance_barplot(
         palette='deep',
         font='sans-serif',
         font_scale=1,
-        rc={
-            'pdf.fonttype': 42,
-            'ps.fonttype': 42,
-            'svg.fonttype': 'none'
-        }
+        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
     )
 
     # Create figure
@@ -226,7 +270,7 @@ def panel_c_right_performance_barplot(
         hue='reward_group',
         palette=behavior_palette[2:4][::-1],
         width=0.3,
-        dodge=True
+        dodge=True,
     )
 
     # Swarm plot for individual mice
@@ -254,10 +298,7 @@ def panel_c_right_performance_barplot(
         group_R_plus = df_day[df_day['reward_group'] == 'R+']['outcome_w']
         group_R_minus = df_day[df_day['reward_group'] == 'R-']['outcome_w']
 
-        stat, p_value = mannwhitneyu(
-            group_R_plus, group_R_minus,
-            alternative='two-sided'
-        )
+        stat, p_value = mannwhitneyu(group_R_plus, group_R_minus, alternative='two-sided')
         stats.append({'day': day, 'statistic': stat, 'p_value': p_value})
 
         # Add significance stars to the plot
@@ -266,14 +307,11 @@ def panel_c_right_performance_barplot(
         ypos = 95
 
         if p_value < 0.001:
-            plt.text(xpos, ypos, '***', ha='center', va='bottom',
-                    color='black', fontsize=14)
+            plt.text(xpos, ypos, '***', ha='center', va='bottom', color='black', fontsize=14)
         elif p_value < 0.01:
-            plt.text(xpos, ypos, '**', ha='center', va='bottom',
-                    color='black', fontsize=14)
+            plt.text(xpos, ypos, '**', ha='center', va='bottom', color='black', fontsize=14)
         elif p_value < 0.05:
-            plt.text(xpos, ypos, '*', ha='center', va='bottom',
-                    color='black', fontsize=14)
+            plt.text(xpos, ypos, '*', ha='center', va='bottom', color='black', fontsize=14)
 
     # Save figure and data
     os.makedirs(save_path, exist_ok=True)

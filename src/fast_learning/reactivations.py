@@ -46,13 +46,13 @@ from fast_learning import imaging, paths
 # ============================================================================
 
 # Imaging / template
-SAMPLING_RATE = 30          # Hz
-WIN = (0, 0.300)            # Template time window (stimulus onset → 300 ms)
-N_MAP_TRIALS = 40           # Mapping trials used to build the template
-THRESHOLD_DFF = None        # dF/F threshold for template cells (None = all cells)
+SAMPLING_RATE = 30  # Hz
+WIN = (0, 0.300)  # Template time window (stimulus onset → 300 ms)
+N_MAP_TRIALS = 40  # Mapping trials used to build the template
+THRESHOLD_DFF = None  # dF/F threshold for template cells (None = all cells)
 
 # Event detection
-THRESHOLD_CORR = 0.45       # Fixed correlation threshold, used only without surrogate thresholds
+THRESHOLD_CORR = 0.45  # Fixed correlation threshold, used only without surrogate thresholds
 MIN_EVENT_DISTANCE_MS = 150
 MIN_EVENT_DISTANCE_FRAMES = int(MIN_EVENT_DISTANCE_MS / 1000 * SAMPLING_RATE)
 PROMINENCE = 0.15
@@ -60,7 +60,7 @@ PROMINENCE = 0.15
 # Surrogates
 DAYS = [-2, -1, 0, 1, 2]
 PRELEARNING_DAYS = [-2, -1]
-SURROGATE_SEED = 0          # Base seed; each (mouse, day) gets its own stream
+SURROGATE_SEED = 0  # Base seed; each (mouse, day) gets its own stream
 
 # Mouse selection for the participation analyses (see module docstring)
 MIN_DAY0_EVENTS = 3
@@ -72,6 +72,7 @@ MOUSE_SELECTION_CSV = os.path.join(paths.processed_dir, 'reactivation', 'mouse_s
 # ============================================================================
 # Helpers
 # ============================================================================
+
 
 def percentile_tag(p):
     return f"p{int(p)}" if p == int(p) else f"p{int(p * 10)}"
@@ -90,15 +91,14 @@ def surrogate_rng(mouse, day):
 # Core imaging functions
 # ============================================================================
 
+
 def create_whisker_template(mouse, day, threshold_dff=THRESHOLD_DFF, verbose=False):
     """Create whisker response template from mapping data for a specific day."""
     folder = paths.tensor_dir
-    xarray_map = imaging.load_mouse_xarray(
-        mouse, folder, 'tensor_xarray_mapping_data.nc', subtracted=True)
+    xarray_map = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_mapping_data.nc', subtracted=True)
 
     xarray_day = xarray_map.sel(trial=xarray_map['day'] == day)
-    xarray_day = xarray_day.groupby('day').apply(
-        lambda x: x.isel(trial=slice(-N_MAP_TRIALS, None)))
+    xarray_day = xarray_day.groupby('day').apply(lambda x: x.isel(trial=slice(-N_MAP_TRIALS, None)))
 
     d = xarray_day.sel(time=slice(WIN[0], WIN[1])).mean(dim='time').fillna(0)
     template = d.mean(dim='trial').values
@@ -125,8 +125,7 @@ def compute_template_correlation(data, template):
     data_centered = data - np.mean(data, axis=0, keepdims=True)
     data_stds = np.std(data, axis=0)
 
-    correlations = np.dot(template_centered, data_centered) / (
-        template_std * data_stds * n_cells)
+    correlations = np.dot(template_centered, data_centered) / (template_std * data_stds * n_cells)
     correlations[data_stds == 0] = 0
     return correlations
 
@@ -149,22 +148,22 @@ def load_selected_trials(mouse, day, no_lick_only=False, time_window=None, folde
     file refer to these trials' concatenated trial x time axis, so pass the
     no_lick_only / time_window of that file (its 'parameters' entry)."""
     xarray_learning = imaging.load_mouse_xarray(
-        mouse, folder or paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=False)
+        mouse, folder or paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=False
+    )
     xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
-    selected, _ = select_trials_by_type(
-        xarray_day, no_lick_only=no_lick_only, time_window=time_window)
+    selected, _ = select_trials_by_type(xarray_day, no_lick_only=no_lick_only, time_window=time_window)
     return selected
 
 
-def detect_reactivation_events(correlations, threshold, min_distance, prominence,
-                                smooth=True, window_length=5, polyorder=2):
+def detect_reactivation_events(
+    correlations, threshold, min_distance, prominence, smooth=True, window_length=5, polyorder=2
+):
     """Detect reactivation events as peaks in correlation timeseries."""
     if smooth:
         if window_length % 2 == 0:
             window_length += 1
         if window_length > len(correlations):
-            window_length = (len(correlations) if len(correlations) % 2 == 1
-                             else len(correlations) - 1)
+            window_length = len(correlations) if len(correlations) % 2 == 1 else len(correlations) - 1
         if window_length < polyorder + 2:
             smoothed_corr = correlations
         else:
@@ -172,8 +171,7 @@ def detect_reactivation_events(correlations, threshold, min_distance, prominence
     else:
         smoothed_corr = correlations
 
-    peaks, _ = find_peaks(smoothed_corr, height=threshold,
-                          distance=min_distance, prominence=prominence)
+    peaks, _ = find_peaks(smoothed_corr, height=threshold, distance=min_distance, prominence=prominence)
     return peaks
 
 
@@ -186,8 +184,7 @@ def compute_time_above_threshold(correlations, threshold):
     return pct, n_above, total
 
 
-def map_events_to_blocks(event_indices, nostim_trials, n_timepoints_per_trial,
-                         sampling_rate=SAMPLING_RATE):
+def map_events_to_blocks(event_indices, nostim_trials, n_timepoints_per_trial, sampling_rate=SAMPLING_RATE):
     """Map event indices to block IDs and count events per block."""
     block_ids = nostim_trials['block_id'].values
     event_trials = event_indices // n_timepoints_per_trial
@@ -205,26 +202,26 @@ def map_events_to_blocks(event_indices, nostim_trials, n_timepoints_per_trial,
             events_per_block[int(b)] += 1
 
     event_frequency_per_block = {
-        int(b): events_per_block[int(b)] / (
-            trials_per_block[int(b)] * n_timepoints_per_trial / sampling_rate / 60)
+        int(b): events_per_block[int(b)]
+        / (trials_per_block[int(b)] * n_timepoints_per_trial / sampling_rate / 60)
         for b in unique_blocks
     }
     return events_per_block, event_frequency_per_block, event_blocks
 
 
-def compute_time_above_per_block(correlations, threshold, trial_block_ids,
-                                  n_timepoints_per_trial):
+def compute_time_above_per_block(correlations, threshold, trial_block_ids, n_timepoints_per_trial):
     """Compute percentage of time above threshold per block."""
     unique_blocks = np.unique(trial_block_ids)
     percent_time_per_block = {}
     for block in unique_blocks:
         trials_in_block = np.where(trial_block_ids == block)[0]
-        block_corr = np.concatenate([
-            correlations[t * n_timepoints_per_trial:(t + 1) * n_timepoints_per_trial]
-            for t in trials_in_block
-        ])
-        pct = (np.sum(block_corr > threshold) / len(block_corr) * 100
-               if len(block_corr) > 0 else 0.0)
+        block_corr = np.concatenate(
+            [
+                correlations[t * n_timepoints_per_trial : (t + 1) * n_timepoints_per_trial]
+                for t in trials_in_block
+            ]
+        )
+        pct = np.sum(block_corr > threshold) / len(block_corr) * 100 if len(block_corr) > 0 else 0.0
         percent_time_per_block[int(block)] = pct
     return percent_time_per_block
 
@@ -232,9 +229,7 @@ def compute_time_above_per_block(correlations, threshold, trial_block_ids,
 def get_block_boundaries(nostim_trials, n_timepoints_per_trial):
     """Find frame indices where block transitions occur."""
     block_ids = nostim_trials['block_id'].values
-    return [i * n_timepoints_per_trial
-            for i in range(1, len(block_ids))
-            if block_ids[i] != block_ids[i - 1]]
+    return [i * n_timepoints_per_trial for i in range(1, len(block_ids)) if block_ids[i] != block_ids[i - 1]]
 
 
 def extract_performance_per_block(nostim_trials):
@@ -250,11 +245,15 @@ def extract_performance_per_block(nostim_trials):
     return hr_per_block
 
 
-def compute_reactivation_frequency_per_trial(selected_trials, template, threshold,
-                                              time_bin_ms=500,
-                                              sampling_rate=SAMPLING_RATE,
-                                              min_distance=MIN_EVENT_DISTANCE_FRAMES,
-                                              prominence=PROMINENCE):
+def compute_reactivation_frequency_per_trial(
+    selected_trials,
+    template,
+    threshold,
+    time_bin_ms=500,
+    sampling_rate=SAMPLING_RATE,
+    min_distance=MIN_EVENT_DISTANCE_FRAMES,
+    prominence=PROMINENCE,
+):
     """Compute average reactivation frequency as function of time within trials."""
     n_cells, n_trials, n_timepoints = selected_trials.shape
     frames_per_bin = int(time_bin_ms / 1000.0 * sampling_rate)
@@ -267,14 +266,12 @@ def compute_reactivation_frequency_per_trial(selected_trials, template, threshol
     events_per_trial = np.zeros((n_trials, n_bins))
 
     for trial_idx in range(n_trials):
-        trial_data = np.nan_to_num(
-            selected_trials[:, trial_idx, :n_frames].values, nan=0.0)
+        trial_data = np.nan_to_num(selected_trials[:, trial_idx, :n_frames].values, nan=0.0)
         corr = compute_template_correlation(trial_data, template)
         events = detect_reactivation_events(corr, threshold, min_distance, prominence)
         for bin_idx in range(n_bins):
             events_per_trial[trial_idx, bin_idx] = np.sum(
-                (events >= bin_idx * frames_per_bin) &
-                (events < (bin_idx + 1) * frames_per_bin)
+                (events >= bin_idx * frames_per_bin) & (events < (bin_idx + 1) * frames_per_bin)
             )
 
     time_bins = (np.arange(n_bins) + 0.5) * frames_per_bin / sampling_rate
@@ -286,6 +283,7 @@ def compute_reactivation_frequency_per_trial(selected_trials, template, threshol
 # ============================================================================
 # Surrogate threshold loading
 # ============================================================================
+
 
 def load_surrogate_thresholds(surrogate_csv_path, percentile=99):
     """Load percentile-based thresholds from surrogate CSV.
@@ -319,8 +317,7 @@ def load_surrogate_thresholds(surrogate_csv_path, percentile=99):
     return threshold_dict
 
 
-def get_threshold_for_mouse_day(threshold_dict, mouse, day,
-                                 default_threshold=THRESHOLD_CORR):
+def get_threshold_for_mouse_day(threshold_dict, mouse, day, default_threshold=THRESHOLD_CORR):
     """Get per-mouse, per-day threshold with fallback to default."""
     if threshold_dict is None:
         return default_threshold
@@ -333,8 +330,10 @@ def get_threshold_for_mouse_day(threshold_dict, mouse, day,
 # Reactivation event detection (per mouse)
 # ============================================================================
 
-def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=None,
-                                no_lick_only=False, time_window=None):
+
+def analyze_mouse_reactivation(
+    mouse, days=DAYS, verbose=False, threshold_dict=None, no_lick_only=False, time_window=None
+):
     """
     Detect reactivation events for a single mouse across all days.
 
@@ -347,46 +346,49 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
 
     for day in days:
         try:
-            template, cells_mask = create_whisker_template(
-                mouse, day, THRESHOLD_DFF, verbose=verbose)
+            template, cells_mask = create_whisker_template(mouse, day, THRESHOLD_DFF, verbose=verbose)
 
             selected_trials = load_selected_trials(
-                mouse, day, no_lick_only=no_lick_only, time_window=time_window, folder=folder)
+                mouse, day, no_lick_only=no_lick_only, time_window=time_window, folder=folder
+            )
             n_selected_trials = len(selected_trials.trial)
             if n_selected_trials == 0:
                 continue
 
             n_cells, n_trials, n_timepoints = selected_trials.shape
-            data = np.nan_to_num(
-                selected_trials.values.reshape(n_cells, -1), nan=0.0)
+            data = np.nan_to_num(selected_trials.values.reshape(n_cells, -1), nan=0.0)
 
             correlations = compute_template_correlation(data, template)
 
-            current_threshold = get_threshold_for_mouse_day(
-                threshold_dict, mouse, day, THRESHOLD_CORR)
+            current_threshold = get_threshold_for_mouse_day(threshold_dict, mouse, day, THRESHOLD_CORR)
             events = detect_reactivation_events(
-                correlations, current_threshold,
-                MIN_EVENT_DISTANCE_FRAMES, PROMINENCE)
+                correlations, current_threshold, MIN_EVENT_DISTANCE_FRAMES, PROMINENCE
+            )
 
-            pct_above, n_above, total_frames = compute_time_above_threshold(
-                correlations, current_threshold)
+            pct_above, n_above, total_frames = compute_time_above_threshold(correlations, current_threshold)
             events_per_block, event_freq_per_block, event_blocks = map_events_to_blocks(
-                events, selected_trials, n_timepoints, SAMPLING_RATE)
+                events, selected_trials, n_timepoints, SAMPLING_RATE
+            )
             trial_block_ids = selected_trials['block_id'].values
             pct_per_block = compute_time_above_per_block(
-                correlations, current_threshold, trial_block_ids, n_timepoints)
+                correlations, current_threshold, trial_block_ids, n_timepoints
+            )
             block_boundaries = get_block_boundaries(selected_trials, n_timepoints)
             hr_per_block = extract_performance_per_block(selected_trials)
 
             session_dur_sec = (n_trials * n_timepoints) / SAMPLING_RATE
             event_frequency = len(events) / (session_dur_sec / 60)
 
-            time_bins, event_rate, event_rate_sem, n_trials_temporal = \
+            time_bins, event_rate, event_rate_sem, n_trials_temporal = (
                 compute_reactivation_frequency_per_trial(
-                    selected_trials, template, current_threshold,
+                    selected_trials,
+                    template,
+                    current_threshold,
                     sampling_rate=SAMPLING_RATE,
                     min_distance=MIN_EVENT_DISTANCE_FRAMES,
-                    prominence=PROMINENCE)
+                    prominence=PROMINENCE,
+                )
+            )
 
             results['days'][day] = {
                 'template': template,
@@ -407,8 +409,7 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
                 'session_duration_sec': session_dur_sec,
                 'session_duration_min': session_dur_sec / 60,
                 'event_frequency': event_frequency,
-                'session_hr_mean': (np.mean(list(hr_per_block.values()))
-                                    if hr_per_block else np.nan),
+                'session_hr_mean': (np.mean(list(hr_per_block.values())) if hr_per_block else np.nan),
                 'threshold_used': current_threshold,
                 'temporal': {
                     'time_bins': time_bins,
@@ -422,6 +423,7 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
             print(f"  WARNING {mouse} day {day} skipped: {e!r}")
             if verbose:
                 import traceback
+
                 traceback.print_exc()
             continue
 
@@ -431,6 +433,7 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
 # ============================================================================
 # Surrogate computation functions
 # ============================================================================
+
 
 def create_surrogate_by_circular_shift(data, min_shift_frames=0, rng=None):
     """Create one surrogate by independently circular-shifting each cell."""
@@ -444,8 +447,9 @@ def create_surrogate_by_circular_shift(data, min_shift_frames=0, rng=None):
     return surrogate
 
 
-def compute_surrogate_thresholds(data, template, n_surrogates=1000, min_shift=0,
-                                  percentiles=(99,), verbose=False, rng=None):
+def compute_surrogate_thresholds(
+    data, template, n_surrogates=1000, min_shift=0, percentiles=(99,), verbose=False, rng=None
+):
     """
     Compute surrogate-based thresholds for multiple percentiles via circular shift.
     Returns dict keyed by percentile value.
@@ -465,8 +469,7 @@ def compute_surrogate_thresholds(data, template, n_surrogates=1000, min_shift=0,
     results = {}
     for p in percentiles:
         med = np.median(surrogate_pcts[p])
-        ci = (np.percentile(surrogate_pcts[p], 2.5),
-              np.percentile(surrogate_pcts[p], 97.5))
+        ci = (np.percentile(surrogate_pcts[p], 2.5), np.percentile(surrogate_pcts[p], 97.5))
         pval = percentileofscore(surrogate_pcts[p], observed_pcts[p]) / 100.0
         results[p] = {
             'threshold_percentile_median': med,
@@ -479,9 +482,16 @@ def compute_surrogate_thresholds(data, template, n_surrogates=1000, min_shift=0,
     return results
 
 
-def analyze_surrogates_per_day(mouse, days=DAYS, threshold_dff=THRESHOLD_DFF,
-                                 n_surrogates=1000, percentiles=(99,), verbose=False,
-                                 no_lick_only=False, time_window=None):
+def analyze_surrogates_per_day(
+    mouse,
+    days=DAYS,
+    threshold_dff=THRESHOLD_DFF,
+    n_surrogates=1000,
+    percentiles=(99,),
+    verbose=False,
+    no_lick_only=False,
+    time_window=None,
+):
     """
     Compute per-day surrogate thresholds for one mouse.
     Returns (results_dfs, all_surrogate_data) where results_dfs is {percentile: DataFrame}.
@@ -492,17 +502,18 @@ def analyze_surrogates_per_day(mouse, days=DAYS, threshold_dff=THRESHOLD_DFF,
 
     for day in days:
         try:
-            template, cells_mask = create_whisker_template(
-                mouse, day, threshold_dff, verbose=verbose)
+            template, cells_mask = create_whisker_template(mouse, day, threshold_dff, verbose=verbose)
             n_resp = cells_mask.sum()
             if n_resp < 3 and threshold_dff is not None:
                 continue
 
             xarray_learning = imaging.load_mouse_xarray(
-                mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=False)
+                mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=False
+            )
             xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
             nostim, n_trials = select_trials_by_type(
-                xarray_day, no_lick_only=no_lick_only, time_window=time_window)
+                xarray_day, no_lick_only=no_lick_only, time_window=time_window
+            )
             if n_trials < 5:
                 continue
 
@@ -513,24 +524,27 @@ def analyze_surrogates_per_day(mouse, days=DAYS, threshold_dff=THRESHOLD_DFF,
                 continue
 
             surrogate_results = compute_surrogate_thresholds(
-                data, template, n_surrogates, 0, percentiles, verbose,
-                rng=surrogate_rng(mouse, day))
+                data, template, n_surrogates, 0, percentiles, verbose, rng=surrogate_rng(mouse, day)
+            )
 
             for p in percentiles:
                 pr = surrogate_results[p]
-                results_lists[p].append({
-                    'mouse_id': mouse, 'day': day,
-                    'n_cells_responsive': n_resp,
-                    'n_trials': n_trials,
-                    'n_frames': n_frames,
-                    'n_surrogates': n_surrogates,
-                    'percentile_value': p,
-                    'threshold_percentile_median': pr['threshold_percentile_median'],
-                    'threshold_percentile_ci_lower': pr['threshold_percentile_ci'][0],
-                    'threshold_percentile_ci_upper': pr['threshold_percentile_ci'][1],
-                    'observed_percentile': pr['observed_percentile'],
-                    'p_value_percentile': pr['p_value_percentile'],
-                })
+                results_lists[p].append(
+                    {
+                        'mouse_id': mouse,
+                        'day': day,
+                        'n_cells_responsive': n_resp,
+                        'n_trials': n_trials,
+                        'n_frames': n_frames,
+                        'n_surrogates': n_surrogates,
+                        'percentile_value': p,
+                        'threshold_percentile_median': pr['threshold_percentile_median'],
+                        'threshold_percentile_ci_lower': pr['threshold_percentile_ci'][0],
+                        'threshold_percentile_ci_upper': pr['threshold_percentile_ci'][1],
+                        'observed_percentile': pr['observed_percentile'],
+                        'p_value_percentile': pr['p_value_percentile'],
+                    }
+                )
                 all_surrogate_data[p][day] = pr
 
         except Exception as e:
@@ -544,20 +558,39 @@ def analyze_surrogates_per_day(mouse, days=DAYS, threshold_dff=THRESHOLD_DFF,
     return results_dfs, all_surrogate_data
 
 
-def process_mouse_surrogates_per_day(mouse, days, threshold_dff, n_surrogates,
-                            percentiles=(99,), verbose=False,
-                            no_lick_only=False, time_window=None):
+def process_mouse_surrogates_per_day(
+    mouse,
+    days,
+    threshold_dff,
+    n_surrogates,
+    percentiles=(99,),
+    verbose=False,
+    no_lick_only=False,
+    time_window=None,
+):
     """Parallel wrapper for per-day surrogates."""
     results_dfs, surrogate_data = analyze_surrogates_per_day(
-        mouse, days=days, threshold_dff=threshold_dff,
-        n_surrogates=n_surrogates, percentiles=percentiles, verbose=verbose,
-        no_lick_only=no_lick_only, time_window=time_window)
+        mouse,
+        days=days,
+        threshold_dff=threshold_dff,
+        n_surrogates=n_surrogates,
+        percentiles=percentiles,
+        verbose=verbose,
+        no_lick_only=no_lick_only,
+        time_window=time_window,
+    )
     return (mouse, results_dfs, surrogate_data)
 
 
-def analyze_surrogates_per_mouse(mouse, threshold_dff=THRESHOLD_DFF,
-                                   n_surrogates=1000, percentiles=(99,),
-                                   verbose=False, no_lick_only=False, time_window=None):
+def analyze_surrogates_per_mouse(
+    mouse,
+    threshold_dff=THRESHOLD_DFF,
+    n_surrogates=1000,
+    percentiles=(99,),
+    verbose=False,
+    no_lick_only=False,
+    time_window=None,
+):
     """
     Compute single per-mouse surrogate threshold using pre-learning days pooled.
     Returns (results_dfs, surrogate_data) where results_dfs is {percentile: DataFrame}.
@@ -565,7 +598,8 @@ def analyze_surrogates_per_mouse(mouse, threshold_dff=THRESHOLD_DFF,
     folder = paths.tensor_dir
     try:
         xarray_learning = imaging.load_mouse_xarray(
-            mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=False)
+            mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=False
+        )
     except Exception as e:
         if verbose:
             print(f"  Error loading xarray for {mouse}: {e}")
@@ -578,15 +612,15 @@ def analyze_surrogates_per_mouse(mouse, threshold_dff=THRESHOLD_DFF,
 
     for day in PRELEARNING_DAYS:
         try:
-            template, cells_mask = create_whisker_template(
-                mouse, day, threshold_dff, verbose=verbose)
+            template, cells_mask = create_whisker_template(mouse, day, threshold_dff, verbose=verbose)
             n_resp = cells_mask.sum()
             if n_resp < 3 and threshold_dff is not None:
                 continue
 
             xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
             nostim, n_nostim_trials = select_trials_by_type(
-                xarray_day, no_lick_only=no_lick_only, time_window=time_window)
+                xarray_day, no_lick_only=no_lick_only, time_window=time_window
+            )
             if n_nostim_trials < 5:
                 continue
 
@@ -596,8 +630,8 @@ def analyze_surrogates_per_mouse(mouse, threshold_dff=THRESHOLD_DFF,
                 continue
 
             day_results = compute_surrogate_thresholds(
-                data, template, n_surrogates, 0, percentiles, verbose,
-                rng=surrogate_rng(mouse, day))
+                data, template, n_surrogates, 0, percentiles, verbose, rng=surrogate_rng(mouse, day)
+            )
 
             for p in percentiles:
                 pooled_surr[p].append(day_results[p]['surrogate_percentiles'])
@@ -624,18 +658,22 @@ def analyze_surrogates_per_mouse(mouse, threshold_dff=THRESHOLD_DFF,
         ci = np.percentile(pooled, [2.5, 97.5])
         pval = np.mean(pooled > observed)
 
-        results_dfs[p] = pd.DataFrame([{
-            'mouse_id': mouse,
-            'n_frames': total_frames,
-            'n_days_processed': days_processed,
-            'n_surrogates_per_day': n_surrogates,
-            'percentile_value': p,
-            'threshold_percentile_median': threshold,
-            'threshold_percentile_ci_lower': ci[0],
-            'threshold_percentile_ci_upper': ci[1],
-            'observed_percentile': observed,
-            'p_value_percentile': pval,
-        }])
+        results_dfs[p] = pd.DataFrame(
+            [
+                {
+                    'mouse_id': mouse,
+                    'n_frames': total_frames,
+                    'n_days_processed': days_processed,
+                    'n_surrogates_per_day': n_surrogates,
+                    'percentile_value': p,
+                    'threshold_percentile_median': threshold,
+                    'threshold_percentile_ci_lower': ci[0],
+                    'threshold_percentile_ci_upper': ci[1],
+                    'observed_percentile': observed,
+                    'p_value_percentile': pval,
+                }
+            ]
+        )
         surrogate_data[p] = {
             'threshold_percentile_median': threshold,
             'threshold_percentile_ci': ci,
@@ -648,20 +686,26 @@ def analyze_surrogates_per_mouse(mouse, threshold_dff=THRESHOLD_DFF,
     return results_dfs, surrogate_data
 
 
-def process_mouse_surrogates_per_mouse(mouse, threshold_dff, n_surrogates,
-                              percentiles=(99,), verbose=False,
-                              no_lick_only=False, time_window=None):
+def process_mouse_surrogates_per_mouse(
+    mouse, threshold_dff, n_surrogates, percentiles=(99,), verbose=False, no_lick_only=False, time_window=None
+):
     """Parallel wrapper for per-mouse surrogates."""
     results_dfs, surrogate_data = analyze_surrogates_per_mouse(
-        mouse, threshold_dff=threshold_dff,
-        n_surrogates=n_surrogates, percentiles=percentiles, verbose=verbose,
-        no_lick_only=no_lick_only, time_window=time_window)
+        mouse,
+        threshold_dff=threshold_dff,
+        n_surrogates=n_surrogates,
+        percentiles=percentiles,
+        verbose=verbose,
+        no_lick_only=no_lick_only,
+        time_window=time_window,
+    )
     return (mouse, results_dfs, surrogate_data)
 
 
 # ============================================================================
 # Helpers for collecting parallel results
 # ============================================================================
+
 
 def collect_surrogate_results(results_list, percentiles):
     """Aggregate per-mouse DataFrames from parallel results into one per percentile."""
@@ -671,16 +715,13 @@ def collect_surrogate_results(results_list, percentiles):
             for p in percentiles:
                 if p in results_dfs:
                     all_results[p].append(results_dfs[p])
-    return {
-        p: pd.concat(dfs, ignore_index=True)
-        for p, dfs in all_results.items()
-        if dfs
-    }
+    return {p: pd.concat(dfs, ignore_index=True) for p, dfs in all_results.items() if dfs}
 
 
 # ============================================================================
 # Mouse selection for the participation analyses
 # ============================================================================
+
 
 def compute_mouse_selection(results_data, min_events=MIN_DAY0_EVENTS, day=SELECTION_DAY):
     """One row per mouse: reward group, number of events on `day`, included.
@@ -692,9 +733,14 @@ def compute_mouse_selection(results_data, min_events=MIN_DAY0_EVENTS, day=SELECT
     for key, group in [('r_plus_results', 'R+'), ('r_minus_results', 'R-')]:
         for mouse, res in results_data[key].items():
             n_events = int(res.get('days', {}).get(day, {}).get('total_events', 0))
-            rows.append({'mouse_id': mouse, 'reward_group': group,
-                         f'n_events_day{day}': n_events,
-                         'included': n_events >= min_events})
+            rows.append(
+                {
+                    'mouse_id': mouse,
+                    'reward_group': group,
+                    f'n_events_day{day}': n_events,
+                    'included': n_events >= min_events,
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -703,6 +749,7 @@ def load_participation_mice(path=MOUSE_SELECTION_CSV):
     if not os.path.exists(path):
         raise FileNotFoundError(
             f"Mouse selection not found: {path}\n"
-            "Run pipeline/07_reactivations.py (or its --selection-only option) first.")
+            "Run pipeline/07_reactivations.py (or its --selection-only option) first."
+        )
     df = pd.read_csv(path)
     return set(df.loc[df['included'], 'mouse_id'])

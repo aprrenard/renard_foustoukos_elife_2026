@@ -28,7 +28,7 @@ from fast_learning.plotting import reward_palette, save_figure
 # ============================================================================
 
 sampling_rate = 30
-win = (0, 0.300)          # response window from stimulus onset (seconds)
+win = (0, 0.300)  # response window from stimulus onset (seconds)
 baseline_win = (-1, 0)
 if __name__ == '__main__':
     baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * sampling_rate))
@@ -40,15 +40,15 @@ if __name__ == '__main__':
     RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
     OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 
-
     # ============================================================================
     # Load data
     # ============================================================================
 
     _, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir, two_p_imaging='yes')
 
-    bh_path = os.path.join(paths.processed_dir, 'behavior',
-                            'behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
+    bh_path = os.path.join(
+        paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
+    )
     table = pd.read_csv(bh_path)
     bh_df = table.loc[(table['day'] == 0) & (table['whisker_stim'] == 1)]
 
@@ -64,8 +64,7 @@ if __name__ == '__main__':
         rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
 
         # --- mapping data ---
-        xarray = imaging.load_mouse_xarray(
-            mouse, folder, 'tensor_xarray_mapping_data.nc', subtracted=True)
+        xarray = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_mapping_data.nc', subtracted=True)
         xarray = xarray.sel(trial=xarray['day'].isin(days))
 
         n_trials = xarray[0, :, 0].groupby('day').count(dim='trial').values
@@ -78,8 +77,7 @@ if __name__ == '__main__':
         d = d.fillna(0)
 
         # --- Day 0 learning data ---
-        xarray_l = imaging.load_mouse_xarray(
-            mouse, folder, 'tensor_xarray_learning_data.nc')
+        xarray_l = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')
         xarray_l = xarray_l.sel(trial=xarray_l['day'].isin([0]))
         xarray_l = xarray_l.sel(trial=xarray_l['whisker_stim'] == 1)
         xarray_l = xarray_l.sel(time=slice(win[0], win[1])).mean(dim='time')
@@ -94,21 +92,27 @@ if __name__ == '__main__':
             vectors_nonrew_day0_learning.append(xarray_l)
             mice_nonrew.append(mouse)
 
-
     # ============================================================================
     # Analysis
     # ============================================================================
 
-    def progressive_learning_analysis(vectors_mapping, vectors_learning, mice_list,
-                                       pre_days=[-2, -1], post_days=[1, 2],
-                                       window_size=10, step_size=1, seed=42):
+    def progressive_learning_analysis(
+        vectors_mapping,
+        vectors_learning,
+        mice_list,
+        pre_days=[-2, -1],
+        post_days=[1, 2],
+        window_size=10,
+        step_size=1,
+        seed=42,
+    ):
         """
-    Train a pre/post decoder on mapping trials and apply it with a sliding
-    window to Day-0 learning trials.
+        Train a pre/post decoder on mapping trials and apply it with a sliding
+        window to Day-0 learning trials.
 
-    Returns a DataFrame with columns: mouse_id, trial_start, trial_center,
-    mean_decision_value.
-    """
+        Returns a DataFrame with columns: mouse_id, trial_start, trial_center,
+        mean_decision_value.
+        """
         results = []
 
         for d_mapping, d_learning, mouse in zip(vectors_mapping, vectors_learning, mice_list):
@@ -140,24 +144,29 @@ if __name__ == '__main__':
                 if X_win.shape[0] == 0:
                     continue
                 decision_values = clf.decision_function(scaler.transform(X_win))
-                results.append({
-                    'mouse_id': mouse,
-                    'trial_start': start_idx,
-                    'trial_center': start_idx + window_size // 2,
-                    'mean_decision_value': np.mean(decision_values) * sign_flip,
-                })
+                results.append(
+                    {
+                        'mouse_id': mouse,
+                        'trial_start': start_idx,
+                        'trial_center': start_idx + window_size // 2,
+                        'mean_decision_value': np.mean(decision_values) * sign_flip,
+                    }
+                )
 
         return pd.DataFrame(results)
 
-
     results_rew = progressive_learning_analysis(
-        vectors_rew_mapping, vectors_rew_day0_learning, mice_rew,
-        window_size=window_size, step_size=step_size)
+        vectors_rew_mapping, vectors_rew_day0_learning, mice_rew, window_size=window_size, step_size=step_size
+    )
     results_rew['reward_group'] = 'R+'
 
     results_nonrew = progressive_learning_analysis(
-        vectors_nonrew_mapping, vectors_nonrew_day0_learning, mice_nonrew,
-        window_size=window_size, step_size=step_size)
+        vectors_nonrew_mapping,
+        vectors_nonrew_day0_learning,
+        mice_nonrew,
+        window_size=window_size,
+        step_size=step_size,
+    )
     results_nonrew['reward_group'] = 'R-'
 
     results_combined = pd.concat([results_rew, results_nonrew], ignore_index=True)
@@ -185,11 +194,13 @@ if __name__ == '__main__':
         corr_groups.append(group)
         print(f"{mouse} ({group}): r={corr:.3f}")
 
-    df_corr = pd.DataFrame({
-        'mouse_id': corr_mice,
-        'reward_group': corr_groups,
-        'correlation': corr_real,
-    })
+    df_corr = pd.DataFrame(
+        {
+            'mouse_id': corr_mice,
+            'reward_group': corr_groups,
+            'correlation': corr_real,
+        }
+    )
 
     # Population-level statistics (Wilcoxon one-sample, H0: median correlation <= 0)
     pop_stats = {}
@@ -200,19 +211,22 @@ if __name__ == '__main__':
             _, p_wilcox = wilcoxon(sub['correlation'].values, alternative='greater')
             _, p_ttest = ttest_1samp(sub['correlation'].values, 0, alternative='greater')
             pop_stats[group] = p_wilcox
-            pop_stats_rows.append({
-                'reward_group': group,
-                'n': len(sub),
-                'mean_correlation': np.mean(sub['correlation'].values),
-                'std_correlation': np.std(sub['correlation'].values),
-                'p_wilcoxon': p_wilcox,
-                'p_ttest': p_ttest,
-            })
-            print(f"{group} (N={len(sub)}): mean r={np.mean(sub['correlation'].values):.3f}, "
-                  f"Wilcoxon p={p_wilcox:.4f}")
+            pop_stats_rows.append(
+                {
+                    'reward_group': group,
+                    'n': len(sub),
+                    'mean_correlation': np.mean(sub['correlation'].values),
+                    'std_correlation': np.std(sub['correlation'].values),
+                    'p_wilcoxon': p_wilcox,
+                    'p_ttest': p_ttest,
+                }
+            )
+            print(
+                f"{group} (N={len(sub)}): mean r={np.mean(sub['correlation'].values):.3f}, "
+                f"Wilcoxon p={p_wilcox:.4f}"
+            )
 
     df_pop_stats = pd.DataFrame(pop_stats_rows)
-
 
     # ============================================================================
     # Figure
@@ -220,11 +234,25 @@ if __name__ == '__main__':
 
     fig, ax = plt.subplots(1, 1, figsize=(4, 5))
 
-    sns.swarmplot(data=df_corr, x='reward_group', y='correlation',
-                  palette=reward_palette[::-1], size=8, alpha=0.6, ax=ax)
-    sns.pointplot(data=df_corr, x='reward_group', y='correlation',
-                  palette=reward_palette[::-1], errorbar='ci', markersize=10,
-                  join=False, ax=ax)
+    sns.swarmplot(
+        data=df_corr,
+        x='reward_group',
+        y='correlation',
+        palette=reward_palette[::-1],
+        size=8,
+        alpha=0.6,
+        ax=ax,
+    )
+    sns.pointplot(
+        data=df_corr,
+        x='reward_group',
+        y='correlation',
+        palette=reward_palette[::-1],
+        errorbar='ci',
+        markersize=10,
+        join=False,
+        ax=ax,
+    )
     ax.axhline(0, color='black', linestyle='--', alpha=0.5, linewidth=1)
 
     # Annotate p-values
@@ -234,15 +262,13 @@ if __name__ == '__main__':
             p_text = f'p={p:.4f}' if p >= 0.001 else 'p<0.001'
             sig = '***' if p < 0.001 else ('**' if p < 0.01 else ('*' if p < 0.05 else 'n.s.'))
             y_pos = ax.get_ylim()[1] - 0.1 * (ax.get_ylim()[1] - ax.get_ylim()[0])
-            ax.text(i, y_pos, f'{p_text}\n{sig}', ha='center', va='top',
-                    fontsize=9, fontweight='bold')
+            ax.text(i, y_pos, f'{p_text}\n{sig}', ha='center', va='top', fontsize=9, fontweight='bold')
 
     ax.set_ylim(-1, 1)
     ax.set_xlabel('Reward group')
     ax.set_ylabel('Pearson r\n(Decision value vs Performance)')
     sns.despine()
     plt.tight_layout()
-
 
     # ============================================================================
     # Save

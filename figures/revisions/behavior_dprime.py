@@ -123,6 +123,7 @@ EPS = 1e-3  # clipping epsilon for already-smoothed probability curves
 # Shared d' helpers
 # ============================================================================
 
+
 def _dprime_from_counts(hits, n_hit, fas, n_fa):
     """d' from raw trial counts, with the log-linear correction (Hautus,
     1995) that avoids +/-inf when a session's hit or FA rate is exactly 0
@@ -145,21 +146,24 @@ def _session_dprime(table, group_cols):
     """Collapse a trial-level table to one d' value per group (typically
     one row per session), using whisker trials as signal and no-stim/catch
     trials as noise."""
-    counts = table.groupby(group_cols).agg(
-        n_hit=('outcome_w', 'count'),
-        hits=('outcome_w', 'sum'),
-        n_fa=('outcome_c', 'count'),
-        fas=('outcome_c', 'sum'),
-    ).reset_index()
-    counts['dprime_w'] = _dprime_from_counts(
-        counts['hits'], counts['n_hit'], counts['fas'], counts['n_fa']
+    counts = (
+        table.groupby(group_cols)
+        .agg(
+            n_hit=('outcome_w', 'count'),
+            hits=('outcome_w', 'sum'),
+            n_fa=('outcome_c', 'count'),
+            fas=('outcome_c', 'sum'),
+        )
+        .reset_index()
     )
+    counts['dprime_w'] = _dprime_from_counts(counts['hits'], counts['n_hit'], counts['fas'], counts['n_fa'])
     return counts
 
 
 def _load_trial_resolved_dprime(
-    table_path=os.path.join(paths.processed_dir, 'behavior',
-                             'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'),
+    table_path=os.path.join(
+        paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
+    ),
     n_trials=120,
 ):
     """Load the Day-0 whisker-trial table (used by figure_1d.py and
@@ -186,10 +190,22 @@ def _load_trial_resolved_dprime(
 # (Figure 1C-right, 2C, 2F, execution panel c)
 # ============================================================================
 
+
 def _dprime_barplot_by_group(
-    data, day_col, days_of_interest, day_labels, group_col, group_order,
-    bar_palette, filename, output_dir=OUTPUT_DIR, save_format='svg', dpi=300,
-    xlabel='Day', ylabel="d' (whisker vs. catch)", legend_title=None,
+    data,
+    day_col,
+    days_of_interest,
+    day_labels,
+    group_col,
+    group_order,
+    bar_palette,
+    filename,
+    output_dir=OUTPUT_DIR,
+    save_format='svg',
+    dpi=300,
+    xlabel='Day',
+    ylabel="d' (whisker vs. catch)",
+    legend_title=None,
     swarm_color='grey',
 ):
     """Bar + swarm plot of dprime_w across days_of_interest, split into the
@@ -201,22 +217,34 @@ def _dprime_barplot_by_group(
     the original's [0, 100] percentage range."""
 
     day_data = data[data[day_col].astype(str).isin([str(d) for d in days_of_interest])].copy()
-    day_data['day_label'] = day_data[day_col].astype(str).map(
-        dict(zip([str(d) for d in days_of_interest], day_labels))
+    day_data['day_label'] = (
+        day_data[day_col].astype(str).map(dict(zip([str(d) for d in days_of_interest], day_labels)))
     )
 
     sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
     plt.figure(figsize=(8, 6))
 
     sns.barplot(
-        data=day_data, x='day_label', y='dprime_w', hue=group_col,
-        order=day_labels, hue_order=group_order, palette=bar_palette,
-        width=0.3, dodge=True,
+        data=day_data,
+        x='day_label',
+        y='dprime_w',
+        hue=group_col,
+        order=day_labels,
+        hue_order=group_order,
+        palette=bar_palette,
+        width=0.3,
+        dodge=True,
     )
     sns.swarmplot(
-        data=day_data, x='day_label', y='dprime_w', hue=group_col,
-        order=day_labels, hue_order=group_order, dodge=True,
-        color=swarm_color, alpha=0.6,
+        data=day_data,
+        x='day_label',
+        y='dprime_w',
+        hue=group_col,
+        order=day_labels,
+        hue_order=group_order,
+        dodge=True,
+        color=swarm_color,
+        alpha=0.6,
     )
 
     plt.xlabel(xlabel)
@@ -267,6 +295,7 @@ def _dprime_barplot_by_group(
 # Figure 1C (right): session-level d', R+ vs R-, days 0/+1/+2
 # ============================================================================
 
+
 def panel_1c_right_dprime(
     table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
     days_of_interest=[0, 1, 2],
@@ -286,18 +315,24 @@ def panel_1c_right_dprime(
     table['day'] = table['day'].astype(str)
 
     session_dprime = _session_dprime(table, ['mouse_id', 'session_id', 'reward_group', 'day'])
-    avg_performance = session_dprime.groupby(
-        ['day', 'mouse_id', 'reward_group'], as_index=False
-    )['dprime_w'].mean()
+    avg_performance = session_dprime.groupby(['day', 'mouse_id', 'reward_group'], as_index=False)[
+        'dprime_w'
+    ].mean()
 
     _dprime_barplot_by_group(
-        avg_performance, day_col='day',
+        avg_performance,
+        day_col='day',
         days_of_interest=[str(d) for d in days_of_interest],
         day_labels=[str(d) for d in days_of_interest],
-        group_col='reward_group', group_order=['R+', 'R-'],
+        group_col='reward_group',
+        group_order=['R+', 'R-'],
         bar_palette=behavior_palette[2:4][::-1],
-        filename='figure_1c_right_dprime', output_dir=save_path,
-        save_format=save_format, dpi=dpi, xlabel='Day', legend_title='Reward group',
+        filename='figure_1c_right_dprime',
+        output_dir=save_path,
+        save_format=save_format,
+        dpi=dpi,
+        xlabel='Day',
+        legend_title='Reward group',
         swarm_color='grey',
     )
 
@@ -306,9 +341,11 @@ def panel_1c_right_dprime(
 # Figure 1D: trial-resolved d' across Day-0 whisker trials, R+ vs R-
 # ============================================================================
 
+
 def panel_1d_dprime(
-    table_path=os.path.join(paths.processed_dir, 'behavior',
-                             'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'),
+    table_path=os.path.join(
+        paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
+    ),
     n_trials=120,
     save_path=OUTPUT_DIR,
     save_format='svg',
@@ -324,8 +361,14 @@ def panel_1d_dprime(
     fig, ax = plt.subplots(1, 1, figsize=(6, 5))
 
     sns.lineplot(
-        data=df, x='trial_w', y='dprime_w', palette=reward_palette[::-1],
-        hue='reward_group', errorbar='ci', err_style='band', ax=ax,
+        data=df,
+        x='trial_w',
+        y='dprime_w',
+        palette=reward_palette[::-1],
+        hue='reward_group',
+        errorbar='ci',
+        err_style='band',
+        ax=ax,
     )
 
     # Same p-value color code as figure_1d.py: p > 0.05 (not significant)
@@ -401,6 +444,7 @@ def panel_1d_dprime(
 # Figure 2C: session-level d', wS1 vs fpS1 (muscimol, learning)
 # ============================================================================
 
+
 def panel_2c_dprime(
     table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_muscimol.csv'),
     days_of_interest=['muscimol_1', 'muscimol_2', 'muscimol_3'],
@@ -421,38 +465,71 @@ def panel_2c_dprime(
     nwb_dir = paths.nwb_dir
 
     fpS1_mice = database.select_mice_from_db(
-        db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
-        pharmacology='yes', pharma_inactivation_type='learning', pharma_area='fpS1',
+        db_path,
+        nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude'],
+        pharmacology='yes',
+        pharma_inactivation_type='learning',
+        pharma_area='fpS1',
     )
     wS1_mice = database.select_mice_from_db(
-        db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
-        pharmacology='yes', pharma_inactivation_type='learning', pharma_area='wS1',
+        db_path,
+        nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude'],
+        pharmacology='yes',
+        pharma_inactivation_type='learning',
+        pharma_area='wS1',
     )
     table.loc[table.mouse_id.isin(fpS1_mice), 'area'] = 'fpS1'
     table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
 
     _, _, _, db = database.select_sessions_from_db(
-        db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
+        db_path,
+        nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude'],
         pharma_inactivation_type=['learning'],
-        pharma_day=["pre_-2", "pre_-1", "muscimol_1", "muscimol_2", "muscimol_3",
-                    "recovery_1", "recovery_2", "recovery_3"],
+        pharma_day=[
+            "pre_-2",
+            "pre_-1",
+            "muscimol_1",
+            "muscimol_2",
+            "muscimol_3",
+            "recovery_1",
+            "recovery_2",
+            "recovery_3",
+        ],
     )
-    table = pd.merge(table, db[['mouse_id', 'session_id', 'pharma_day']],
-                      on=['mouse_id', 'session_id'], how='left')
+    table = pd.merge(
+        table, db[['mouse_id', 'session_id', 'pharma_day']], on=['mouse_id', 'session_id'], how='left'
+    )
 
     data = _session_dprime(table, ['mouse_id', 'session_id', 'pharma_day', 'area'])
 
     _dprime_barplot_by_group(
-        data, day_col='pharma_day', days_of_interest=days_of_interest, day_labels=day_labels,
-        group_col='area', group_order=['wS1', 'fpS1'], bar_palette=[reward_palette[1]],
-        filename='figure_2c_dprime', output_dir=save_path, save_format=save_format, dpi=dpi,
-        xlabel='Day', legend_title='Area', swarm_color=stim_palette[2],
+        data,
+        day_col='pharma_day',
+        days_of_interest=days_of_interest,
+        day_labels=day_labels,
+        group_col='area',
+        group_order=['wS1', 'fpS1'],
+        bar_palette=[reward_palette[1]],
+        filename='figure_2c_dprime',
+        output_dir=save_path,
+        save_format=save_format,
+        dpi=dpi,
+        xlabel='Day',
+        legend_title='Area',
+        swarm_color=stim_palette[2],
     )
 
 
 # ============================================================================
 # Figure 2F: session-level d', wS1 vs fpS1 (optogenetics, learning)
 # ============================================================================
+
 
 def panel_2f_dprime(
     table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_opto_learning.csv'),
@@ -474,37 +551,62 @@ def panel_2f_dprime(
     nwb_dir = paths.nwb_dir
 
     fpS1_mice = database.select_mice_from_db(
-        db_path, nwb_dir, experimenters=None, exclude_cols=['exclude', 'opto_exclude'],
-        optogenetic='yes', opto_inactivation_type='learning', opto_area='fpS1',
+        db_path,
+        nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude', 'opto_exclude'],
+        optogenetic='yes',
+        opto_inactivation_type='learning',
+        opto_area='fpS1',
     )
     wS1_mice = database.select_mice_from_db(
-        db_path, nwb_dir, experimenters=None, exclude_cols=['exclude', 'opto_exclude'],
-        optogenetic='yes', opto_inactivation_type='learning', opto_area='wS1',
+        db_path,
+        nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude', 'opto_exclude'],
+        optogenetic='yes',
+        opto_inactivation_type='learning',
+        opto_area='wS1',
     )
     table.loc[table.mouse_id.isin(fpS1_mice), 'area'] = 'fpS1'
     table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
 
     _, _, _, db = database.select_sessions_from_db(
-        db_path, nwb_dir, experimenters=None, exclude_cols=['exclude', 'opto_exclude'],
+        db_path,
+        nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude', 'opto_exclude'],
         opto_inactivation_type=['learning'],
         opto_day=["pre_-2", "pre_-1", "opto", "recovery_1"],
     )
-    table = pd.merge(table, db[['mouse_id', 'session_id', 'opto_day']],
-                      on=['mouse_id', 'session_id'], how='left')
+    table = pd.merge(
+        table, db[['mouse_id', 'session_id', 'opto_day']], on=['mouse_id', 'session_id'], how='left'
+    )
 
     data = _session_dprime(table, ['mouse_id', 'session_id', 'opto_day', 'area'])
 
     _dprime_barplot_by_group(
-        data, day_col='opto_day', days_of_interest=days_of_interest, day_labels=day_labels,
-        group_col='area', group_order=['wS1', 'fpS1'], bar_palette=[reward_palette[1]],
-        filename='figure_2f_dprime', output_dir=save_path, save_format=save_format, dpi=dpi,
-        xlabel='Day', legend_title='Area', swarm_color='black',
+        data,
+        day_col='opto_day',
+        days_of_interest=days_of_interest,
+        day_labels=day_labels,
+        group_col='area',
+        group_order=['wS1', 'fpS1'],
+        bar_palette=[reward_palette[1]],
+        filename='figure_2f_dprime',
+        output_dir=save_path,
+        save_format=save_format,
+        dpi=dpi,
+        xlabel='Day',
+        legend_title='Area',
+        swarm_color='black',
     )
 
 
 # ============================================================================
 # Execution panel c: session-level d', wS1 vs fpS1 (muscimol, execution)
 # ============================================================================
+
 
 def panel_2c_execution_dprime(
     table_path=EXECUTION_TABLE_PATH,
@@ -528,31 +630,55 @@ def panel_2c_execution_dprime(
     nwb_dir = paths.nwb_dir
 
     fpS1_mice = database.select_mice_from_db(
-        db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
-        pharmacology='yes', pharma_inactivation_type='execution', pharma_area='fpS1',
+        db_path,
+        nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude'],
+        pharmacology='yes',
+        pharma_inactivation_type='execution',
+        pharma_area='fpS1',
     )
     wS1_mice = database.select_mice_from_db(
-        db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
-        pharmacology='yes', pharma_inactivation_type='execution', pharma_area='wS1',
+        db_path,
+        nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude'],
+        pharmacology='yes',
+        pharma_inactivation_type='execution',
+        pharma_area='wS1',
     )
     table.loc[table.mouse_id.isin(fpS1_mice), 'area'] = 'fpS1'
     table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
 
     _, _, _, db = database.select_sessions_from_db(
-        db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
+        db_path,
+        nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude'],
         pharma_inactivation_type=['execution'],
         pharma_day=["pre_-2", "pre_-1", "muscimol_1", "ringer_1", "muscimol_2"],
     )
-    table = pd.merge(table, db[['mouse_id', 'session_id', 'pharma_day']],
-                      on=['mouse_id', 'session_id'], how='left')
+    table = pd.merge(
+        table, db[['mouse_id', 'session_id', 'pharma_day']], on=['mouse_id', 'session_id'], how='left'
+    )
 
     data = _session_dprime(table, ['mouse_id', 'session_id', 'pharma_day', 'area'])
 
     _dprime_barplot_by_group(
-        data, day_col='pharma_day', days_of_interest=days_of_interest, day_labels=day_labels,
-        group_col='area', group_order=['wS1', 'fpS1'], bar_palette=[reward_palette[1]],
-        filename='figure_2c_execution_dprime', output_dir=save_path, save_format=save_format, dpi=dpi,
-        xlabel='Day', legend_title='Area', swarm_color=stim_palette[2],
+        data,
+        day_col='pharma_day',
+        days_of_interest=days_of_interest,
+        day_labels=day_labels,
+        group_col='area',
+        group_order=['wS1', 'fpS1'],
+        bar_palette=[reward_palette[1]],
+        filename='figure_2c_execution_dprime',
+        output_dir=save_path,
+        save_format=save_format,
+        dpi=dpi,
+        xlabel='Day',
+        legend_title='Area',
+        swarm_color=stim_palette[2],
     )
 
 
@@ -560,9 +686,11 @@ def panel_2c_execution_dprime(
 # Figure 4C (behavior row only): trial-resolved d', R+ vs R-
 # ============================================================================
 
+
 def panel_4c_dprime(
-    table_path=os.path.join(paths.processed_dir, 'behavior',
-                             'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'),
+    table_path=os.path.join(
+        paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
+    ),
     cut_n_trials=100,
     save_path=OUTPUT_DIR,
     save_format='svg',
@@ -609,9 +737,11 @@ def panel_4c_dprime(
 # Figure 4E: per-mouse correlation between decoder value and d'
 # ============================================================================
 
+
 def panel_4e_dprime_correlation(
-    table_path=os.path.join(paths.processed_dir, 'behavior',
-                             'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'),
+    table_path=os.path.join(
+        paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
+    ),
     cut_n_trials=100,
     weights_path=os.path.join(paths.processed_dir, 'decoding', 'decoder_weights.pkl'),
     window_size=10,
@@ -660,12 +790,14 @@ def panel_4e_dprime_correlation(
             if X_win.shape[0] == 0:
                 continue
             dec_vals = clf.decision_function(scaler.transform(X_win))
-            results.append({
-                'mouse_id': mouse,
-                'reward_group': w['reward_group'],
-                'trial_start': start_idx,
-                'mean_decision_value': np.mean(dec_vals) * sign_flip,
-            })
+            results.append(
+                {
+                    'mouse_id': mouse,
+                    'reward_group': w['reward_group'],
+                    'trial_start': start_idx,
+                    'mean_decision_value': np.mean(dec_vals) * sign_flip,
+                }
+            )
     results_combined = pd.DataFrame(results)
 
     corr_real, corr_mice, corr_groups = [], [], []
@@ -696,23 +828,44 @@ def panel_4e_dprime_correlation(
             _, p_wilcox = wilcoxon(sub['correlation'].values, alternative='greater')
             _, p_ttest = ttest_1samp(sub['correlation'].values, 0, alternative='greater')
             pop_stats[group] = p_wilcox
-            pop_stats_rows.append({
-                'reward_group': group, 'n': len(sub),
-                'mean_correlation': np.mean(sub['correlation'].values),
-                'std_correlation': np.std(sub['correlation'].values),
-                'p_wilcoxon': p_wilcox, 'p_ttest': p_ttest,
-            })
-            print(f"{group} (N={len(sub)}): mean r={np.mean(sub['correlation'].values):.3f}, "
-                  f"Wilcoxon p={p_wilcox:.4f}")
+            pop_stats_rows.append(
+                {
+                    'reward_group': group,
+                    'n': len(sub),
+                    'mean_correlation': np.mean(sub['correlation'].values),
+                    'std_correlation': np.std(sub['correlation'].values),
+                    'p_wilcoxon': p_wilcox,
+                    'p_ttest': p_ttest,
+                }
+            )
+            print(
+                f"{group} (N={len(sub)}): mean r={np.mean(sub['correlation'].values):.3f}, "
+                f"Wilcoxon p={p_wilcox:.4f}"
+            )
     df_pop_stats = pd.DataFrame(pop_stats_rows)
 
     sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
     fig, ax = plt.subplots(1, 1, figsize=(4, 5))
 
-    sns.swarmplot(data=df_corr, x='reward_group', y='correlation',
-                  palette=reward_palette[::-1], size=8, alpha=0.6, ax=ax)
-    sns.pointplot(data=df_corr, x='reward_group', y='correlation',
-                  palette=reward_palette[::-1], errorbar='ci', markersize=10, join=False, ax=ax)
+    sns.swarmplot(
+        data=df_corr,
+        x='reward_group',
+        y='correlation',
+        palette=reward_palette[::-1],
+        size=8,
+        alpha=0.6,
+        ax=ax,
+    )
+    sns.pointplot(
+        data=df_corr,
+        x='reward_group',
+        y='correlation',
+        palette=reward_palette[::-1],
+        errorbar='ci',
+        markersize=10,
+        join=False,
+        ax=ax,
+    )
     ax.axhline(0, color='black', linestyle='--', alpha=0.5, linewidth=1)
 
     for i, group in enumerate(['R+', 'R-']):

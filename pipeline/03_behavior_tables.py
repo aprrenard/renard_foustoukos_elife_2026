@@ -36,82 +36,117 @@ from fast_learning.behavior import make_behavior_table
 OUTPUT_DIR = os.path.join(paths.processed_dir, 'behavior')
 DAYS = ['-2', '-1', '0', '+1', '+2']
 PARTICLE_TEST_DAYS = ['whisker_on_1', 'whisker_off', 'whisker_on_2']
-MUSCIMOL_DAYS = ['pre_-2', 'pre_-1', 'muscimol_1', 'muscimol_2', 'muscimol_3',
-                 'recovery_1', 'recovery_2', 'recovery_3']
+MUSCIMOL_DAYS = [
+    'pre_-2',
+    'pre_-1',
+    'muscimol_1',
+    'muscimol_2',
+    'muscimol_3',
+    'recovery_1',
+    'recovery_2',
+    'recovery_3',
+]
 OPTO_DAYS = ['pre_-2', 'pre_-1', 'opto', 'recovery_1']
 
 
 def _build(session_list, nwb_list, cut_session):
-    return make_behavior_table(nwb_list, session_list, paths.db_path,
-                               cut_session=cut_session,
-                               stop_flag_yaml=paths.stop_flags_yaml,
-                               trial_indices_yaml=paths.trial_indices_yaml)
+    return make_behavior_table(
+        nwb_list,
+        session_list,
+        paths.db_path,
+        cut_session=cut_session,
+        stop_flag_yaml=paths.stop_flags_yaml,
+        trial_indices_yaml=paths.trial_indices_yaml,
+    )
 
 
 def _save(table, file_name):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     path = os.path.join(OUTPUT_DIR, file_name)
     table.to_csv(path, index=False)
-    print(f'Saved {path} ({table.session_id.nunique()} sessions, '
-          f'{table.mouse_id.nunique()} mice)')
+    print(f'Saved {path} ({table.session_id.nunique()} sessions, {table.mouse_id.nunique()} mice)')
 
 
 def imaging_mice_table():
-    mice = database.select_mice_from_db(paths.db_path, paths.nwb_dir, experimenters=None,
-                                  exclude_cols=['exclude', 'two_p_exclude'],
-                                  optogenetic=['no', np.nan],
-                                  pharmacology=['no', np.nan],
-                                  two_p_imaging='yes')
-    session_list, nwb_list, _, _ = database.select_sessions_from_db(
-        paths.db_path, paths.nwb_dir, experimenters=None,
+    mice = database.select_mice_from_db(
+        paths.db_path,
+        paths.nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude', 'two_p_exclude'],
-        day=DAYS, mouse_id=mice)
-    _save(_build(session_list, nwb_list, cut_session=True),
-          'behavior_imagingmice_table_5days_cut.csv')
+        optogenetic=['no', np.nan],
+        pharmacology=['no', np.nan],
+        two_p_imaging='yes',
+    )
+    session_list, nwb_list, _, _ = database.select_sessions_from_db(
+        paths.db_path,
+        paths.nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude', 'two_p_exclude'],
+        day=DAYS,
+        mouse_id=mice,
+    )
+    _save(_build(session_list, nwb_list, cut_session=True), 'behavior_imagingmice_table_5days_cut.csv')
 
 
 def particle_test_table():
-    mice = database.select_mice_from_db(paths.db_path, paths.nwb_dir, experimenters=None,
-                                  exclude_cols=['exclude'],
-                                  day=PARTICLE_TEST_DAYS,
-                                  optogenetic=['no', np.nan],
-                                  pharmacology=['no', np.nan],
-                                  two_p_imaging='yes')
+    mice = database.select_mice_from_db(
+        paths.db_path,
+        paths.nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude'],
+        day=PARTICLE_TEST_DAYS,
+        optogenetic=['no', np.nan],
+        pharmacology=['no', np.nan],
+        two_p_imaging='yes',
+    )
     session_list, nwb_list, _, _ = database.select_sessions_from_db(
-        paths.db_path, paths.nwb_dir, experimenters=None,
+        paths.db_path,
+        paths.nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude', 'two_p_exclude'],
-        day=PARTICLE_TEST_DAYS, mouse_id=mice)
-    _save(_build(session_list, nwb_list, cut_session=False),
-          'behavior_particle_test.csv')
+        day=PARTICLE_TEST_DAYS,
+        mouse_id=mice,
+    )
+    _save(_build(session_list, nwb_list, cut_session=False), 'behavior_particle_test.csv')
 
 
 def opto_learning_table():
-    mice = database.select_mice_from_db(paths.db_path, paths.nwb_dir, experimenters=None,
-                                  exclude_cols=['exclude', 'opto_exclude'],
-                                  opto_inactivation_type=['learning'],
-                                  optogenetic='yes')
-    session_list, nwb_list, _, _ = database.select_sessions_from_db(
-        paths.db_path, paths.nwb_dir, experimenters=None,
+    mice = database.select_mice_from_db(
+        paths.db_path,
+        paths.nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude', 'opto_exclude'],
         opto_inactivation_type=['learning'],
-        opto_day=OPTO_DAYS, mouse_id=mice)
-    _save(_build(session_list, nwb_list, cut_session=True),
-          'behavior_opto_learning.csv')
+        optogenetic='yes',
+    )
+    session_list, nwb_list, _, _ = database.select_sessions_from_db(
+        paths.db_path,
+        paths.nwb_dir,
+        experimenters=None,
+        exclude_cols=['exclude', 'opto_exclude'],
+        opto_inactivation_type=['learning'],
+        opto_day=OPTO_DAYS,
+        mouse_id=mice,
+    )
+    _save(_build(session_list, nwb_list, cut_session=True), 'behavior_opto_learning.csv')
 
 
 def muscimol_learning_table():
     # The original generation code was commented out in behavior.py; this
     # restores it with the same selection.
-    mice = database.select_mice_from_db(paths.db_path, paths.nwb_dir, experimenters=None,
-                                  exclude_cols=['exclude'],
-                                  pharmacology='yes')
+    mice = database.select_mice_from_db(
+        paths.db_path, paths.nwb_dir, experimenters=None, exclude_cols=['exclude'], pharmacology='yes'
+    )
     session_list, nwb_list, _, _ = database.select_sessions_from_db(
-        paths.db_path, paths.nwb_dir, experimenters=None,
+        paths.db_path,
+        paths.nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude'],
         pharma_inactivation_type=['learning'],
-        pharma_day=MUSCIMOL_DAYS, mouse_id=mice)
-    _save(_build(session_list, nwb_list, cut_session=True),
-          'behavior_muscimol.csv')
+        pharma_day=MUSCIMOL_DAYS,
+        mouse_id=mice,
+    )
+    _save(_build(session_list, nwb_list, cut_session=True), 'behavior_muscimol.csv')
 
 
 EXECUTION_DAYS = ['pre_-2', 'pre_-1', 'muscimol_1', 'ringer_1', 'muscimol_2']
@@ -120,13 +155,15 @@ EXECUTION_DAYS = ['pre_-2', 'pre_-1', 'muscimol_1', 'ringer_1', 'muscimol_2']
 def muscimol_execution_table():
     # Moved from revisions/figure_2b_c_execution.py, same selection.
     session_list, nwb_list, mice_list, _ = database.select_sessions_from_db(
-        paths.db_path, paths.nwb_dir, experimenters=None,
+        paths.db_path,
+        paths.nwb_dir,
+        experimenters=None,
         exclude_cols=['exclude'],
         pharma_inactivation_type=['execution'],
-        pharma_day=EXECUTION_DAYS)
+        pharma_day=EXECUTION_DAYS,
+    )
     print(f"Execution sessions: {len(session_list)}, {len(mice_list)} mice")
-    _save(_build(session_list, nwb_list, cut_session=True),
-          'behavior_muscimol_execution.csv')
+    _save(_build(session_list, nwb_list, cut_session=True), 'behavior_muscimol_execution.csv')
 
 
 TABLES = {
@@ -140,8 +177,13 @@ TABLES = {
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument('--tables', nargs='+', choices=list(TABLES), default=list(TABLES),
-                        help='tables to build (default: all)')
+    parser.add_argument(
+        '--tables',
+        nargs='+',
+        choices=list(TABLES),
+        default=list(TABLES),
+        help='tables to build (default: all)',
+    )
     args = parser.parse_args()
     for name in args.tables:
         print(f'\n=== {name} ===')

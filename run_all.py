@@ -30,21 +30,30 @@ REPO = Path(__file__).resolve().parent
 PIPELINE = [
     # Regenerates the stop-flag / trial-index YAMLs into <processed_dir>/stop_flags;
     # the published ones are part of the dataset, so this is off by default.
-    ('01_session_flags',   'pipeline/01_session_flags.py',   [], False),
+    ('01_session_flags', 'pipeline/01_session_flags.py', [], False),
     # Writes tensors to <processed_dir>/mice; point tensor_dir there to use them.
-    ('02_tensors',         'pipeline/02_tensors.py',         [], True),
+    ('02_tensors', 'pipeline/02_tensors.py', [], True),
     ('03_behavior_tables', 'pipeline/03_behavior_tables.py', [], True),
-    ('04_learning_curves', 'pipeline/04_learning_curves.py', [], True),   # ~3 h
-    ('05_lmi',             'pipeline/05_lmi.py',             [], True),
-    ('06_decoder',         'pipeline/06_decoder.py',         [], True),
-    ('07_reactivations',   'pipeline/07_reactivations.py',   [], True),
+    ('04_learning_curves', 'pipeline/04_learning_curves.py', [], True),  # ~3 h
+    ('05_lmi', 'pipeline/05_lmi.py', [], True),
+    ('06_decoder', 'pipeline/06_decoder.py', [], True),
+    ('07_reactivations', 'pipeline/07_reactivations.py', [], True),
     ('07_reactivations_nolick', 'pipeline/07_reactivations.py', ['--nolick'], True),
-    ('08_participation',   'pipeline/08_participation.py',   [], True),
+    ('08_participation', 'pipeline/08_participation.py', [], True),
     ('09_pairwise_correlations', 'pipeline/09_pairwise_correlations.py', [], True),
 ]
 
-FIGURE_DIRS = ['figure_1', 'supp_1', 'figure_2', 'figure_3', 'supp_2', 'supp_3',
-               'figure_4', 'supp_4', 'revisions']
+FIGURE_DIRS = [
+    'figure_1',
+    'supp_1',
+    'figure_2',
+    'figure_3',
+    'supp_2',
+    'supp_3',
+    'figure_4',
+    'supp_4',
+    'revisions',
+]
 # Revision analyses with a slow computation of their own; --recompute forces it.
 RECOMPUTE = {'figure_3f_LMIshuffles', 'figure_4h_shuffle_control'}
 
@@ -63,7 +72,7 @@ def select(steps, args):
     if args.from_step:
         if args.from_step not in names:
             sys.exit(f"--from: unknown step '{args.from_step}'")
-        steps = steps[names.index(args.from_step):]
+        steps = steps[names.index(args.from_step) :]
     out = []
     for step in steps:
         name, group = step[0], (step[4] if len(step) > 4 else None)
@@ -79,18 +88,28 @@ def select(steps, args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__.split('\n')[0],
-                                     formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     epilog=__doc__.split('\n', 1)[1])
+    parser = argparse.ArgumentParser(
+        description=__doc__.split('\n')[0],
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__.split('\n', 1)[1],
+    )
     parser.add_argument('--stage', choices=['pipeline', 'figures', 'all'], default='all')
-    parser.add_argument('--only', nargs='+', default=[], metavar='NAME',
-                        help='steps or figure folders to run (includes steps off by default)')
-    parser.add_argument('--skip', nargs='+', default=[], metavar='NAME',
-                        help='steps or figure folders to leave out')
-    parser.add_argument('--from', dest='from_step', metavar='NAME',
-                        help='start at this step (within the selected stage)')
-    parser.add_argument('--recompute', action='store_true',
-                        help='force the slow computations of the revision analyses')
+    parser.add_argument(
+        '--only',
+        nargs='+',
+        default=[],
+        metavar='NAME',
+        help='steps or figure folders to run (includes steps off by default)',
+    )
+    parser.add_argument(
+        '--skip', nargs='+', default=[], metavar='NAME', help='steps or figure folders to leave out'
+    )
+    parser.add_argument(
+        '--from', dest='from_step', metavar='NAME', help='start at this step (within the selected stage)'
+    )
+    parser.add_argument(
+        '--recompute', action='store_true', help='force the slow computations of the revision analyses'
+    )
     parser.add_argument('--keep-going', action='store_true', help='continue after a failed step')
     parser.add_argument('--list', action='store_true', help='list the selected steps and exit')
     parser.add_argument('--dry-run', action='store_true', help='print the commands only')
@@ -109,7 +128,8 @@ def main():
             print(f"{step[0]:32s} {step[1]} {' '.join(step[2])}")
         return
 
-    from fast_learning import paths   # reads config.yaml
+    from fast_learning import paths  # reads config.yaml
+
     log_dir = Path(paths.output_root) / 'logs'
     log_dir.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, MPLBACKEND='Agg')
@@ -135,8 +155,10 @@ def main():
                 break
 
     if not args.dry_run:
-        print(f"\nDone in {(time.time() - t_start) / 60:.1f} min; "
-              f"{'all steps succeeded' if not failed else 'failed: ' + ', '.join(failed)}. Logs: {log_dir}")
+        print(
+            f"\nDone in {(time.time() - t_start) / 60:.1f} min; "
+            f"{'all steps succeeded' if not failed else 'failed: ' + ', '.join(failed)}. Logs: {log_dir}"
+        )
     sys.exit(1 if failed else 0)
 
 

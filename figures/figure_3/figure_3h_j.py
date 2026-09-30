@@ -25,8 +25,11 @@ from fast_learning import imaging
 from fast_learning import paths, database
 from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.similarity import (
-    WIN, DAYS, N_MAP_TRIALS,
-    compute_similarity_matrix, compute_within_day_metrics,
+    WIN,
+    DAYS,
+    N_MAP_TRIALS,
+    compute_similarity_matrix,
+    compute_within_day_metrics,
     compute_reorganization_metrics,
 )
 from fast_learning.stats import significance_stars as _significance_stars
@@ -42,6 +45,7 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
 # ============================================================================
 # Data loading and processing
 # ============================================================================
+
 
 def load_and_process_data(
     similarity_metric='cosine',
@@ -141,11 +145,10 @@ def load_and_process_data(
     return corr_matrices_rew, corr_matrices_nonrew, mice_rew, mice_nonrew
 
 
-
-
 # ============================================================================
 # Panel h: Average trial-by-trial correlation matrices
 # ============================================================================
+
 
 def panel_h_correlation_matrices(
     corr_matrices_rew=None,
@@ -239,18 +242,22 @@ def panel_h_correlation_matrices(
         for j, day_col in enumerate(DAYS):
             row_idx = np.arange(i * N_MAP_TRIALS, (i + 1) * N_MAP_TRIALS)
             col_idx = np.arange(j * N_MAP_TRIALS, (j + 1) * N_MAP_TRIALS)
-            records.append({
-                'reward_group': 'R+',
-                'day_row': day_row,
-                'day_col': day_col,
-                'correlation': np.nanmean(avg_corr_rew[np.ix_(row_idx, col_idx)]),
-            })
-            records.append({
-                'reward_group': 'R-',
-                'day_row': day_row,
-                'day_col': day_col,
-                'correlation': np.nanmean(avg_corr_nonrew[np.ix_(row_idx, col_idx)]),
-            })
+            records.append(
+                {
+                    'reward_group': 'R+',
+                    'day_row': day_row,
+                    'day_col': day_col,
+                    'correlation': np.nanmean(avg_corr_rew[np.ix_(row_idx, col_idx)]),
+                }
+            )
+            records.append(
+                {
+                    'reward_group': 'R-',
+                    'day_row': day_row,
+                    'day_col': day_col,
+                    'correlation': np.nanmean(avg_corr_nonrew[np.ix_(row_idx, col_idx)]),
+                }
+            )
     data_df = pd.DataFrame(records)
     data_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_3h_data.csv'), index=False)
     print(f"Figure 3h data saved to: {os.path.join(OUTPUT_DIR, 'figure_3h_data.csv')}")
@@ -259,6 +266,7 @@ def panel_h_correlation_matrices(
 # ============================================================================
 # Panel i: Within-day correlation trajectory
 # ============================================================================
+
 
 def panel_i_within_day_correlations(
     corr_matrices_rew=None,
@@ -302,7 +310,8 @@ def panel_i_within_day_correlations(
     long_df = metrics_combined.melt(
         id_vars=['mouse_id', 'reward_group'],
         value_vars=day_cols,
-        var_name='day_label', value_name='correlation',
+        var_name='day_label',
+        value_name='correlation',
     )
     long_df['day'] = long_df['day_label'].str.extract(r'day([+-]?\d+)').astype(int)
     long_df['day_label'] = pd.Categorical(long_df['day_label'], categories=day_cols, ordered=True)
@@ -312,13 +321,15 @@ def panel_i_within_day_correlations(
     anova_table = anova_lm(model, typ=2)
     anova_rows = []
     for term, row in anova_table.iterrows():
-        anova_rows.append({
-            'test': '2-way ANOVA',
-            'term': term,
-            'F': row.get('F', np.nan),
-            'p_value': row['PR(>F)'],
-            'significance': _significance_stars(row['PR(>F)']) if not np.isnan(row['PR(>F)']) else '',
-        })
+        anova_rows.append(
+            {
+                'test': '2-way ANOVA',
+                'term': term,
+                'F': row.get('F', np.nan),
+                'p_value': row['PR(>F)'],
+                'significance': _significance_stars(row['PR(>F)']) if not np.isnan(row['PR(>F)']) else '',
+            }
+        )
 
     # Post-hoc: Mann-Whitney U between groups for each day (no correction)
     stats_rows = anova_rows
@@ -329,31 +340,55 @@ def panel_i_within_day_correlations(
         r_minus = metrics_nonrew[col].dropna()
         stat, p = mannwhitneyu(r_plus, r_minus, alternative='two-sided')
         stats_dict[day] = p
-        stats_rows.append({
-            'test': 'Mann-Whitney U (post-hoc)',
-            'term': f'R+ vs R- day {day:+d}',
-            'F': np.nan,
-            'p_value': p,
-            'significance': _significance_stars(p),
-        })
+        stats_rows.append(
+            {
+                'test': 'Mann-Whitney U (post-hoc)',
+                'term': f'R+ vs R- day {day:+d}',
+                'F': np.nan,
+                'p_value': p,
+                'significance': _significance_stars(p),
+            }
+        )
 
     fig, ax = plt.subplots(1, 1, figsize=(6, 5))
 
     sns.pointplot(
-        data=long_df, x='day_label', y='correlation', hue='reward_group',
-        palette=reward_palette[::-1], ax=ax, errorbar='ci',
-        markers='o', linestyles='-', markersize=8, linewidth=2,
+        data=long_df,
+        x='day_label',
+        y='correlation',
+        hue='reward_group',
+        palette=reward_palette[::-1],
+        ax=ax,
+        errorbar='ci',
+        markers='o',
+        linestyles='-',
+        markersize=8,
+        linewidth=2,
     )
 
     for mouse_id in metrics_combined['mouse_id'].unique():
         mouse_data = long_df[long_df['mouse_id'] == mouse_id].sort_values('day')
         rg = mouse_data['reward_group'].iloc[0]
         color = reward_palette[1] if rg == 'R+' else reward_palette[0]
-        ax.plot(range(len(DAYS)), mouse_data['correlation'].values, color=color, alpha=0.3, linewidth=0.8, zorder=1)
+        ax.plot(
+            range(len(DAYS)),
+            mouse_data['correlation'].values,
+            color=color,
+            alpha=0.3,
+            linewidth=0.8,
+            zorder=1,
+        )
 
     ylim_top = 0.8 if similarity_metric in ('pearson', 'cosine') else 0.3
     for day in DAYS:
-        ax.text(DAYS.index(day), ylim_top * 0.95, _significance_stars(stats_dict[day]), ha='center', va='bottom', fontsize=9)
+        ax.text(
+            DAYS.index(day),
+            ylim_top * 0.95,
+            _significance_stars(stats_dict[day]),
+            ha='center',
+            va='bottom',
+            fontsize=9,
+        )
 
     ax.set_ylim(0, ylim_top)
     ax.set_xlabel('Day')
@@ -379,6 +414,7 @@ def panel_i_within_day_correlations(
 # ============================================================================
 # Panel j: Network reorganization index
 # ============================================================================
+
 
 def panel_j_reorganization_index(
     corr_matrices_rew=None,
@@ -423,7 +459,15 @@ def panel_j_reorganization_index(
         metrics_nonrew['reorganization_index'].dropna(),
         alternative='two-sided',
     )
-    stats_rows = [{'metric': 'reorganization_index', 'test': 'Mann-Whitney U', 'U_statistic': stat, 'p_value': p, 'significance': _significance_stars(p)}]
+    stats_rows = [
+        {
+            'metric': 'reorganization_index',
+            'test': 'Mann-Whitney U',
+            'U_statistic': stat,
+            'p_value': p,
+            'significance': _significance_stars(p),
+        }
+    ]
 
     long_df = metrics_combined[['mouse_id', 'reward_group', 'reorganization_index']].copy()
     long_df['metric'] = 'reorganization_index'
@@ -431,12 +475,24 @@ def panel_j_reorganization_index(
     fig, ax = plt.subplots(1, 1, figsize=(4, 5))
 
     sns.barplot(
-        data=long_df, x='metric', y='reorganization_index', hue='reward_group',
-        palette=reward_palette[::-1], ax=ax, errorbar='ci',
+        data=long_df,
+        x='metric',
+        y='reorganization_index',
+        hue='reward_group',
+        palette=reward_palette[::-1],
+        ax=ax,
+        errorbar='ci',
     )
     sns.swarmplot(
-        data=long_df, x='metric', y='reorganization_index', hue='reward_group',
-        dodge=True, ax=ax, size=4, color='grey', legend=False,
+        data=long_df,
+        x='metric',
+        y='reorganization_index',
+        hue='reward_group',
+        dodge=True,
+        ax=ax,
+        size=4,
+        color='grey',
+        legend=False,
     )
 
     ylim_top = 0.3 if similarity_metric in ('pearson', 'cosine') else 0.15
@@ -459,9 +515,9 @@ def panel_j_reorganization_index(
     print(f"Figure 3j saved to: {os.path.join(output_dir, 'figure_3j.' + save_format)}")
 
     # Save CSVs
-    metrics_combined[['mouse_id', 'reward_group', 'within_pre', 'within_post', 'between_pre_post', 'reorganization_index']].to_csv(
-        os.path.join(OUTPUT_DIR, 'figure_3j_data.csv'), index=False
-    )
+    metrics_combined[
+        ['mouse_id', 'reward_group', 'within_pre', 'within_post', 'between_pre_post', 'reorganization_index']
+    ].to_csv(os.path.join(OUTPUT_DIR, 'figure_3j_data.csv'), index=False)
     pd.DataFrame(stats_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure_3j_stats.csv'), index=False)
     print(f"Figure 3j data/stats saved to: {OUTPUT_DIR}")
 

@@ -56,10 +56,10 @@ PERCENTILES = ['p99', 'p995', 'p999']
 # ============================================================================
 
 
-
 # ============================================================================
 # Panel h
 # ============================================================================
+
 
 def panel_h_reactivation_rate(
     r_plus_results,
@@ -80,8 +80,7 @@ def panel_h_reactivation_rate(
         <filename>_data.csv: mouse_id, reward_group, day, event_frequency
         <filename>_stats.csv: Mann-Whitney U results per day
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep',
-                  font='sans-serif', font_scale=1)
+    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
     days_sorted = sorted(days)
 
@@ -90,15 +89,25 @@ def panel_h_reactivation_rate(
     for mouse, results in r_plus_results.items():
         for day in days_sorted:
             if day in results['days']:
-                data_list.append({'mouse_id': mouse, 'reward_group': 'R+',
-                                  'Day': day,
-                                  'Frequency': results['days'][day]['event_frequency']})
+                data_list.append(
+                    {
+                        'mouse_id': mouse,
+                        'reward_group': 'R+',
+                        'Day': day,
+                        'Frequency': results['days'][day]['event_frequency'],
+                    }
+                )
     for mouse, results in r_minus_results.items():
         for day in days_sorted:
             if day in results['days']:
-                data_list.append({'mouse_id': mouse, 'reward_group': 'R-',
-                                  'Day': day,
-                                  'Frequency': results['days'][day]['event_frequency']})
+                data_list.append(
+                    {
+                        'mouse_id': mouse,
+                        'reward_group': 'R-',
+                        'Day': day,
+                        'Frequency': results['days'][day]['event_frequency'],
+                    }
+                )
 
     df = pd.DataFrame(data_list)
 
@@ -113,35 +122,49 @@ def panel_h_reactivation_rate(
         else:
             stat, p = np.nan, 1.0
         p_values.append(p)
-        stats_rows.append({
-            'test': 'Mann-Whitney U',
-            'day': day,
-            'R+_n': len(r_plus_vals),
-            'R-_n': len(r_minus_vals),
-            'R+_mean': np.nanmean(r_plus_vals),
-            'R-_mean': np.nanmean(r_minus_vals),
-            'statistic': stat,
-            'p_value': p,
-            'significance': _significance_stars(p),
-        })
+        stats_rows.append(
+            {
+                'test': 'Mann-Whitney U',
+                'day': day,
+                'R+_n': len(r_plus_vals),
+                'R-_n': len(r_minus_vals),
+                'R+_mean': np.nanmean(r_plus_vals),
+                'R-_mean': np.nanmean(r_minus_vals),
+                'statistic': stat,
+                'p_value': p,
+                'significance': _significance_stars(p),
+            }
+        )
 
     # Add dummy rows so all days appear even if data is missing
     for day in days_sorted:
         for group in ['R+', 'R-']:
             if day not in df[df['reward_group'] == group]['Day'].values:
-                df = pd.concat([df, pd.DataFrame(
-                    {'mouse_id': [''], 'reward_group': [group],
-                     'Day': [day], 'Frequency': [np.nan]}
-                )], ignore_index=True)
+                df = pd.concat(
+                    [
+                        df,
+                        pd.DataFrame(
+                            {'mouse_id': [''], 'reward_group': [group], 'Day': [day], 'Frequency': [np.nan]}
+                        ),
+                    ],
+                    ignore_index=True,
+                )
 
     # Plot
     fig, ax = plt.subplots(1, 1, figsize=(5, 4))
 
-    sns.barplot(data=df, x='Day', y='Frequency', hue='reward_group',
-                errorbar=('ci', 95),
-                palette={'R+': reward_palette[1], 'R-': reward_palette[0]},
-                hue_order=['R+', 'R-'],
-                alpha=0.7, edgecolor='black', ax=ax)
+    sns.barplot(
+        data=df,
+        x='Day',
+        y='Frequency',
+        hue='reward_group',
+        errorbar=('ci', 95),
+        palette={'R+': reward_palette[1], 'R-': reward_palette[0]},
+        hue_order=['R+', 'R-'],
+        alpha=0.7,
+        edgecolor='black',
+        ax=ax,
+    )
 
     # # Individual mouse trajectories
     # bar_width = 0.35
@@ -166,10 +189,22 @@ def panel_h_reactivation_rate(
     for day_idx, (day, p) in enumerate(zip(days_sorted, p_values)):
         stars = _significance_stars(p)
         if stars != 'n.s.':
-            r_plus_vals = df[(df['Day'] == day) & (df['reward_group'] == 'R+') & (df['mouse_id'] != '')]['Frequency']
-            r_minus_vals = df[(df['Day'] == day) & (df['reward_group'] == 'R-') & (df['mouse_id'] != '')]['Frequency']
-            ci_plus = r_plus_vals.mean() + 1.96 * r_plus_vals.std() / np.sqrt(len(r_plus_vals)) if len(r_plus_vals) > 0 else 0
-            ci_minus = r_minus_vals.mean() + 1.96 * r_minus_vals.std() / np.sqrt(len(r_minus_vals)) if len(r_minus_vals) > 0 else 0
+            r_plus_vals = df[(df['Day'] == day) & (df['reward_group'] == 'R+') & (df['mouse_id'] != '')][
+                'Frequency'
+            ]
+            r_minus_vals = df[(df['Day'] == day) & (df['reward_group'] == 'R-') & (df['mouse_id'] != '')][
+                'Frequency'
+            ]
+            ci_plus = (
+                r_plus_vals.mean() + 1.96 * r_plus_vals.std() / np.sqrt(len(r_plus_vals))
+                if len(r_plus_vals) > 0
+                else 0
+            )
+            ci_minus = (
+                r_minus_vals.mean() + 1.96 * r_minus_vals.std() / np.sqrt(len(r_minus_vals))
+                if len(r_minus_vals) > 0
+                else 0
+            )
             y1 = max(ci_plus, ci_minus)
             y2 = y1 + y_range
             x1 = day_idx - width / 2
@@ -190,16 +225,15 @@ def panel_h_reactivation_rate(
     print(f"Figure saved to: {os.path.join(output_dir, filename + '.' + save_format)}")
 
     # Save CSVs
-    df[df['mouse_id'] != ''].to_csv(
-        os.path.join(output_dir, f'{filename}_data.csv'), index=False)
-    pd.DataFrame(stats_rows).to_csv(
-        os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
+    df[df['mouse_id'] != ''].to_csv(os.path.join(output_dir, f'{filename}_data.csv'), index=False)
+    pd.DataFrame(stats_rows).to_csv(os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
     print(f"Data/stats saved to: {output_dir}")
 
 
 # ============================================================================
 # Main execution
 # ============================================================================
+
 
 def _load_and_plot(results_file, filename):
     print(f"Loading reactivation results from: {results_file}")
@@ -224,15 +258,13 @@ if __name__ == '__main__':
     if NO_LICK_ONLY:
         # No-lick, ±2s baseline at three detection percentiles (99, 99.5, 99.9).
         for pstr in PERCENTILES:
-            results_file = os.path.join(
-                NOLICK_RESULTS_DIR, f'reactivation_results_{pstr}.pkl')
+            results_file = os.path.join(NOLICK_RESULTS_DIR, f'reactivation_results_{pstr}.pkl')
             _load_and_plot(results_file, filename=f'figure_4h_nolick_{pstr}')
     else:
         # Original all-no_stim, full window, at the same three detection
         # percentiles. p99 keeps the original unsuffixed filename (kept
         # reproducible); p995/p999 are the added robustness-check variants.
         for pstr in PERCENTILES:
-            results_file = os.path.join(
-                RESULTS_DIR, f'reactivation_results_{pstr}.pkl')
+            results_file = os.path.join(RESULTS_DIR, f'reactivation_results_{pstr}.pkl')
             filename = 'figure_4h' if pstr == 'p99' else f'figure_4h_{pstr}'
             _load_and_plot(results_file, filename=filename)

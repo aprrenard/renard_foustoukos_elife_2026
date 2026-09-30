@@ -39,7 +39,8 @@ def _config_file():
         raise FileNotFoundError(
             f'Configuration file not found: {path}\n'
             f'Copy {REPO_ROOT / "config.example.yaml"} to {REPO_ROOT / "config.yaml"} '
-            f'and set data_root and output_root, or point {CONFIG_ENV} to your own file.')
+            f'and set data_root and output_root, or point {CONFIG_ENV} to your own file.'
+        )
     return path
 
 
@@ -92,17 +93,19 @@ def adjust_path_to_host(path):
     paths; code that uses the paths above does not need it.
     """
     import platform
+
     unc = '//sv-nas1.rcp.epfl.ch/Petersen-Lab'
     mounts = {
         'Linux': {'analysis': '/mnt/lsens-analysis', 'data': '/mnt/lsens-data'},
         'Darwin': {'analysis': '/Volumes/Petersen-Lab/analysis', 'data': '/Volumes/Petersen-Lab/data'},
     }
-    forms = {share: [f'{unc}/{share}'] + [m[share] for m in mounts.values()]
-             for share in ('analysis', 'data')}
+    forms = {
+        share: [f'{unc}/{share}'] + [m[share] for m in mounts.values()] for share in ('analysis', 'data')
+    }
     target = mounts.get(platform.system())
     for share, variants in forms.items():
         dest = target[share] if target else f'{unc}/{share}'
         for v in variants:
             if path.startswith(v):
-                return dest + path[len(v):]
+                return dest + path[len(v) :]
     return path

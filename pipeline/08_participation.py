@@ -52,6 +52,7 @@ LMI_RESULTS_CSV = os.path.join(paths.processed_dir, 'lmi_results.csv')
 # Inputs
 # ============================================================================
 
+
 def load_selected_results(results_file):
     """Reactivation results of the selected mice, and their reward groups."""
     print(f"\nLoading reactivation events from: {results_file}")
@@ -71,6 +72,7 @@ def load_selected_results(results_file):
 # Parts
 # ============================================================================
 
+
 def run_rates(results, reward_groups, selection, no_lick_only, time_window):
     """Participation rates per day and merged with LMI, at each threshold."""
     lmi_df = pd.read_csv(LMI_RESULTS_CSV)
@@ -78,8 +80,12 @@ def run_rates(results, reward_groups, selection, no_lick_only, time_window):
         print(f"\n--- participation rates, threshold {threshold} ({selection}) ---")
         results_list = Parallel(n_jobs=N_JOBS, verbose=10)(
             delayed(pt.process_mouse_participation)(
-                mouse, results[mouse], participation_threshold=threshold,
-                no_lick_only=no_lick_only, time_window=time_window)
+                mouse,
+                results[mouse],
+                participation_threshold=threshold,
+                no_lick_only=no_lick_only,
+                time_window=time_window,
+            )
             for mouse in results
         )
         per_day_df = pd.concat([df for _, df in results_list if df is not None], ignore_index=True)
@@ -117,19 +123,23 @@ def run_day0(reward_groups):
 
 def run_binary(results, reward_groups):
     """Binary participation per cell-day (circular-shift test), merged with LMI."""
-    print(f"\nRunning circular-shift test for {len(results)} mice "
-          f"({pt.N_SHIFTS} shifts x {len(pt.DAYS)} days each) ...")
+    print(
+        f"\nRunning circular-shift test for {len(results)} mice "
+        f"({pt.N_SHIFTS} shifts x {len(pt.DAYS)} days each) ..."
+    )
     raw = Parallel(n_jobs=N_JOBS, verbose=5)(
-        delayed(pt.process_mouse_circular_shift)(mouse, results[mouse], pt.N_SHIFTS)
-        for mouse in results
+        delayed(pt.process_mouse_circular_shift)(mouse, results[mouse], pt.N_SHIFTS) for mouse in results
     )
     participation_df = pd.concat([df for _, df in raw if df is not None], ignore_index=True)
     participation_df['reward_group'] = participation_df['mouse_id'].map(reward_groups)
 
     lmi_df = pt.add_lmi_category(pd.read_csv(LMI_RESULTS_CSV))
-    merged = pd.merge(participation_df,
-                      lmi_df[['mouse_id', 'roi', 'lmi', 'lmi_p', 'lmi_category']],
-                      on=['mouse_id', 'roi'], how='inner')
+    merged = pd.merge(
+        participation_df,
+        lmi_df[['mouse_id', 'roi', 'lmi', 'lmi_p', 'lmi_category']],
+        on=['mouse_id', 'roi'],
+        how='inner',
+    )
     merged.to_csv(pt.BINARY_CSV, index=False)
     print(f"Saved: {pt.BINARY_CSV}")
 
@@ -140,10 +150,14 @@ def run_binary(results, reward_groups):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Pipeline step 08: participation in reactivations.')
-    parser.add_argument('--only', nargs='+', choices=['rates', 'day0', 'binary'],
-                        default=['rates', 'day0', 'binary'])
-    parser.add_argument('--nolick', action='store_true',
-                        help="participation rates from the no-lick reactivation events ('rates' only)")
+    parser.add_argument(
+        '--only', nargs='+', choices=['rates', 'day0', 'binary'], default=['rates', 'day0', 'binary']
+    )
+    parser.add_argument(
+        '--nolick',
+        action='store_true',
+        help="participation rates from the no-lick reactivation events ('rates' only)",
+    )
     args = parser.parse_args()
 
     if args.nolick:

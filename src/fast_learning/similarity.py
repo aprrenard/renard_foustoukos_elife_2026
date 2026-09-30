@@ -10,7 +10,7 @@ import pandas as pd
 from scipy.stats import spearmanr
 
 
-WIN = (0, 0.300)       # stimulus onset to 300 ms after
+WIN = (0, 0.300)  # stimulus onset to 300 ms after
 DAYS = [-2, -1, 0, 1, 2]
 N_MAP_TRIALS = 40
 
@@ -72,12 +72,14 @@ def compute_reorganization_metrics(corr_matrices, mice_ids, reward_group):
         within_pre = np.nanmean(cm[np.ix_(pre_idx, pre_idx)])
         within_post = np.nanmean(cm[np.ix_(post_idx, post_idx)])
         between = np.nanmean(cm[np.ix_(pre_idx, post_idx)])
-        results.append({
-            'within_pre': within_pre,
-            'within_post': within_post,
-            'between_pre_post': between,
-            'reorganization_index': (within_pre + within_post) / 2 - between,
-        })
+        results.append(
+            {
+                'within_pre': within_pre,
+                'within_post': within_post,
+                'between_pre_post': between,
+                'reorganization_index': (within_pre + within_post) / 2 - between,
+            }
+        )
     df = pd.DataFrame(results)
     df['reward_group'] = reward_group
     df['mouse_id'] = mice_ids

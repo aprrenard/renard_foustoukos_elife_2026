@@ -39,14 +39,14 @@ from fast_learning import reactivations as rx
 
 # Part 1: Surrogates
 RUN_SURROGATES = True
-SURROGATE_MODE = 'mouse'    # 'day' | 'mouse' | 'both'
+SURROGATE_MODE = 'mouse'  # 'day' | 'mouse' | 'both'
 N_SURROGATES = 1000
 PERCENTILES = [99, 99.5, 99.9]
 N_JOBS = 35
 
 # Part 2: Detection
 USE_SURROGATE_THRESHOLDS = 'mouse'  # 'day' | 'mouse' | None (fixed threshold)
-PERCENTILE_TO_USE = 99              # main threshold; defines the mouse selection
+PERCENTILE_TO_USE = 99  # main threshold; defines the mouse selection
 
 OUTPUT_DIR = os.path.join(paths.processed_dir, 'reactivation')
 NOLICK_OUTPUT_DIR = os.path.join(OUTPUT_DIR, 'nolick')
@@ -57,10 +57,10 @@ NOLICK_TIME_WINDOW = (-2, 2)
 # Mouse lists
 # ============================================================================
 
+
 def get_mouse_lists():
     """R+ and R- imaging mice from the session database."""
-    _, _, all_mice, db = database.select_sessions_from_db(
-        paths.db_path, paths.nwb_dir, two_p_imaging='yes')
+    _, _, all_mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir, two_p_imaging='yes')
     r_plus_mice, r_minus_mice = [], []
     for mouse in all_mice:
         try:
@@ -79,6 +79,7 @@ def get_mouse_lists():
 # ============================================================================
 # Part 1a: Per-day surrogate thresholds
 # ============================================================================
+
 
 def run_surrogates_per_day(
     mice,
@@ -100,14 +101,21 @@ def run_surrogates_per_day(
     print("\n" + "=" * 60)
     print("PART 1a — PER-DAY SURROGATE THRESHOLDS")
     print("=" * 60)
-    print(f"  Mice: {len(mice)}, Days: {days}, Surrogates: {n_surrogates}, "
-          f"Percentiles: {percentiles}, Jobs: {n_jobs}")
+    print(
+        f"  Mice: {len(mice)}, Days: {days}, Surrogates: {n_surrogates}, "
+        f"Percentiles: {percentiles}, Jobs: {n_jobs}"
+    )
 
     results_list = Parallel(n_jobs=n_jobs, verbose=10)(
         delayed(rx.process_mouse_surrogates_per_day)(
-            mouse, days, threshold_dff, n_surrogates,
-            percentiles=percentiles, verbose=False,
-            no_lick_only=no_lick_only, time_window=time_window,
+            mouse,
+            days,
+            threshold_dff,
+            n_surrogates,
+            percentiles=percentiles,
+            verbose=False,
+            no_lick_only=no_lick_only,
+            time_window=time_window,
         )
         for mouse in mice
     )
@@ -131,6 +139,7 @@ def run_surrogates_per_day(
 # Part 1b: Per-mouse surrogate thresholds
 # ============================================================================
 
+
 def run_surrogates_per_mouse(
     mice,
     output_dir=OUTPUT_DIR,
@@ -150,14 +159,17 @@ def run_surrogates_per_mouse(
     print("\n" + "=" * 60)
     print("PART 1b — PER-MOUSE SURROGATE THRESHOLDS")
     print("=" * 60)
-    print(f"  Mice: {len(mice)}, Surrogates: {n_surrogates}, "
-          f"Percentiles: {percentiles}, Jobs: {n_jobs}")
+    print(f"  Mice: {len(mice)}, Surrogates: {n_surrogates}, Percentiles: {percentiles}, Jobs: {n_jobs}")
 
     results_list = Parallel(n_jobs=n_jobs, verbose=10)(
         delayed(rx.process_mouse_surrogates_per_mouse)(
-            mouse, threshold_dff, n_surrogates,
-            percentiles=percentiles, verbose=False,
-            no_lick_only=no_lick_only, time_window=time_window,
+            mouse,
+            threshold_dff,
+            n_surrogates,
+            percentiles=percentiles,
+            verbose=False,
+            no_lick_only=no_lick_only,
+            time_window=time_window,
         )
         for mouse in mice
     )
@@ -180,6 +192,7 @@ def run_surrogates_per_mouse(
 # ============================================================================
 # Part 2: Reactivation event detection
 # ============================================================================
+
 
 def run_reactivation_detection(
     r_plus_mice,
@@ -209,9 +222,11 @@ def run_reactivation_detection(
     # Load surrogate thresholds
     threshold_dict = None
     if use_surrogate_thresholds is not None:
-        csv_name = (f'surrogate_thresholds_per_day_{rx.percentile_tag(percentile)}.csv'
-                    if use_surrogate_thresholds == 'day'
-                    else f'surrogate_thresholds_per_mouse_{rx.percentile_tag(percentile)}.csv')
+        csv_name = (
+            f'surrogate_thresholds_per_day_{rx.percentile_tag(percentile)}.csv'
+            if use_surrogate_thresholds == 'day'
+            else f'surrogate_thresholds_per_mouse_{rx.percentile_tag(percentile)}.csv'
+        )
         csv_path = os.path.join(output_dir, csv_name)
         threshold_dict = rx.load_surrogate_thresholds(csv_path, percentile=percentile)
         print(f"  Loaded thresholds: {csv_path} ({len(threshold_dict)} mice)")
@@ -226,8 +241,11 @@ def run_reactivation_detection(
         print(f"\n  Processing {group_name} mice ({len(mice_list)})...")
         results_list = Parallel(n_jobs=n_jobs, verbose=10)(
             delayed(rx.analyze_mouse_reactivation)(
-                mouse, verbose=False, threshold_dict=threshold_dict,
-                no_lick_only=no_lick_only, time_window=time_window,
+                mouse,
+                verbose=False,
+                threshold_dict=threshold_dict,
+                no_lick_only=no_lick_only,
+                time_window=time_window,
             )
             for mouse in mice_list
         )
@@ -263,14 +281,17 @@ def run_reactivation_detection(
 # Part 3: Mouse selection for the participation analyses
 # ============================================================================
 
+
 def save_mouse_selection(results_data, path=rx.MOUSE_SELECTION_CSV):
     """Write the participation mouse selection computed from results_data."""
     selection = rx.compute_mouse_selection(results_data)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     selection.to_csv(path, index=False)
     excluded = selection.loc[~selection['included']]
-    print(f"\n  Mouse selection (>= {rx.MIN_DAY0_EVENTS} day-0 events): "
-          f"{selection['included'].sum()} of {len(selection)} mice included")
+    print(
+        f"\n  Mouse selection (>= {rx.MIN_DAY0_EVENTS} day-0 events): "
+        f"{selection['included'].sum()} of {len(selection)} mice included"
+    )
     print(excluded.to_string(index=False) if len(excluded) else "  No mouse excluded.")
     print(f"  Saved: {path}")
     return selection
@@ -282,14 +303,20 @@ def save_mouse_selection(results_data, path=rx.MOUSE_SELECTION_CSV):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Pipeline step 07: reactivation events.')
-    parser.add_argument('--nolick', action='store_true',
-                        help='no-stim trials without licks, +/- 2 s around no-stim onset')
-    parser.add_argument('--selection-only', action='store_true',
-                        help='only rebuild mouse_selection.csv from the existing results file')
+    parser.add_argument(
+        '--nolick', action='store_true', help='no-stim trials without licks, +/- 2 s around no-stim onset'
+    )
+    parser.add_argument(
+        '--selection-only',
+        action='store_true',
+        help='only rebuild mouse_selection.csv from the existing results file',
+    )
     args = parser.parse_args()
 
     if args.selection_only:
-        results_file = os.path.join(OUTPUT_DIR, f'reactivation_results_{rx.percentile_tag(PERCENTILE_TO_USE)}.pkl')
+        results_file = os.path.join(
+            OUTPUT_DIR, f'reactivation_results_{rx.percentile_tag(PERCENTILE_TO_USE)}.pkl'
+        )
         print(f"Loading {results_file}")
         with open(results_file, 'rb') as f:
             save_mouse_selection(pickle.load(f))
@@ -314,11 +341,13 @@ if __name__ == '__main__':
     # ------------------------------------------------------------------
     if RUN_SURROGATES:
         if SURROGATE_MODE in ('day', 'both'):
-            run_surrogates_per_day(all_mice_to_process, output_dir=output_dir,
-                                   no_lick_only=no_lick_only, time_window=time_window)
+            run_surrogates_per_day(
+                all_mice_to_process, output_dir=output_dir, no_lick_only=no_lick_only, time_window=time_window
+            )
         if SURROGATE_MODE in ('mouse', 'both'):
-            run_surrogates_per_mouse(all_mice_to_process, output_dir=output_dir,
-                                     no_lick_only=no_lick_only, time_window=time_window)
+            run_surrogates_per_mouse(
+                all_mice_to_process, output_dir=output_dir, no_lick_only=no_lick_only, time_window=time_window
+            )
     else:
         print("\nSkipping surrogate computation (RUN_SURROGATES=False).")
 
@@ -327,8 +356,13 @@ if __name__ == '__main__':
     # ------------------------------------------------------------------
     for percentile in PERCENTILES:
         results_data = run_reactivation_detection(
-            r_plus_mice, r_minus_mice, output_dir=output_dir, percentile=percentile,
-            no_lick_only=no_lick_only, time_window=time_window)
+            r_plus_mice,
+            r_minus_mice,
+            output_dir=output_dir,
+            percentile=percentile,
+            no_lick_only=no_lick_only,
+            time_window=time_window,
+        )
 
         # --------------------------------------------------------------
         # Part 3: Mouse selection, from the main detection threshold

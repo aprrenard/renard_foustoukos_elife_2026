@@ -44,6 +44,7 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
 # Decoding helper
 # ============================================================================
 
+
 def _per_mouse_cv_accuracy(vectors, label_encoder, seed=42, n_shuffles=100, n_jobs=-1):
     """
     Compute cross-validated pre vs post learning decoding accuracy per mouse.
@@ -100,11 +101,10 @@ def _per_mouse_cv_accuracy(vectors, label_encoder, seed=42, n_shuffles=100, n_jo
     return np.array(accuracies), np.array(chance_accuracies)
 
 
-
-
 # ============================================================================
 # Panel l: Pre vs post learning decoding accuracy
 # ============================================================================
+
 
 def panel_l_decoding_accuracy(
     vectors_rew=None,
@@ -160,14 +160,12 @@ def panel_l_decoding_accuracy(
             'p_value': p_between,
             'significance': _significance_stars(p_between),
         },
-
     ]
 
     # Plot
     fig, ax = plt.subplots(1, 1, figsize=(4, 5))
     data_plot = [accs_rew, accs_nonrew]
-    sns.barplot(data=data_plot, palette=reward_palette[::-1], estimator=np.nanmean,
-                errorbar='ci', ax=ax)
+    sns.barplot(data=data_plot, palette=reward_palette[::-1], estimator=np.nanmean, errorbar='ci', ax=ax)
     sns.swarmplot(data=data_plot, palette=reward_palette[::-1], alpha=0.7, ax=ax)
     ax.set_xticks([0, 1])
     ax.set_xticklabels(['R+', 'R-'])
@@ -175,7 +173,9 @@ def panel_l_decoding_accuracy(
     ax.set_ylim(0, 1)
     ax.axhline(0.5, color='grey', linestyle='--', linewidth=1)
 
-    p_text = 'p<0.001' if p_between < 0.001 else f'p={p_between:.3f}' if p_between < 0.01 else f'p={p_between:.2f}'
+    p_text = (
+        'p<0.001' if p_between < 0.001 else f'p={p_between:.3f}' if p_between < 0.01 else f'p={p_between:.2f}'
+    )
     ax.text(0.5, 0.95, p_text, ha='center', va='bottom', transform=ax.transAxes, fontsize=9)
 
     sns.despine()
@@ -188,12 +188,14 @@ def panel_l_decoding_accuracy(
     print(f"Figure 3l saved to: {os.path.join(output_dir, 'figure_3l.' + save_format)}")
 
     # Save CSVs
-    data_df = pd.DataFrame({
-        'mouse_id': mice_rew + mice_nonrew,
-        'reward_group': ['R+'] * len(mice_rew) + ['R-'] * len(mice_nonrew),
-        'accuracy': np.concatenate([accs_rew, accs_nonrew]),
-        'chance_accuracy': np.concatenate([chance_rew, chance_nonrew]),
-    })
+    data_df = pd.DataFrame(
+        {
+            'mouse_id': mice_rew + mice_nonrew,
+            'reward_group': ['R+'] * len(mice_rew) + ['R-'] * len(mice_nonrew),
+            'accuracy': np.concatenate([accs_rew, accs_nonrew]),
+            'chance_accuracy': np.concatenate([chance_rew, chance_nonrew]),
+        }
+    )
     data_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_3l_data.csv'), index=False)
     pd.DataFrame(stats_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure_3l_stats.csv'), index=False)
     print(f"Figure 3l data/stats saved to: {OUTPUT_DIR}")
@@ -202,6 +204,7 @@ def panel_l_decoding_accuracy(
 # ============================================================================
 # Panel m: Pairwise day decoding with fixed pre/post decoder
 # ============================================================================
+
 
 def _make_symmetric_with_diag(mat):
     """Make an accuracy matrix symmetric, preserving the diagonal."""
@@ -240,7 +243,11 @@ def _pairwise_day_decoding_fixed_decoder_cv(vectors, days, seed=42, n_splits=10)
                     continue
                 idx_shuff = rng.permutation(idx)
                 fold_size = len(idx) // n_splits
-                test_fold = idx_shuff[k * fold_size:(k + 1) * fold_size] if k < n_splits - 1 else idx_shuff[k * fold_size:]
+                test_fold = (
+                    idx_shuff[k * fold_size : (k + 1) * fold_size]
+                    if k < n_splits - 1
+                    else idx_shuff[k * fold_size :]
+                )
                 train_fold = np.setdiff1d(idx, test_fold)
                 train_idx.append((day, train_fold))
                 test_idx.append((day, test_fold))
@@ -289,12 +296,8 @@ def _extract_pairwise_decoding_accuracy(acc_matrices):
     idx_pre = [0, 1]
     idx_post = [3, 4]
     idx_day0 = 2
-    acc_pre_vs_day0 = np.array([
-        np.nanmean([mat[i, idx_day0] for i in idx_pre]) for mat in acc_matrices
-    ])
-    acc_day0_vs_post = np.array([
-        np.nanmean([mat[idx_day0, j] for j in idx_post]) for mat in acc_matrices
-    ])
+    acc_pre_vs_day0 = np.array([np.nanmean([mat[i, idx_day0] for i in idx_pre]) for mat in acc_matrices])
+    acc_day0_vs_post = np.array([np.nanmean([mat[idx_day0, j] for j in idx_post]) for mat in acc_matrices])
     return acc_pre_vs_day0, acc_day0_vs_post
 
 
@@ -354,18 +357,21 @@ def panel_m_pairwise_decoding(
             if np.all(np.isnan(r_plus)) or np.all(np.isnan(r_minus)):
                 continue
             stat, p = mannwhitneyu(
-                r_plus[~np.isnan(r_plus)], r_minus[~np.isnan(r_minus)],
+                r_plus[~np.isnan(r_plus)],
+                r_minus[~np.isnan(r_minus)],
                 alternative='two-sided',
             )
-            stats_rows.append({
-                'test': 'Mann-Whitney U',
-                'comparison': f'R+ vs R- day {day_i:+d} vs day {day_j:+d}',
-                'day_i': day_i,
-                'day_j': day_j,
-                'statistic': stat,
-                'p_value': p,
-                'significance': _significance_stars(p),
-            })
+            stats_rows.append(
+                {
+                    'test': 'Mann-Whitney U',
+                    'comparison': f'R+ vs R- day {day_i:+d} vs day {day_j:+d}',
+                    'day_i': day_i,
+                    'day_j': day_j,
+                    'statistic': stat,
+                    'p_value': p,
+                    'significance': _significance_stars(p),
+                }
+            )
 
     # Plot
     vmin = 0.5
@@ -377,18 +383,36 @@ def panel_m_pairwise_decoding(
     ax1 = fig.add_subplot(gs[1])
     ax_cbar = fig.add_subplot(gs[2])
 
-    sns.heatmap(mean_accs_rew_sym, annot=True, fmt='.2f',
-                xticklabels=day_labels, yticklabels=day_labels,
-                ax=ax0, cmap='viridis', vmin=vmin, vmax=vmax,
-                mask=np.isnan(mean_accs_rew_sym), cbar=False)
+    sns.heatmap(
+        mean_accs_rew_sym,
+        annot=True,
+        fmt='.2f',
+        xticklabels=day_labels,
+        yticklabels=day_labels,
+        ax=ax0,
+        cmap='viridis',
+        vmin=vmin,
+        vmax=vmax,
+        mask=np.isnan(mean_accs_rew_sym),
+        cbar=False,
+    )
     ax0.set_title(f'R+ (N={len(mice_rew)} mice)')
     ax0.set_xlabel('Day')
     ax0.set_ylabel('Day')
 
-    sns.heatmap(mean_accs_nonrew_sym, annot=True, fmt='.2f',
-                xticklabels=day_labels, yticklabels=day_labels,
-                ax=ax1, cmap='viridis', vmin=vmin, vmax=vmax,
-                mask=np.isnan(mean_accs_nonrew_sym), cbar=False)
+    sns.heatmap(
+        mean_accs_nonrew_sym,
+        annot=True,
+        fmt='.2f',
+        xticklabels=day_labels,
+        yticklabels=day_labels,
+        ax=ax1,
+        cmap='viridis',
+        vmin=vmin,
+        vmax=vmax,
+        mask=np.isnan(mean_accs_nonrew_sym),
+        cbar=False,
+    )
     ax1.set_title(f'R- (N={len(mice_nonrew)} mice)')
     ax1.set_xlabel('Day')
     ax1.set_ylabel('Day')
@@ -410,17 +434,22 @@ def panel_m_pairwise_decoding(
 
     # Save CSVs
     records = []
-    for group, matrices, mice_ids in [('R+', accs_rew_matrix, mice_rew), ('R-', accs_nonrew_matrix, mice_nonrew)]:
+    for group, matrices, mice_ids in [
+        ('R+', accs_rew_matrix, mice_rew),
+        ('R-', accs_nonrew_matrix, mice_nonrew),
+    ]:
         for m_idx, mouse_id in enumerate(mice_ids):
             for i, day_i in enumerate(DAYS):
                 for j, day_j in enumerate(DAYS):
-                    records.append({
-                        'mouse_id': mouse_id,
-                        'reward_group': group,
-                        'day_i': day_i,
-                        'day_j': day_j,
-                        'accuracy': matrices[m_idx, i, j],
-                    })
+                    records.append(
+                        {
+                            'mouse_id': mouse_id,
+                            'reward_group': group,
+                            'day_i': day_i,
+                            'day_j': day_j,
+                            'accuracy': matrices[m_idx, i, j],
+                        }
+                    )
     pd.DataFrame(records).to_csv(os.path.join(OUTPUT_DIR, 'figure_3m_data.csv'), index=False)
     pd.DataFrame(stats_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure_3m_stats.csv'), index=False)
     print(f"Figure 3m data/stats saved to: {OUTPUT_DIR}")
@@ -429,6 +458,7 @@ def panel_m_pairwise_decoding(
 # ============================================================================
 # Panel n: Does day 0 look more like pre or post?
 # ============================================================================
+
 
 def panel_n_day0_classification(
     vectors_rew=None,
@@ -482,26 +512,54 @@ def panel_n_day0_classification(
         ('R-', acc_pre_vs_day0_nonrew, acc_day0_vs_post_nonrew),
     ]:
         stat, p = wilcoxon(acc_pre, acc_post, alternative='two-sided')
-        stats_rows.append({'test': 'Wilcoxon signed-rank', 'reward_group': group,
-                           'comparison': 'pre_vs_day0 vs day0_vs_post (paired)',
-                           'statistic': stat, 'p_value': p, 'significance': _significance_stars(p)})
+        stats_rows.append(
+            {
+                'test': 'Wilcoxon signed-rank',
+                'reward_group': group,
+                'comparison': 'pre_vs_day0 vs day0_vs_post (paired)',
+                'statistic': stat,
+                'p_value': p,
+                'significance': _significance_stars(p),
+            }
+        )
         stat, p = wilcoxon(acc_pre - 0.5, alternative='two-sided')
-        stats_rows.append({'test': 'Wilcoxon signed-rank', 'reward_group': group,
-                           'comparison': 'pre_vs_day0 vs chance',
-                           'statistic': stat, 'p_value': p, 'significance': _significance_stars(p)})
+        stats_rows.append(
+            {
+                'test': 'Wilcoxon signed-rank',
+                'reward_group': group,
+                'comparison': 'pre_vs_day0 vs chance',
+                'statistic': stat,
+                'p_value': p,
+                'significance': _significance_stars(p),
+            }
+        )
         stat, p = wilcoxon(acc_post - 0.5, alternative='two-sided')
-        stats_rows.append({'test': 'Wilcoxon signed-rank', 'reward_group': group,
-                           'comparison': 'day0_vs_post vs chance',
-                           'statistic': stat, 'p_value': p, 'significance': _significance_stars(p)})
+        stats_rows.append(
+            {
+                'test': 'Wilcoxon signed-rank',
+                'reward_group': group,
+                'comparison': 'day0_vs_post vs chance',
+                'statistic': stat,
+                'p_value': p,
+                'significance': _significance_stars(p),
+            }
+        )
 
     for comparison, rew_vals, nonrew_vals in [
         ('pre_vs_day0', acc_pre_vs_day0_rew, acc_pre_vs_day0_nonrew),
         ('day0_vs_post', acc_day0_vs_post_rew, acc_day0_vs_post_nonrew),
     ]:
         stat, p = mannwhitneyu(rew_vals, nonrew_vals, alternative='two-sided')
-        stats_rows.append({'test': 'Mann-Whitney U', 'reward_group': 'R+ vs R-',
-                           'comparison': comparison,
-                           'statistic': stat, 'p_value': p, 'significance': _significance_stars(p)})
+        stats_rows.append(
+            {
+                'test': 'Mann-Whitney U',
+                'reward_group': 'R+ vs R-',
+                'comparison': comparison,
+                'statistic': stat,
+                'p_value': p,
+                'significance': _significance_stars(p),
+            }
+        )
 
     # Plot
     fig, axes = plt.subplots(1, 2, figsize=(6, 4), sharey=True)
@@ -513,14 +571,14 @@ def panel_n_day0_classification(
         [acc_day0_vs_post_rew, acc_day0_vs_post_nonrew],
         reward_palette[::-1],
     ):
-        df_plot = pd.DataFrame({
-            'comparison': ['Pre vs Day 0'] * len(acc_pre) + ['Day 0 vs Post'] * len(acc_post),
-            'accuracy': np.concatenate([acc_pre, acc_post]),
-        })
-        sns.barplot(data=df_plot, x='comparison', y='accuracy', errorbar='ci',
-                    ax=ax, color=color, alpha=0.7)
-        sns.swarmplot(data=df_plot, x='comparison', y='accuracy',
-                      ax=ax, color=color, alpha=0.5, size=7)
+        df_plot = pd.DataFrame(
+            {
+                'comparison': ['Pre vs Day 0'] * len(acc_pre) + ['Day 0 vs Post'] * len(acc_post),
+                'accuracy': np.concatenate([acc_pre, acc_post]),
+            }
+        )
+        sns.barplot(data=df_plot, x='comparison', y='accuracy', errorbar='ci', ax=ax, color=color, alpha=0.7)
+        sns.swarmplot(data=df_plot, x='comparison', y='accuracy', ax=ax, color=color, alpha=0.5, size=7)
         ax.set_title(f'{group} group')
         ax.set_ylim(0, 1.0)
         ax.axhline(0.5, color='grey', linestyle='--', linewidth=1)
@@ -537,18 +595,24 @@ def panel_n_day0_classification(
     print(f"Figure 3n saved to: {os.path.join(output_dir, 'figure_3n.' + save_format)}")
 
     # Save CSVs
-    data_df = pd.DataFrame({
-        'mouse_id': mice_rew + mice_nonrew + mice_rew + mice_nonrew,
-        'reward_group': (['R+'] * len(mice_rew) + ['R-'] * len(mice_nonrew)) * 2,
-        'comparison': (
-            ['pre_vs_day0'] * (len(mice_rew) + len(mice_nonrew)) +
-            ['day0_vs_post'] * (len(mice_rew) + len(mice_nonrew))
-        ),
-        'accuracy': np.concatenate([
-            acc_pre_vs_day0_rew, acc_pre_vs_day0_nonrew,
-            acc_day0_vs_post_rew, acc_day0_vs_post_nonrew,
-        ]),
-    })
+    data_df = pd.DataFrame(
+        {
+            'mouse_id': mice_rew + mice_nonrew + mice_rew + mice_nonrew,
+            'reward_group': (['R+'] * len(mice_rew) + ['R-'] * len(mice_nonrew)) * 2,
+            'comparison': (
+                ['pre_vs_day0'] * (len(mice_rew) + len(mice_nonrew))
+                + ['day0_vs_post'] * (len(mice_rew) + len(mice_nonrew))
+            ),
+            'accuracy': np.concatenate(
+                [
+                    acc_pre_vs_day0_rew,
+                    acc_pre_vs_day0_nonrew,
+                    acc_day0_vs_post_rew,
+                    acc_day0_vs_post_nonrew,
+                ]
+            ),
+        }
+    )
     data_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_3n_data.csv'), index=False)
     pd.DataFrame(stats_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure_3n_stats.csv'), index=False)
     print(f"Figure 3n data/stats saved to: {OUTPUT_DIR}")
