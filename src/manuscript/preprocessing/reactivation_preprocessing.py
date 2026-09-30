@@ -28,9 +28,8 @@ from scipy.signal import find_peaks, savgol_filter
 from scipy.stats import percentileofscore
 from joblib import Parallel, delayed
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
+from fast_learning import imaging
+from fast_learning import paths, database
 
 
 # ============================================================================
@@ -64,21 +63,21 @@ USE_SURROGATE_THRESHOLDS = 'mouse'  # 'day' | 'mouse' | None
 PERCENTILE_TO_USE = 99
 
 # --- Shared ---
-OUTPUT_DIR = os.path.join(io.processed_dir, 'reactivation')
+OUTPUT_DIR = os.path.join(paths.processed_dir, 'reactivation')
 
 
 # ============================================================================
 # Mouse lists
 # ============================================================================
 
-_, _, all_mice, db = io.select_sessions_from_db(
-    io.db_path, io.nwb_dir, two_p_imaging='yes'
+_, _, all_mice, db = database.select_sessions_from_db(
+    paths.db_path, paths.nwb_dir, two_p_imaging='yes'
 )
 
 r_plus_mice, r_minus_mice = [], []
 for mouse in all_mice:
     try:
-        rg = io.get_mouse_reward_group_from_db(io.db_path, mouse, db=db)
+        rg = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db=db)
         if rg == 'R+':
             r_plus_mice.append(mouse)
         elif rg == 'R-':
@@ -113,9 +112,9 @@ def _surrogate_rng(mouse, day):
 
 def create_whisker_template(mouse, day, threshold_dff=THRESHOLD_DFF, verbose=False):
     """Create whisker response template from mapping data for a specific day."""
-    folder = io.tensor_dir
-    xarray_map = utils_imaging.load_mouse_xarray(
-        mouse, folder, 'tensor_xarray_mapping_data.nc', substracted=True)
+    folder = paths.tensor_dir
+    xarray_map = imaging.load_mouse_xarray(
+        mouse, folder, 'tensor_xarray_mapping_data.nc', subtracted=True)
 
     xarray_day = xarray_map.sel(trial=xarray_map['day'] == day)
     xarray_day = xarray_day.groupby('day').apply(
@@ -349,15 +348,15 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
     Returns a nested dict: {mouse, days: {day: {correlations, events, ...}}}
     """
     results = {'mouse': mouse, 'days': {}}
-    folder = io.tensor_dir
+    folder = paths.tensor_dir
 
     for day in days:
         try:
             template, cells_mask = create_whisker_template(
                 mouse, day, THRESHOLD_DFF, verbose=verbose)
 
-            xarray_learning = utils_imaging.load_mouse_xarray(
-                mouse, folder, 'tensor_xarray_learning_data.nc', substracted=False)
+            xarray_learning = imaging.load_mouse_xarray(
+                mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=False)
             xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
 
             selected_trials, n_selected_trials = select_trials_by_type(
@@ -496,7 +495,7 @@ def _analyze_surrogates_per_day(mouse, days=DAYS, threshold_dff=THRESHOLD_DFF,
     Compute per-day surrogate thresholds for one mouse.
     Returns (results_dfs, all_surrogate_data) where results_dfs is {percentile: DataFrame}.
     """
-    folder = io.tensor_dir
+    folder = paths.tensor_dir
     results_lists = {p: [] for p in percentiles}
     all_surrogate_data = {p: {} for p in percentiles}
 
@@ -508,8 +507,8 @@ def _analyze_surrogates_per_day(mouse, days=DAYS, threshold_dff=THRESHOLD_DFF,
             if n_resp < 3 and threshold_dff is not None:
                 continue
 
-            xarray_learning = utils_imaging.load_mouse_xarray(
-                mouse, folder, 'tensor_xarray_learning_data.nc', substracted=False)
+            xarray_learning = imaging.load_mouse_xarray(
+                mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=False)
             xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
             nostim, n_trials = select_trials_by_type(
                 xarray_day, no_lick_only=no_lick_only, time_window=time_window)
@@ -572,10 +571,10 @@ def _analyze_surrogates_per_mouse(mouse, threshold_dff=THRESHOLD_DFF,
     Compute single per-mouse surrogate threshold using pre-learning days pooled.
     Returns (results_dfs, surrogate_data) where results_dfs is {percentile: DataFrame}.
     """
-    folder = io.tensor_dir
+    folder = paths.tensor_dir
     try:
-        xarray_learning = utils_imaging.load_mouse_xarray(
-            mouse, folder, 'tensor_xarray_learning_data.nc', substracted=False)
+        xarray_learning = imaging.load_mouse_xarray(
+            mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=False)
     except Exception as e:
         if verbose:
             print(f"  Error loading xarray for {mouse}: {e}")

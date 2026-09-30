@@ -12,9 +12,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
+from fast_learning import paths
 
 # ============================================================================
 # PARAMETERS
@@ -34,11 +32,11 @@ SAMPLING_RATE = 30
 TIME_WINDOW_PER_DAY = 120
 
 # Path to saved reactivation results
-RESULTS_DIR = os.path.join(io.results_dir, 'reactivation')
+RESULTS_DIR = os.path.join(paths.results_dir, 'reactivation')
 RESULTS_FILE = os.path.join(RESULTS_DIR, 'reactivation_results.pkl')
 
 # Output path
-OUTPUT_DIR = os.path.join(io.results_dir, 'reactivation', 'illustrations')
+OUTPUT_DIR = os.path.join(paths.results_dir, 'reactivation', 'illustrations')
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ============================================================================

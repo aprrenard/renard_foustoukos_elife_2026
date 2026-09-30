@@ -13,12 +13,11 @@ import yaml
 import xarray as xr
 import scipy.stats as stats
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
+from fast_learning import paths, database
 from cicada_nwb import NWBSession
-import src.utils.utils_imaging as utils_imaging
-from src.utils.utils_two_photons import make_events_aligned_array_3d
-from src.utils.utils_behavior import make_behavior_table
+from fast_learning import imaging
+from fast_learning.tensors import make_events_aligned_array_3d
+from fast_learning.behavior import make_behavior_table
 
 
 # =============================================================================
@@ -26,16 +25,16 @@ from src.utils.utils_behavior import make_behavior_table
 # =============================================================================
 
 # Get directories and files.
-db_path = io.solve_common_paths('db')
-nwb_path = io.solve_common_paths('nwb')
-trial_indices_yaml = io.solve_common_paths('trial_indices')
-stop_flag_yaml = io.solve_common_paths('stop_flags')
-trial_indices_sensory_map_yaml = io.solve_common_paths('trial_indices_sensory_map')
-stop_flag_sensory_map_yaml = io.solve_common_paths('stop_flags_sensory_map')
-processed_data_dir = io.solve_common_paths('processed_data')
+db_path = paths.db_path
+nwb_path = paths.nwb_dir
+trial_indices_yaml = paths.trial_indices_yaml
+stop_flag_yaml = paths.stop_flags_yaml
+trial_indices_sensory_map_yaml = paths.trial_indices_sensory_map_yaml
+stop_flag_sensory_map_yaml = paths.stop_flags_sensory_map_yaml
+processed_data_dir = paths.processed_dir
 
 days = ['-2', '-1', '0', '+1', '+2']
-_, nwb_list, mice_list, _ = io.select_sessions_from_db(db_path, nwb_path,
+_, nwb_list, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
                                                 exclude_cols=['exclude', 'two_p_exclude'],
                                                 experimenters=['AR', 'GF', 'MI'],
                                                 day=days,
@@ -158,14 +157,14 @@ for mouse in mice_list:
 # =============================================================================
 
 # Get directories and files.
-db_path = io.solve_common_paths('db')
-nwb_path = io.solve_common_paths('nwb')
-trial_indices_sensory_map_yaml = io.solve_common_paths('trial_indices_sensory_map')
-stop_flag_sensory_map_yaml = io.solve_common_paths('stop_flags_sensory_map')
-processed_data_dir = io.solve_common_paths('processed_data')
+db_path = paths.db_path
+nwb_path = paths.nwb_dir
+trial_indices_sensory_map_yaml = paths.trial_indices_sensory_map_yaml
+stop_flag_sensory_map_yaml = paths.stop_flags_sensory_map_yaml
+processed_data_dir = paths.processed_dir
 
 days = ['-2', '-1', '0', '+1', '+2']
-_, nwb_list, mice_list, _ = io.select_sessions_from_db(db_path, nwb_path,
+_, nwb_list, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
                                                 exclude_cols=['exclude', 'two_p_exclude'],
                                                 experimenters=['AR', 'GF', 'MI'],
                                                 day=days,
@@ -224,7 +223,7 @@ for mouse in mice_list:
         # boundary: align_array_to_events leaves these entirely NaN (all
         # cells, all timepoints) rather than dropping them, which happens
         # occasionally for mapping trials since they are collected at the
-        # end of the session. Same idiom as utils_imaging.extract_trials().
+        # end of the session. Same idiom as imaging.extract_trials().
         all_nan_trials = np.isnan(traces).all(axis=(0, 2))
         if all_nan_trials.any():
             print(f'  Dropping {all_nan_trials.sum()} trial(s) with event '
@@ -273,17 +272,17 @@ for mouse in mice_list:
 # #############################################################################
 
 # Get directories and files.
-db_path = io.solve_common_paths('db')
-nwb_path = io.solve_common_paths('nwb')
-trial_indices_sensory_map_yaml = io.solve_common_paths('trial_indices_sensory_map')
-stop_flag_sensory_map_yaml = io.solve_common_paths('stop_flags_sensory_map')
-processed_data_dir = io.solve_common_paths('processed_data')
+db_path = paths.db_path
+nwb_path = paths.nwb_dir
+trial_indices_sensory_map_yaml = paths.trial_indices_sensory_map_yaml
+stop_flag_sensory_map_yaml = paths.stop_flags_sensory_map_yaml
+processed_data_dir = paths.processed_dir
 days = ['-2', '-1', '0', '+1', '+2']
 sampling_rate = 30  # Hz, for imaging data.
 baseline_win = (0, 1)
 baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * sampling_rate))
 
-_, nwb_list, mice_list, _ = io.select_sessions_from_db(db_path, nwb_path,
+_, nwb_list, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
                                                 exclude_cols=['exclude', 'two_p_exclude'],
                                                 experimenters=['AR', 'GF', 'MI'],
                                                 day=days,
@@ -291,22 +290,22 @@ _, nwb_list, mice_list, _ = io.select_sessions_from_db(db_path, nwb_path,
 
 # mice_list = ['GF305',]
 for mouse_id in mice_list:
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
 
     file_name = 'tensor_xarray_learning_data.nc'
-    folder = os.path.join(io.processed_dir, 'mice')
-    xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, substracted=False)
-    xarr = utils_imaging.substract_baseline(xarr, 2, baseline_win)
+    folder = os.path.join(paths.processed_dir, 'mice')
+    xarr = imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=False)
+    xarr = imaging.subtract_baseline(xarr, 2, baseline_win)
 
     # Save the xarray.
     save_path = os.path.join(folder, mouse_id, 'tensor_xarray_learning_data_baselinesubstracted.nc')
     xarr.to_netcdf(save_path)
 
     file_name = 'tensor_xarray_mapping_data.nc'
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = os.path.join(paths.processed_dir, 'mice')
 
-    xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, substracted=False)
-    xarr = utils_imaging.substract_baseline(xarr, 2, baseline_win)
+    xarr = imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=False)
+    xarr = imaging.subtract_baseline(xarr, 2, baseline_win)
     # Save the xarray.
     save_path = os.path.join(folder, mouse_id, 'tensor_xarray_mapping_data_baselinesubstracted.nc')
     xarr.to_netcdf(save_path)
@@ -316,13 +315,13 @@ for mouse_id in mice_list:
 # Lick-aligned xarrays.
 # #############################################################################
 
-db_path = io.solve_common_paths('db')
-db = io.read_excel_db(db_path)
-nwb_path = io.solve_common_paths('nwb')
-processed_dir = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+db_path = paths.db_path
+db = database.read_excel_db(db_path)
+nwb_path = paths.nwb_dir
+processed_dir = os.path.join(paths.processed_dir, 'mice')
 
 days = ['-2', '-1', '0', '+1', '+2']
-_, _, mice_list, _ = io.select_sessions_from_db(db_path, nwb_path,
+_, _, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
                                                 exclude_cols=['exclude', 'two_p_exclude'],
                                                 experimenters=['AR', 'GF', 'MI'],
                                                 day=days,
@@ -335,8 +334,8 @@ _, _, mice_list, _ = io.select_sessions_from_db(db_path, nwb_path,
 for mouse in mice_list:
     print(f'Processing lick aligned array for {mouse}')
     file_name = 'tensor_xarray_learning_data.nc'
-    xarray = utils_imaging.load_mouse_xarray(mouse, processed_dir, file_name, substracted=True)
-    rew_gp = io.get_mouse_reward_group_from_db(db_path, mouse, db)
+    xarray = imaging.load_mouse_xarray(mouse, processed_dir, file_name, subtracted=True)
+    rew_gp = database.get_mouse_reward_group_from_db(db_path, mouse, db)
 
     lick_times = xarray.coords['lick_time'].values
     stim_onset = xarray.coords['stim_onset'].values

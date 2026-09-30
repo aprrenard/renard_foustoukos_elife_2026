@@ -18,9 +18,8 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import wilcoxon
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import trial_type_rew_palette
+from fast_learning import paths
+from fast_learning.plotting import trial_type_rew_palette
 
 
 # ============================================================================
@@ -28,14 +27,14 @@ from src.utils.utils_plot import trial_type_rew_palette
 # ============================================================================
 
 ON_OFF_ORDER = ['whisker_on_1', 'whisker_off', 'whisker_on_2']
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
 
 
 # ============================================================================
 # Load particle-test behaviour table
 # ============================================================================
 
-table_path = os.path.join(io.processed_dir, 'behavior', 'behavior_particle_test.csv')
+table_path = os.path.join(paths.processed_dir, 'behavior', 'behavior_particle_test.csv')
 table_particle_test = pd.read_csv(table_path)
 
 

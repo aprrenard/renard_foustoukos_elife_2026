@@ -17,9 +17,8 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import mannwhitneyu
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import trial_type_rew_palette, trial_type_nonrew_palette
+from fast_learning import paths
+from fast_learning.plotting import trial_type_rew_palette, trial_type_nonrew_palette
 
 
 # ============================================================================
@@ -29,7 +28,7 @@ from src.utils.utils_plot import trial_type_rew_palette, trial_type_nonrew_palet
 DAYS = [-2, -1, 0, 1, 2]
 MAX_TRIALS_RT = 100
 MIN_MICE_PER_TRIAL = 5   # minimum mice required to plot a trial bin in panel j
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
 
 # (filter_col, outcome_col, trial_col, label, rp_palette_idx, rm_palette_idx)
 STIM_DEFS = [
@@ -43,7 +42,7 @@ STIM_DEFS = [
 # Load data
 # ============================================================================
 
-bh_path = os.path.join(io.processed_dir, 'behavior',
+bh_path = os.path.join(paths.processed_dir, 'behavior',
                        'behavior_imagingmice_table_5days_cut.csv')
 table = pd.read_csv(bh_path)
 

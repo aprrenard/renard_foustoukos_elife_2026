@@ -18,8 +18,7 @@ from scipy.stats import pearsonr
 from sklearn.linear_model import LinearRegression
 from sklearn.utils import resample
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
+from fast_learning import paths
 
 
 # ============================================================================
@@ -28,8 +27,8 @@ import src.utils.utils_io as io
 
 N_BOOT = 1000
 SEED = 42
-RESULTS_DIR = os.path.join(io.processed_dir, 'decoding')
-OUTPUT_DIR  = os.path.join(io.manuscript_output_dir, 'supp_2', 'output')
+RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
+OUTPUT_DIR  = os.path.join(paths.manuscript_output_dir, 'supp_2', 'output')
 
 
 # ============================================================================
@@ -37,7 +36,7 @@ OUTPUT_DIR  = os.path.join(io.manuscript_output_dir, 'supp_2', 'output')
 # ============================================================================
 
 weights_df = pd.read_csv(os.path.join(RESULTS_DIR, 'classifier_weights.csv'))
-lmi_df     = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+lmi_df     = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
 
 merged = weights_df.merge(lmi_df[['mouse_id', 'roi', 'lmi']], on=['mouse_id', 'roi'], how='inner')
 merged = merged.dropna(subset=['lmi', 'classifier_weight'])

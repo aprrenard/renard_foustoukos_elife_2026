@@ -14,12 +14,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import mannwhitneyu
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import behavior_palette
+from fast_learning import paths
+from fast_learning.plotting import behavior_palette
 
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_1', 'output')
 
 
 # ============================================================================
@@ -27,7 +26,7 @@ OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_1', 'output')
 # ============================================================================
 
 def panel_c_left_performance_across_days(
-    table_path=os.path.join(io.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
+    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
     save_path=OUTPUT_DIR,
     save_format='svg',
     dpi=300
@@ -46,7 +45,7 @@ def panel_c_left_performance_across_days(
     """
 
     # Load behavioral data
-    table_path = io.adjust_path_to_host(table_path)
+    table_path = paths.adjust_path_to_host(table_path)
     table = pd.read_csv(table_path)
 
     # Remove spurious whisker trials from mapping sessions (days -2 and -1)
@@ -156,7 +155,7 @@ def panel_c_left_performance_across_days(
 # ============================================================================
 
 def panel_c_right_performance_barplot(
-    table_path=os.path.join(io.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
+    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
     days_of_interest=[0, 1, 2],
     save_path=OUTPUT_DIR,
     save_format='svg',
@@ -177,7 +176,7 @@ def panel_c_right_performance_barplot(
     """
 
     # Load behavioral data
-    table_path = io.adjust_path_to_host(table_path)
+    table_path = paths.adjust_path_to_host(table_path)
     table = pd.read_csv(table_path)
 
     # Remove spurious whisker trials from mapping sessions

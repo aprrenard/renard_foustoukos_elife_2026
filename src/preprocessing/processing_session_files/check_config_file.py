@@ -4,23 +4,22 @@ import sys
 import yaml
 import pandas as pd
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-import src.utils.utils_io as io
+from fast_learning import paths, database
 from nwb_wrappers import nwb_reader_functions as nwb_read
 
 
 # Path to the directory containing the processed data.
-processed_dir = io.solve_common_paths('processed_data')
-nwb_dir = io.solve_common_paths('nwb')
-db_path = io.solve_common_paths('db')
+processed_dir = paths.processed_dir
+nwb_dir = paths.nwb_dir
+db_path = paths.db_path
 
 
 # #############################################################################
 # Checking the yaml config files reward group match with the db.
 # #############################################################################
 
-sessions, nwb_files, mice, db = io.select_sessions_from_db(db_path,
+sessions, nwb_files, mice, db = database.select_sessions_from_db(db_path,
                                             nwb_dir,
                                             reward_group='R+'
                                             )

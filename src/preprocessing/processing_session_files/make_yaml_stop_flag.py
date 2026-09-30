@@ -12,15 +12,15 @@ sys.path.append(r'H:\anthony\repos\NWB_analysis')
 # sys.path.append(r'/home/aprenard/repos/NWB_analysis')
 # sys.path.append(r'/home/aprenard/repos/fast-learning')
 from nwb_wrappers import nwb_reader_functions as nwb_read
-from src.utils import utils_io as io
+from fast_learning import paths, database
 
 
 # =============================================================================
 # Path configuation.
 # =============================================================================
 
-nwb_dir = io.solve_common_paths('nwb')
-db_path = io.solve_common_paths('db')
+nwb_dir = paths.nwb_dir
+db_path = paths.db_path
 
 
 # =============================================================================
@@ -30,7 +30,7 @@ db_path = io.solve_common_paths('db')
 # Find the trial index of the first whisker trial of this block.
 
 # List nwb files.
-session_list, nwb_list, mice, db_filtered = io.select_sessions_from_db(
+session_list, nwb_list, mice, db_filtered = database.select_sessions_from_db(
                                                 db_path,
                                                 nwb_dir,
                                                 two_p_imaging='yes',
@@ -131,7 +131,7 @@ for nwb_file in nwb_list:
 
 # Save yaml files. Written under the output root; the yaml files in
 # mice_info/stop_flags are read-only inputs.
-yaml_dir = os.path.join(io.processed_dir, 'stop_flags')
+yaml_dir = os.path.join(paths.processed_dir, 'stop_flags')
 os.makedirs(yaml_dir, exist_ok=True)
 yaml_save = os.path.join(yaml_dir, 'stop_flags_sensory_map.yaml')
 with open(yaml_save, 'w') as stream:
@@ -144,7 +144,7 @@ with open(yaml_save, 'w') as stream:
 trial_count = pd.DataFrame(trial_count, columns = ['mouse_id', 'session_id', 'start', 'stop', 'n_wh_miss', 'n_wh_hit'])
 
 nwb_file = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/NWB/AR127_20240221_133407.nwb'
-nwb_file = io.adjust_path_to_host(nwb_file)
+nwb_file = paths.adjust_path_to_host(nwb_file)
 table = nwb_read.get_trial_table(nwb_file)
 table = table.reset_index()
 table = table.loc[(table.trial_id >= 250)]
@@ -162,7 +162,7 @@ plt.scatter(table.loc[table.no_stim==1, 'trial_id'], table.loc[table.no_stim==1,
 # hits in the rest.
 
 # List nwb files.
-nwb_list = io.read_excel_db(db_path)
+nwb_list = database.read_excel_db(db_path)
 nwb_list = nwb_list.loc[(nwb_list['exclude']!='exclude')]
 nwb_list = list(nwb_list.session_id)
 nwb_list = [os.path.join(nwb_dir, f + '.nwb') for f in nwb_list]

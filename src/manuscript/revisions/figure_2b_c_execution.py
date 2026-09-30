@@ -25,7 +25,7 @@ Execution modes:
     MODE = 'plot'     : load the previously cached CSV and plot only
 
 Figures and CSVs are saved to
-    io.manuscript_output_dir/revisions/figure_2b_c_execution/output/.
+    paths.manuscript_output_dir/revisions/figure_2b_c_execution/output/.
 """
 
 import os
@@ -36,17 +36,16 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import mannwhitneyu
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_behavior import make_behavior_table
-from src.utils.utils_plot import stim_palette, reward_palette
+from fast_learning import paths, database
+from fast_learning.behavior import make_behavior_table
+from fast_learning.plotting import stim_palette, reward_palette
 
 
 # FAST_LEARNING_MODE overrides the default.
 MODE = os.environ.get('FAST_LEARNING_MODE', 'compute')
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'revisions', 'figure_2b_c_execution', 'output')
-TABLE_PATH = os.path.join(io.processed_dir, 'behavior', 'behavior_muscimol_execution.csv')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_2b_c_execution', 'output')
+TABLE_PATH = os.path.join(paths.processed_dir, 'behavior', 'behavior_muscimol_execution.csv')
 
 INACTIVATION_LABELS = ['pre_-2', 'pre_-1', 'muscimol_1', 'ringer_1', 'muscimol_2']
 DAYS_OF_INTEREST = ['muscimol_1', 'ringer_1', 'muscimol_2']
@@ -61,8 +60,8 @@ def _compute_behavior_table(table_path=TABLE_PATH):
     """Extract trial-level behavior data for execution-inactivation sessions
     from NWB files and cache it to `table_path`.
     """
-    session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
-        io.db_path, io.nwb_dir, experimenters=None,
+    session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
+        paths.db_path, paths.nwb_dir, experimenters=None,
         exclude_cols=['exclude'],
         pharma_inactivation_type=['execution'],
         pharma_day=INACTIVATION_LABELS,
@@ -71,8 +70,8 @@ def _compute_behavior_table(table_path=TABLE_PATH):
           f"{len(mice_list)} mice")
 
     table = make_behavior_table(
-        nwb_list, session_list, io.db_path, cut_session=True,
-        stop_flag_yaml=io.stop_flags_yaml, trial_indices_yaml=io.trial_indices_yaml,
+        nwb_list, session_list, paths.db_path, cut_session=True,
+        stop_flag_yaml=paths.stop_flags_yaml, trial_indices_yaml=paths.trial_indices_yaml,
     )
 
     os.makedirs(os.path.dirname(table_path), exist_ok=True)
@@ -83,7 +82,7 @@ def _compute_behavior_table(table_path=TABLE_PATH):
 
 
 def _load_behavior_table(table_path=TABLE_PATH):
-    table_path = io.adjust_path_to_host(table_path)
+    table_path = paths.adjust_path_to_host(table_path)
     return pd.read_csv(table_path)
 
 
@@ -115,10 +114,10 @@ def panel_b_muscimol_timecourse_execution(
     if table is None:
         table = _compute_behavior_table() if MODE == 'compute' else _load_behavior_table()
 
-    db_path = io.db_path
-    nwb_dir = io.nwb_dir
+    db_path = paths.db_path
+    nwb_dir = paths.nwb_dir
 
-    fpS1_mice = io.select_mice_from_db(
+    fpS1_mice = database.select_mice_from_db(
         db_path, nwb_dir, experimenters=None,
         exclude_cols=['exclude'],
         pharmacology='yes',
@@ -126,7 +125,7 @@ def panel_b_muscimol_timecourse_execution(
         pharma_area='fpS1',
     )
 
-    wS1_mice = io.select_mice_from_db(
+    wS1_mice = database.select_mice_from_db(
         db_path, nwb_dir, experimenters=None,
         exclude_cols=['exclude'],
         pharmacology='yes',
@@ -139,7 +138,7 @@ def panel_b_muscimol_timecourse_execution(
     table.loc[table.mouse_id.isin(fpS1_mice), 'area'] = 'fpS1'
     table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
 
-    _, _, _, db = io.select_sessions_from_db(
+    _, _, _, db = database.select_sessions_from_db(
         db_path, nwb_dir, experimenters=None,
         exclude_cols=['exclude'],
         pharma_inactivation_type=['execution'],

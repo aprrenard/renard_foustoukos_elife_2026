@@ -7,8 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
+from fast_learning import paths
 from nwb_wrappers.nwb_reader_functions import get_image_mask
 
 
@@ -22,7 +21,7 @@ ops_paths = [
 
 mean_images = []
 for path in ops_paths:
-    ops = np.load(io.adjust_path_to_host(path), allow_pickle=True)
+    ops = np.load(paths.adjust_path_to_host(path), allow_pickle=True)
     mean_images.append(ops.item()['meanImg'])
 
 fig, axes = plt.subplots(1, 5, figsize=(15, 3))

@@ -37,7 +37,7 @@ Execution modes:
     MODE = 'plot'    : load previously saved CSVs and plot only
 
 Figures and CSVs are saved to
-    io.manuscript_output_dir/revisions/figure_4h_shuffle_control/output/.
+    paths.manuscript_output_dir/revisions/figure_4h_shuffle_control/output/.
 """
 
 import os
@@ -53,8 +53,8 @@ from scipy.stats import wilcoxon
 from joblib import Parallel, delayed
 
 sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths
+from fast_learning.plotting import reward_palette
 from src.manuscript.preprocessing.reactivation_preprocessing import (
     detect_reactivation_events,
     MIN_EVENT_DISTANCE_FRAMES,
@@ -76,7 +76,7 @@ N_JOBS = 35
 REACTIVATION_RESULTS_FILE = os.path.join(
     REACTIVATION_RESULTS_DIR, f'reactivation_results_{PERCENTILE_TAG}.pkl')
 OUTPUT_DIR = os.path.join(
-    io.manuscript_output_dir, 'revisions', 'figure_4h_shuffle_control', 'output')
+    paths.manuscript_output_dir, 'revisions', 'figure_4h_shuffle_control', 'output')
 
 # Execution mode
 #   'compute' : run the shuffle-detection pipeline, save CSVs, then plot

@@ -16,12 +16,11 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 from statsmodels.stats.multitest import multipletests
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths
+from fast_learning.plotting import reward_palette
 
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_1', 'output')
 
 
 # ============================================================================
@@ -29,7 +28,7 @@ OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_1', 'output')
 # ============================================================================
 
 def generate_panel(
-    table_path=os.path.join(io.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'),
+    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'),
     n_trials=120,
     save_path=OUTPUT_DIR,
     save_format='svg',
@@ -54,7 +53,7 @@ def generate_panel(
     """
 
     # Load behavioral data
-    table_path = io.adjust_path_to_host(table_path)
+    table_path = paths.adjust_path_to_host(table_path)
     table = pd.read_csv(table_path)
 
     # Filter for whisker trials on day 0

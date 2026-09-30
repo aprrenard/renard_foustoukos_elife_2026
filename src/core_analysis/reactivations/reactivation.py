@@ -18,11 +18,9 @@ from scipy.ndimage import gaussian_filter1d
 from joblib import Parallel, delayed
 from scipy.stats import mannwhitneyu
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
 
 
 # ============================================================================
@@ -65,9 +63,9 @@ mode = 'compute'  # Options: 'compute' (run analysis and save results) or 'analy
 n_jobs = 35  # Number of parallel jobs for processing mice (set to -1 to use all available cores)
 
 # Load database and available mice
-_, _, all_mice, db = io.select_sessions_from_db(
-    io.db_path,
-    io.nwb_dir,
+_, _, all_mice, db = database.select_sessions_from_db(
+    paths.db_path,
+    paths.nwb_dir,
     two_p_imaging='yes'
 )
 
@@ -77,7 +75,7 @@ r_minus_mice = []
 
 for mouse in all_mice:
     try:
-        reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse, db=db)
+        reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db=db)
         if reward_group == 'R+':
             r_plus_mice.append(mouse)
         elif reward_group == 'R-':
@@ -104,10 +102,10 @@ def _get_surrogate_csv_path(mode):
         None → returns None (fixed threshold used)
     """
     if mode == 'day':
-        return os.path.join(io.results_dir, 'reactivation_surrogates_per_day',
+        return os.path.join(paths.results_dir, 'reactivation_surrogates_per_day',
                             'surrogate_thresholds_per_day.csv')
     elif mode == 'mouse':
-        return os.path.join(io.results_dir, 'reactivation_surrogates_per_mouse',
+        return os.path.join(paths.results_dir, 'reactivation_surrogates_per_mouse',
                             'surrogate_thresholds_per_mouse.csv')
     return None
 
@@ -253,9 +251,9 @@ def create_whisker_template(mouse, day, threshold_dff=0.05, verbose=True):
         print(f"\n  Creating template for {mouse}, Day {day}")
 
     # Load mapping data
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = paths.tensor_dir
     file_name = 'tensor_xarray_mapping_data.nc'
-    xarray_map = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=True)
+    xarray_map = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=True)
 
     # Select the specific day
     xarray_day = xarray_map.sel(trial=xarray_map['day'] == day)
@@ -1296,7 +1294,7 @@ def plot_threshold_comparison(save_path):
     print("="*60)
 
     # Load mouse-wise thresholds
-    mouse_csv_path = os.path.join(io.results_dir, 'reactivation_surrogates', 'surrogate_thresholds.csv')
+    mouse_csv_path = os.path.join(paths.results_dir, 'reactivation_surrogates', 'surrogate_thresholds.csv')
     day_csv_path = _get_surrogate_csv_path('day')
 
     has_mouse_data = os.path.exists(mouse_csv_path)
@@ -1450,9 +1448,9 @@ def analyze_mouse_reactivation(mouse, days=[-2, -1, 0, 1, 2], verbose=True, thre
             template, cells_mask = create_whisker_template(mouse, day, threshold_dff, verbose=verbose)
 
             # Step 2: Load learning data
-            folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+            folder = paths.tensor_dir
             file_name = 'tensor_xarray_learning_data.nc'
-            xarray_learning = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=False)
+            xarray_learning = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=False)
 
             # Select this day
             xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
@@ -2661,11 +2659,11 @@ def calculate_within_day0_performance_delta(mouse, verbose=False):
         Total number of whisker trials
     """
     # Load learning data
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = paths.tensor_dir
     file_name = 'tensor_xarray_learning_data.nc'
 
     try:
-        xarray_learning = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=False)
+        xarray_learning = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=False)
     except:
         if verbose:
             print(f"  Warning: Could not load data for {mouse}")
@@ -2928,11 +2926,11 @@ def analyze_reactivation_around_first_hit(mouse, verbose=False):
         - 'n_trials_after': actual number of trials after (may be <5)
     """
     # Load learning data
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = paths.tensor_dir
     file_name = 'tensor_xarray_learning_data.nc'
 
     try:
-        xarray_learning = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=False)
+        xarray_learning = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=False)
     except Exception as e:
         if verbose:
             print(f"  Warning: Could not load data for {mouse}: {e}")
@@ -3065,11 +3063,11 @@ def analyze_reactivation_trial_by_trial(mouse, n_trials_after_hit=60):
     Returns array of frequencies: [first_hit, trial+1, trial+2, ..., trial+n]
     """
     # Load data
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = paths.tensor_dir
     file_name = 'tensor_xarray_learning_data.nc'
 
     try:
-        xarray_learning = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=False)
+        xarray_learning = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=False)
     except:
         return None
 
@@ -3747,8 +3745,8 @@ if __name__ == "__main__":
         percentile_suffix = f"_p{int(percentile_to_use * 10)}"
 
     # Create output directories
-    processed_data_dir = os.path.join(io.processed_dir, 'reactivation')
-    output_dir = os.path.join(io.results_dir, 'reactivation')
+    processed_data_dir = os.path.join(paths.processed_dir, 'reactivation')
+    output_dir = os.path.join(paths.results_dir, 'reactivation')
     os.makedirs(processed_data_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
     print(f"\nProcessed data will be saved to: {processed_data_dir}")
@@ -3973,9 +3971,9 @@ if __name__ == "__main__":
 # template, cells_mask = create_whisker_template(mouse, day, threshold_dff=0.05, verbose=True)
 
 # # Load learning data
-# folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+# folder = paths.tensor_dir
 # file_name = 'tensor_xarray_learning_data.nc'
-# xarray_learning = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=False)
+# xarray_learning = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=False)
 
 # # Select trials for day 0
 # xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)

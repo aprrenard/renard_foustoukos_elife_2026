@@ -21,11 +21,9 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import mannwhitneyu, pearsonr
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
+from fast_learning import imaging
+from fast_learning import paths, database
 
 
 # ============================================================================
@@ -41,23 +39,23 @@ N_CORES       = 35
 PAIR_TYPES    = ['wS2-wS2', 'wM1-wM1']
 
 # Intermediate results (heavy CSVs): kept in processed_dir
-RESULTS_DIR = os.path.join(io.processed_dir, 'pairwise_correlations')
+RESULTS_DIR = os.path.join(paths.processed_dir, 'pairwise_correlations')
 
 # Final figures + stats CSVs
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
 
 
 # ============================================================================
 # Session / mouse setup
 # ============================================================================
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path, io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir,
                                              two_p_imaging='yes',
                                              experimenters=['AR', 'GF', 'MI'])
 
 mice_by_group = {}
 for mouse_id in mice:
-    rg = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
+    rg = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
     mice_by_group.setdefault(rg, []).append(mouse_id)
 
 
@@ -66,10 +64,10 @@ for mouse_id in mice:
 # ============================================================================
 
 def process_mouse(mouse_id):
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
-    folder = io.tensor_dir
-    xarr = utils_imaging.load_mouse_xarray(
-        mouse_id, folder, 'tensor_xarray_mapping_data.nc', substracted=False)
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
+    folder = paths.tensor_dir
+    xarr = imaging.load_mouse_xarray(
+        mouse_id, folder, 'tensor_xarray_mapping_data.nc', subtracted=False)
     xarr.name = 'dff'
     xarr = xarr.sel(trial=xarr['day'].isin(PRE_DAYS + POST_DAYS))
     xarr = xarr.sel(time=slice(WIN_SEC[0], WIN_SEC[1]))

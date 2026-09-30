@@ -11,9 +11,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 import pymc as pm 
 import scipy as sp
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
+from fast_learning import database
+from fast_learning.plotting import *
 from cicada_nwb import NWBSession
 from scipy.stats import mannwhitneyu, wilcoxon
 from matplotlib.colors import Normalize
@@ -23,7 +22,7 @@ import matplotlib.cm as cm
 
 def make_behavior_table(nwb_list, session_list, db_path, cut_session, stop_flag_yaml, trial_indices_yaml):
     if cut_session:
-        start_stop, trial_indices = io.read_stop_flags_and_indices_yaml(stop_flag_yaml, trial_indices_yaml)
+        start_stop, trial_indices = database.read_stop_flags_and_indices_yaml(stop_flag_yaml, trial_indices_yaml)
     table = []
     for nwb, session in zip(nwb_list, session_list):
         with NWBSession(nwb) as nwb_session:
@@ -31,7 +30,7 @@ def make_behavior_table(nwb_list, session_list, db_path, cut_session, stop_flag_
             if 'trial_id' not in df.columns:
                 df.rename(columns={'id': 'trial_id'}, inplace=True)
             behavior_type, day = nwb_session.petersen.get_bhv_type_and_training_day_index()
-        reward_group = io.get_reward_group_from_db(db_path, session)
+        reward_group = database.get_reward_group_from_db(db_path, session)
         df['day'] = day
         df['behavior_type'] = behavior_type
         df['session_id'] = session
@@ -49,14 +48,14 @@ def make_behavior_table(nwb_list, session_list, db_path, cut_session, stop_flag_
     return table
 
 def add_db_metadata_to_table(table, db_path, session_list):
-    db = io.read_excel_db(db_path)
+    db = database.read_excel_db(db_path)
     db = db.loc[db['session_id'].isin(session_list)]
     db = db[['session_id', 'reward_group', 'pharmacology', 'pharma_day', 'pharma_inactivation_type', 'pharma_area']]
     table = pd.merge(table, db, on='session_id', how='left')
     return table
     
 def cut_sessions(table, stop_flag_yaml, trial_indices_yaml):
-    start_stop, trial_indices = io.read_stop_flags_and_indices_yaml(stop_flag_yaml, trial_indices_yaml)
+    start_stop, trial_indices = database.read_stop_flags_and_indices_yaml(stop_flag_yaml, trial_indices_yaml)
     
     temp = []
     for session, flags in start_stop.items():

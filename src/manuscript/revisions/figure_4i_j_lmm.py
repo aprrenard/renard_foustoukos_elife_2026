@@ -44,7 +44,7 @@ Execution modes and output layout mirror figure_4i_j.py:
     MODE = 'plot'    : load previously saved CSVs and plot only
 
 Figures and CSVs are saved to
-    io.manuscript_output_dir/revisions/figure_4i_j_lmm/output/.
+    paths.manuscript_output_dir/revisions/figure_4i_j_lmm/output/.
 """
 
 import os
@@ -58,8 +58,8 @@ from scipy.stats import linregress, wilcoxon
 from statsmodels.regression.mixed_linear_model import MixedLM
 
 sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths
+from fast_learning.plotting import reward_palette
 from src.manuscript.figure_4.figure_4i_j import (
     DAYS,
     PARTICIPATION_THRESHOLDS_TO_CHECK,
@@ -79,7 +79,7 @@ from src.manuscript.figure_4.figure_4i_j import (
 # (e.g. after changing PARTICIPATION_THRESHOLDS_TO_CHECK upstream).
 MODE = 'plot'
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'revisions', 'figure_4i_j_lmm', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_4i_j_lmm', 'output')
 
 
 # ============================================================================

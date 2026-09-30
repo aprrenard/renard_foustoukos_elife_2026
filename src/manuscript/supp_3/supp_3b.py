@@ -14,12 +14,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -34,23 +32,23 @@ DAYS          = [-2, -1, 0, 1, 2]
 CELL_TYPES    = ['wS2', 'wM1']
 MIN_CELLS     = 3   # minimum cells per mouse to include that mouse
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
 
 
 # ============================================================================
 # Load and process imaging data
 # ============================================================================
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path, io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir,
                                              two_p_imaging='yes',
                                              experimenters=['AR', 'GF', 'MI'])
 
 psth_records = []
 for mouse_id in mice:
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
-    folder = io.tensor_dir
-    xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, 'tensor_xarray_mapping_data.nc')
-    xarr = utils_imaging.substract_baseline(xarr, 2, BASELINE_WIN)
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
+    folder = paths.tensor_dir
+    xarr = imaging.load_mouse_xarray(mouse_id, folder, 'tensor_xarray_mapping_data.nc')
+    xarr = imaging.subtract_baseline(xarr, 2, BASELINE_WIN)
     xarr = xarr.sel(trial=xarr['day'].isin(DAYS))
     xarr = xarr.sel(time=slice(WIN_SEC[0], WIN_SEC[1]))
     xarr = xarr.groupby('day').mean(dim='trial')
@@ -68,7 +66,7 @@ psth = pd.concat(psth_records, ignore_index=True)
 # Aggregate: per-mouse mean per cell type, then convert to % dF/F0
 # ============================================================================
 
-psth_filtered = utils_imaging.filter_data_by_cell_count(psth, MIN_CELLS)
+psth_filtered = imaging.filter_data_by_cell_count(psth, MIN_CELLS)
 
 data_ctype = psth_filtered[psth_filtered['cell_type'].isin(CELL_TYPES)].copy()
 data_ctype = (data_ctype

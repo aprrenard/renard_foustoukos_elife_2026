@@ -14,12 +14,11 @@ import seaborn as sns
 from scipy.signal import hilbert, find_peaks
 from scipy.ndimage import gaussian_filter1d
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import stim_palette
+from fast_learning import paths
+from fast_learning.plotting import stim_palette
 
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_1', 'output')
 
 
 # ============================================================================
@@ -79,7 +78,7 @@ def detect_piezo_lick_times(
 # ============================================================================
 
 def generate_panel(
-    results_file=os.path.join(io.processed_dir, 'behavior', 'GF305_29112020_103331_results.txt'),
+    results_file=os.path.join(paths.processed_dir, 'behavior', 'GF305_29112020_103331_results.txt'),
     save_path=OUTPUT_DIR,
     save_format='svg',
     dpi=300
@@ -97,7 +96,7 @@ def generate_panel(
         dpi: Resolution for saved figure
     """
 
-    results_file = io.adjust_path_to_host(results_file)
+    results_file = paths.adjust_path_to_host(results_file)
 
     # Load behavioral results
     df_results = pd.read_csv(results_file, sep=r'\s+', engine='python')
@@ -125,7 +124,7 @@ def generate_panel(
             continue
 
         # Load and process lick trace
-        lick_traces_dir = io.adjust_path_to_host(os.path.join(io.processed_dir, 'behavior', 'GF305_lick_traces'))
+        lick_traces_dir = paths.adjust_path_to_host(os.path.join(paths.processed_dir, 'behavior', 'GF305_lick_traces'))
         lick_file = os.path.join(lick_traces_dir, f"LickTrace{int(trial['trialnumber'])}.bin")
         lick_trace = np.fromfile(lick_file)[1::2]
 

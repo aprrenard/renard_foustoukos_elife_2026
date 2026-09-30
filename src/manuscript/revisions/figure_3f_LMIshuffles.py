@@ -10,7 +10,7 @@ LMI computation (data source, response/baseline windows, pre=[-2,-1] vs
 post=[+1,+2] day pooling) exactly mirrors the "Compute LMI" section of
 src/preprocessing/processing_tensor_data/stats_on_tensors.py. The null
 distribution reuses the same shuffle procedure already used there for LMI
-significance testing (utils_imaging.compute_roc), via the new
+significance testing (imaging.compute_roc), via the new
 return_shuffles=True option, which keeps every per-cell per-shuffle null LMI
 value instead of collapsing them to a single percentile. All shuffle x cell
 null values are pooled per reward group (not averaged per cell, which would
@@ -34,10 +34,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import ks_2samp, levene
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths, database
+from fast_learning import imaging
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -49,10 +48,10 @@ BASELINE_WIN = (-1, 0)
 N_SHUFFLES = 100
 DAYS = ['-2', '-1', '0', '+1', '+2']
 
-PROCESSED_DATA_DIR = io.solve_common_paths('processed_data')
+PROCESSED_DATA_DIR = paths.processed_dir
 NULL_LMI_CSV = os.path.join(PROCESSED_DATA_DIR, 'lmi_null_shuffles.csv')
-LMI_RESULTS_CSV = os.path.join(io.processed_dir, 'lmi_results.csv')
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'revisions', 'figure_3f_LMIshuffles')
+LMI_RESULTS_CSV = os.path.join(paths.processed_dir, 'lmi_results.csv')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_3f_LMIshuffles')
 
 # Execution mode
 #   'compute' : rerun the shuffle procedure for all mice, save CSV, then plot
@@ -90,21 +89,21 @@ def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
 
     Saves NULL_LMI_CSV.
     """
-    db_path = io.solve_common_paths('db')
-    nwb_path = io.solve_common_paths('nwb')
+    db_path = paths.db_path
+    nwb_path = paths.nwb_dir
 
-    _, _, mice_list, _ = io.select_sessions_from_db(
+    _, _, mice_list, _ = database.select_sessions_from_db(
         db_path, nwb_path, exclude_cols=['exclude', 'two_p_exclude'],
         experimenters=['AR', 'GF', 'MI'], day=DAYS, two_p_imaging='yes')
 
     rows = []
     for mouse_id in mice_list:
         print(f'Processing {mouse_id}')
-        reward_group = io.get_mouse_reward_group_from_db(db_path, mouse_id)
+        reward_group = database.get_mouse_reward_group_from_db(db_path, mouse_id)
 
         # Same loader as compute_LMI.py, so artefact cells are excluded.
-        data_mapping = utils_imaging.load_mouse_xarray(
-            mouse_id, io.tensor_dir, 'tensor_xarray_mapping_data.nc', substracted=False)
+        data_mapping = imaging.load_mouse_xarray(
+            mouse_id, paths.tensor_dir, 'tensor_xarray_mapping_data.nc', subtracted=False)
         data_mapping = data_mapping - np.nanmean(
             data_mapping.sel(time=slice(*BASELINE_WIN)), axis=2, keepdims=True)
 
@@ -113,7 +112,7 @@ def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
         data_post = data_mapping.sel(trial=data_mapping.coords['day'].isin([1, 2]))
         data_post = data_post.sel(time=slice(*RESPONSE_WIN)).mean(dim='time')
 
-        _, _, lmi_shuffles = utils_imaging.compute_roc(
+        _, _, lmi_shuffles = imaging.compute_roc(
             data_pre, data_post, nshuffles=n_shuffles, return_shuffles=True)
 
         # lmi_shuffles shape: (n_cells, n_shuffles) -- pool to long format.
@@ -144,13 +143,13 @@ def load_real_lmi():
     """Load real LMI values and assign reward groups (mirrors figure_3f_g.py)."""
     lmi_df = pd.read_csv(LMI_RESULTS_CSV)
     lmi_mice = set(lmi_df['mouse_id'].unique())
-    _, _, mice, _ = io.select_sessions_from_db(io.db_path, io.nwb_dir, two_p_imaging='yes')
+    _, _, mice, _ = database.select_sessions_from_db(paths.db_path, paths.nwb_dir, two_p_imaging='yes')
     print(f"  lmi_results.csv mice ({len(lmi_mice)}): {sorted(lmi_mice)}")
     print(f"  DB two_p_imaging=='yes' mice ({len(mice)}): {sorted(mice)}")
     print(f"  Overlap: {len(lmi_mice & set(mice))} mice")
     for mouse in lmi_df['mouse_id'].unique():
         lmi_df.loc[lmi_df['mouse_id'] == mouse, 'reward_group'] = \
-            io.get_mouse_reward_group_from_db(io.db_path, mouse)
+            database.get_mouse_reward_group_from_db(paths.db_path, mouse)
     lmi_df = lmi_df.loc[lmi_df['mouse_id'].isin(mice)]
     print(f"  lmi_df after DB filter: {len(lmi_df)} rows, "
           f"reward_group counts: {lmi_df['reward_group'].value_counts(dropna=False).to_dict()}")

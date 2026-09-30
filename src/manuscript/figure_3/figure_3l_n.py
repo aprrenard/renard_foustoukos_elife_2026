@@ -27,10 +27,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -43,8 +42,8 @@ BASELINE_WIN = (-1, 0)
 DAYS = [-2, -1, 0, 1, 2]
 N_MAP_TRIALS = 40
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_3', 'output')
-RESULTS_DIR = os.path.join(io.processed_dir, 'decoding')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
+RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
 
 
 # ============================================================================
@@ -70,12 +69,12 @@ def load_and_process_data(
         mice_rew: List of R+ mouse IDs
         mice_nonrew: List of R- mouse IDs
     """
-    _, _, mice, db = io.select_sessions_from_db(io.db_path, io.nwb_dir, two_p_imaging='yes')
+    _, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir, two_p_imaging='yes')
     print(mice)
 
     selected_cells = None
     if select_lmi:
-        processed_folder = io.solve_common_paths('processed_data')
+        processed_folder = paths.processed_dir
         lmi_df = pd.read_csv(os.path.join(processed_folder, 'lmi_results.csv'))
         selected_cells = lmi_df.loc[(lmi_df['lmi_p'] <= 0.025) | (lmi_df['lmi_p'] >= 0.975)]
 
@@ -84,14 +83,14 @@ def load_and_process_data(
 
     for mouse in mice:
         print(f"Processing mouse: {mouse}")
-        folder = io.tensor_dir
-        xarray = utils_imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_mapping_data.nc')
+        folder = paths.tensor_dir
+        xarray = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_mapping_data.nc')
         # Manual baseline subtraction
         xarray = xarray - np.nanmean(
             xarray.sel(time=slice(BASELINE_WIN[0], BASELINE_WIN[1])).values,
             axis=2, keepdims=True
         )
-        rew_gp = io.get_mouse_reward_group_from_db(io.db_path, mouse, db)
+        rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
 
         xarray = xarray.sel(trial=xarray['day'].isin(DAYS))
 

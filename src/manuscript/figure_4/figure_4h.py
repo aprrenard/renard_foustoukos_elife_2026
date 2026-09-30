@@ -19,9 +19,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import mannwhitneyu
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -30,7 +29,7 @@ from src.utils.utils_plot import reward_palette
 
 DAYS = [-2, -1, 0, 1, 2]
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_4', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 
 # Trial-selection toggle (mirrors figure_4i_j.py's NO_LICK_ONLY).
 #   True  : no_stim & lick_flag==0 trials, ±2s window (2026 revision
@@ -43,7 +42,7 @@ OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_4', 'output')
 # Both branches are checked at the same three detection percentiles.
 NO_LICK_ONLY = False
 
-RESULTS_DIR = os.path.join(io.processed_dir, 'reactivation')
+RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 NOLICK_RESULTS_DIR = os.path.join(RESULTS_DIR, 'nolick')
 PERCENTILES = ['p99', 'p995', 'p999']
 

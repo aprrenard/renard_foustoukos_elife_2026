@@ -1,8 +1,8 @@
 """Fit learning curves and define the learning trial for the imaging mice.
 
-Reads  io.processed_dir/behavior/behavior_imagingmice_table_5days_cut.csv
+Reads  paths.processed_dir/behavior/behavior_imagingmice_table_5days_cut.csv
        (written by make_behavior_tables.py).
-Writes io.processed_dir/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv
+Writes paths.processed_dir/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv
 
 Uses utils_behavior.compute_learning_curves / compute_learning_trial, the
 implementation that produced the published learning trials: for R+ mice
@@ -21,14 +21,13 @@ import sys
 
 import pandas as pd
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_behavior import compute_learning_curves, compute_learning_trial
+from fast_learning import paths
+from fast_learning.behavior import compute_learning_curves, compute_learning_trial
 
 
 RANDOM_SEED = 0
 N_CONSECUTIVE_TRIALS = 10
-BEHAVIOR_DIR = os.path.join(io.processed_dir, 'behavior')
+BEHAVIOR_DIR = os.path.join(paths.processed_dir, 'behavior')
 INPUT_CSV = os.path.join(BEHAVIOR_DIR, 'behavior_imagingmice_table_5days_cut.csv')
 OUTPUT_CSV = os.path.join(BEHAVIOR_DIR, 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 

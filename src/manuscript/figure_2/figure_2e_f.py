@@ -14,12 +14,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import mannwhitneyu
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import stim_palette, reward_palette
+from fast_learning import paths, database
+from fast_learning.plotting import stim_palette, reward_palette
 
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_2', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_2', 'output')
 
 
 # ============================================================================
@@ -27,7 +26,7 @@ OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_2', 'output')
 # ============================================================================
 
 def panel_e_opto_timecourse(
-    table_path=os.path.join(io.processed_dir, 'behavior', 'behavior_opto_learning.csv'),
+    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_opto_learning.csv'),
     save_path=OUTPUT_DIR,
     save_format='svg',
     dpi=300
@@ -46,14 +45,14 @@ def panel_e_opto_timecourse(
     """
 
     # Load behavioral data
-    table_path = io.adjust_path_to_host(table_path)
+    table_path = paths.adjust_path_to_host(table_path)
     table = pd.read_csv(table_path)
 
     # Get mouse groups from database
-    db_path = io.db_path
-    nwb_dir = io.nwb_dir
+    db_path = paths.db_path
+    nwb_dir = paths.nwb_dir
 
-    fpS1_mice = io.select_mice_from_db(
+    fpS1_mice = database.select_mice_from_db(
         db_path, nwb_dir, experimenters=None,
         exclude_cols=['exclude', 'opto_exclude'],
         optogenetic='yes',
@@ -61,7 +60,7 @@ def panel_e_opto_timecourse(
         opto_area='fpS1',
     )
 
-    wS1_mice = io.select_mice_from_db(
+    wS1_mice = database.select_mice_from_db(
         db_path, nwb_dir, experimenters=None,
         exclude_cols=['exclude', 'opto_exclude'],
         optogenetic='yes',
@@ -74,7 +73,7 @@ def panel_e_opto_timecourse(
     table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
 
     # Get opto_day info from database
-    _, _, _, db = io.select_sessions_from_db(
+    _, _, _, db = database.select_sessions_from_db(
         db_path, nwb_dir, experimenters=None,
         exclude_cols=['exclude', 'opto_exclude'],
         opto_inactivation_type=['learning'],
@@ -269,7 +268,7 @@ def panel_e_opto_timecourse(
 
 def panel_f_opto_barplot(
     data=None,
-    table_path=os.path.join(io.processed_dir, 'behavior', 'behavior_opto_learning.csv'),
+    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_opto_learning.csv'),
     days_of_interest=['opto', 'recovery_1'],
     day_labels=['D0', 'D+1'],
     save_path=OUTPUT_DIR,
@@ -294,14 +293,14 @@ def panel_f_opto_barplot(
 
     # Load data if not provided
     if data is None:
-        table_path = io.adjust_path_to_host(table_path)
+        table_path = paths.adjust_path_to_host(table_path)
         table = pd.read_csv(table_path)
 
         # Get mouse groups and process data (same as panel_e)
-        db_path = io.db_path
-        nwb_dir = io.nwb_dir
+        db_path = paths.db_path
+        nwb_dir = paths.nwb_dir
 
-        fpS1_mice = io.select_mice_from_db(
+        fpS1_mice = database.select_mice_from_db(
             db_path, nwb_dir, experimenters=None,
             exclude_cols=['exclude', 'opto_exclude'],
             optogenetic='yes',
@@ -309,7 +308,7 @@ def panel_f_opto_barplot(
             opto_area='fpS1',
         )
 
-        wS1_mice = io.select_mice_from_db(
+        wS1_mice = database.select_mice_from_db(
             db_path, nwb_dir, experimenters=None,
             exclude_cols=['exclude', 'opto_exclude'],
             optogenetic='yes',
@@ -320,7 +319,7 @@ def panel_f_opto_barplot(
         table.loc[table.mouse_id.isin(fpS1_mice), 'area'] = 'fpS1'
         table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
 
-        _, _, _, db = io.select_sessions_from_db(
+        _, _, _, db = database.select_sessions_from_db(
             db_path, nwb_dir, experimenters=None,
             exclude_cols=['exclude', 'opto_exclude'],
             opto_inactivation_type=['learning'],

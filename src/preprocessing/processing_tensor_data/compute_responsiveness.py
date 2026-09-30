@@ -11,11 +11,10 @@ import scipy.stats as stats
 from sklearn.metrics import auc, roc_curve
 from sklearn.utils import shuffle
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging 
-from src.utils.utils_behavior import *
-from src.utils.utils_imaging import compute_roc
+from fast_learning import paths, database
+from fast_learning import imaging
+from fast_learning.behavior import *
+from fast_learning.imaging import compute_roc
 from joblib import Parallel, delayed
 
 
@@ -73,12 +72,12 @@ baseline_win = (-1, 0)
 days = ['-3', '-2', '-1', '0', '+1', '+2']
 
 # Get directories and files.
-db_path = io.solve_common_paths('db')
-nwb_path = io.solve_common_paths('nwb')
-processed_data_folder = io.solve_common_paths('processed_data')
+db_path = paths.db_path
+nwb_path = paths.nwb_dir
+processed_data_folder = paths.processed_dir
 
 # Get mice list.
-_, _, mice_list, _ = io.select_sessions_from_db(db_path, nwb_path,
+_, _, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
                                                 exclude_cols=['exclude', 'two_p_exclude'],
                                                 experimenters=['AR', 'GF', 'MI'],
                                                 day=days,
@@ -152,12 +151,12 @@ baseline_win = (-1, 0)
 days = ['-2', '-1', '0', '+1', '+2']
 
 # Get directories and files.
-db_path = io.solve_common_paths('db')
-nwb_path = io.solve_common_paths('nwb')
-processed_data_folder = io.solve_common_paths('processed_data')
+db_path = paths.db_path
+nwb_path = paths.nwb_dir
+processed_data_folder = paths.processed_dir
 
 # Get mice list.
-_, _, mice_list, _ = io.select_sessions_from_db(db_path, nwb_path,
+_, _, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
                                                 exclude_cols=['exclude', 'two_p_exclude'],
                                                 experimenters=['AR', 'GF', 'MI'],
                                                 day=days,
@@ -226,14 +225,14 @@ baseline_win = (-1, 0)
 nshuffles = 1000
 
 # Get directories and files.
-db_path = io.solve_common_paths('db')
-nwb_path = io.solve_common_paths('nwb')
-processed_data_folder = io.solve_common_paths('processed_data')
+db_path = paths.db_path
+nwb_path = paths.nwb_dir
+processed_data_folder = paths.processed_dir
 result_file = os.path.join(processed_data_folder, 'response_test_results_mapping_ROC.csv')
 
 # Get mice list.
 days = ['-2', '-1', '0', '+1', '+2']
-_, _, mice_list, _ = io.select_sessions_from_db(db_path, nwb_path,
+_, _, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
                                                 exclude_cols=['exclude', 'two_p_exclude'],
                                                 experimenters=['AR', 'GF', 'MI'],
                                                 day=days,
@@ -293,14 +292,14 @@ baseline_win = (-500, 0)
 nshuffles = 100
 
 # Get directories and files.
-db_path = io.solve_common_paths('db')
-nwb_path = io.solve_common_paths('nwb')
-processed_data_folder = io.solve_common_paths('processed_data')
+db_path = paths.db_path
+nwb_path = paths.nwb_dir
+processed_data_folder = paths.processed_dir
 result_file = os.path.join(processed_data_folder, 'roc_stimvsbaseline_results.csv')
 
 # Get mice list.
 days = ['-2', '-1', '0', '+1', '+2']
-_, _, mice_list, _ = io.select_sessions_from_db(db_path, nwb_path,
+_, _, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
                                                 exclude_cols=['exclude', 'two_p_exclude'],
                                                 experimenters=['AR', 'GF', 'MI'],
                                                 day=days,

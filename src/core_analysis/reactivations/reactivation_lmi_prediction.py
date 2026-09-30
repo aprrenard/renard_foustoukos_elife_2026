@@ -36,11 +36,10 @@ from statsmodels.stats.anova import AnovaRM
 from joblib import Parallel, delayed
 import warnings
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
 sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
 from src.core_analysis.reactivations.reactivation import (
     create_whisker_template,
     compute_template_correlation,
@@ -91,7 +90,7 @@ threshold_mode  = 'day'      # 'mouse' or 'day'
 threshold_type  = 'percentile'
 threshold_corr  = 0.45       # fallback fixed threshold
 
-save_dir = os.path.join(io.processed_dir, 'reactivation')
+save_dir = os.path.join(paths.processed_dir, 'reactivation')
 _p_str = str(int(percentile_to_use)) if percentile_to_use == int(percentile_to_use) else str(int(percentile_to_use * 10))
 reactivation_results_file = os.path.join(save_dir, f'reactivation_results_p{_p_str}.pkl')
 
@@ -103,12 +102,12 @@ circular_shift_mode = 'compute'
 n_shifts = 1000          # number of circular shifts per mouse-day
 min_shift_frames = 300   # minimum shift gap (10 s at 30 Hz)
 significance_pctile = 95  # 95th percentile → p < 0.05
-circular_shift_csv = os.path.join(io.processed_dir, 'reactivations', 'circular_shift_participation_per_day.csv')
+circular_shift_csv = os.path.join(paths.processed_dir, 'reactivations', 'circular_shift_participation_per_day.csv')
 
 # Load database
-_, _, all_mice, db = io.select_sessions_from_db(
-    io.db_path,
-    io.nwb_dir,
+_, _, all_mice, db = database.select_sessions_from_db(
+    paths.db_path,
+    paths.nwb_dir,
     two_p_imaging='yes'
 )
 
@@ -117,7 +116,7 @@ r_plus_mice = []
 r_minus_mice = []
 for mouse in all_mice:
     try:
-        reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse, db=db)
+        reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db=db)
         if reward_group == 'R+':
             r_plus_mice.append(mouse)
         elif reward_group == 'R-':
@@ -209,9 +208,9 @@ def extract_event_responses(mouse, day, verbose=True, threshold_dict=None, infle
         template, cells_mask = create_whisker_template(mouse, day, threshold_dff, verbose=False)
 
         # Step 2: Load learning data
-        folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+        folder = paths.tensor_dir
         file_name = 'tensor_xarray_learning_data.nc'
-        xarray_learning = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=True)
+        xarray_learning = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=True)
 
         # Select this day
         xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
@@ -546,7 +545,7 @@ def load_and_match_lmi_data(participation_df):
         Combined data with LMI and participation metrics
     """
     # Load LMI results
-    lmi_df_path = os.path.join(io.processed_dir, 'lmi_results.csv')
+    lmi_df_path = os.path.join(paths.processed_dir, 'lmi_results.csv')
     lmi_df = pd.read_csv(lmi_df_path)
 
     # Add reward group if not present
@@ -858,9 +857,9 @@ def compute_participation_with_shifts(mouse, day, n_shifts, preloaded_events,
     import pickle as _pickle
     try:
         template, _ = create_whisker_template(mouse, day, threshold_dff, verbose=False)
-        folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
-        xr = utils_imaging.load_mouse_xarray(
-            mouse, folder, 'tensor_xarray_learning_data.nc', substracted=True)
+        folder = paths.tensor_dir
+        xr = imaging.load_mouse_xarray(
+            mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=True)
         xr_day = xr.sel(trial=xr['day'] == day)
         nostim  = xr_day.sel(trial=xr_day['no_stim'] == 1)
 
@@ -1617,8 +1616,8 @@ if __name__ == "__main__":
     print(f"  Parallel jobs: {n_jobs}")
 
     # Create output directories
-    processed_data_dir = os.path.join(io.processed_dir, 'reactivation')
-    output_dir = os.path.join(io.results_dir, 'reactivation')
+    processed_data_dir = os.path.join(paths.processed_dir, 'reactivation')
+    output_dir = os.path.join(paths.results_dir, 'reactivation')
     os.makedirs(processed_data_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
     print(f"\nProcessed data will be saved to: {processed_data_dir}")
@@ -1627,9 +1626,9 @@ if __name__ == "__main__":
     # Load surrogate thresholds if available
     # Choose file based on threshold_mode
     if threshold_mode == 'mouse':
-        surrogate_csv_path = os.path.join(io.results_dir, 'reactivation_surrogates', 'surrogate_thresholds.csv')
+        surrogate_csv_path = os.path.join(paths.results_dir, 'reactivation_surrogates', 'surrogate_thresholds.csv')
     elif threshold_mode == 'day':
-        surrogate_csv_path = os.path.join(io.results_dir, 'reactivation_surrogates_per_day', 'surrogate_thresholds_per_day.csv')
+        surrogate_csv_path = os.path.join(paths.results_dir, 'reactivation_surrogates_per_day', 'surrogate_thresholds_per_day.csv')
     else:
         raise ValueError(f"Invalid threshold_mode '{threshold_mode}'. Must be 'mouse' or 'day'.")
 
@@ -1774,7 +1773,7 @@ if __name__ == "__main__":
 
     # Load inflection points from plasticity results (LMI cells)
     plasticity_csv = os.path.join(
-        io.adjust_path_to_host(
+        paths.adjust_path_to_host(
             '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/day0_learning/plasticity'
         ),
         'plasticity_results_lmi_cells.csv'
@@ -1877,7 +1876,7 @@ if __name__ == "__main__":
                   f"({100*len(sig_cells)/max(1, len(day0_cs)):.1f}%)")
 
             # Diagnostic: fraction significant per LMI category
-            lmi_df_diag = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+            lmi_df_diag = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
             if 'reward_group' not in lmi_df_diag.columns:
                 mice_rg = db[['mouse_id', 'reward_group']].drop_duplicates()
                 lmi_df_diag['reward_group'] = lmi_df_diag['mouse_id'].map(

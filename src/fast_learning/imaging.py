@@ -21,9 +21,9 @@ def load_session_2p_imaging(mouse_id, session_id, dir_path):
     return np.float32(data), metadata
 
 
-def load_mouse_xarray(mouse_id, dir_path, file_name, substracted=True):
+def load_mouse_xarray(mouse_id, dir_path, file_name, subtracted=True):
 
-    if substracted:
+    if subtracted:
         file_name = file_name.replace('.nc', '_baselinesubstracted.nc')
     array_path = os.path.join(dir_path, mouse_id, file_name)
     # Check if file exists locally to speed up loading.
@@ -47,7 +47,7 @@ def load_mouse_xarray(mouse_id, dir_path, file_name, substracted=True):
     return data
 
 
-def substract_baseline(arr, time_axis, baseline_win):
+def subtract_baseline(arr, time_axis, baseline_win):
     """Substract the mean of the baseline window from the array.
 
     Args:

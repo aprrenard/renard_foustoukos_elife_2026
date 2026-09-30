@@ -10,12 +10,11 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 # sys.path.append(r'H:/anthony/repos/NWB_analysis')
 sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 # from nwb_wrappers import nwb_reader_functions as nwb_read
-import src.utils.utils_imaging as utils_imaging 
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
-from src.utils.utils_behavior import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
+from fast_learning.behavior import *
 
 
 # ===========================================================
@@ -32,17 +31,17 @@ win_sec_lick = (-1, 5)  # Time window for lick-aligned data
 
 # Output PDF
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/lmi_characterisation'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 output_pdf = os.path.join(output_dir, 'per_cell_trial_responses.pdf')
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',
                                             experimenters=['AR', 'GF', 'MI'])
 mice_count = db[['mouse_id', 'reward_group']].drop_duplicates()
 
 # Load LMI data
-lmi_df = os.path.join(io.processed_dir, f'lmi_results.csv')
+lmi_df = os.path.join(paths.processed_dir, f'lmi_results.csv')
 lmi_df = pd.read_csv(lmi_df)
 lmi_df['reward_group'] = lmi_df['mouse_id'].map(
     dict(mice_count[['mouse_id', 'reward_group']].values)
@@ -99,7 +98,7 @@ def compute_cell_psths(mouse_id, roi, folder):
     # 1. Load mapping data for each day
     try:
         file_name_mapping = 'tensor_xarray_mapping_data.nc'
-        xarr_mapping = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name_mapping, substracted=True)
+        xarr_mapping = imaging.load_mouse_xarray(mouse_id, folder, file_name_mapping, subtracted=True)
         xarr_mapping = xarr_mapping.sel(time=slice(win_sec_stim[0], win_sec_stim[1]))
 
         # Select this cell
@@ -118,7 +117,7 @@ def compute_cell_psths(mouse_id, roi, folder):
     # 2. Load learning data (all days)
     try:
         file_name_learning = 'tensor_xarray_learning_data.nc'
-        xarr_learning = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name_learning, substracted=True)
+        xarr_learning = imaging.load_mouse_xarray(mouse_id, folder, file_name_learning, subtracted=True)
         xarr_learning = xarr_learning.sel(trial=xarr_learning['day'].isin(days_learning))
         xarr_learning = xarr_learning.sel(time=slice(win_sec_stim[0], win_sec_stim[1]))
 
@@ -158,7 +157,7 @@ def compute_cell_psths(mouse_id, roi, folder):
     # 3. Load lick-aligned data for false alarms
     try:
         file_name_lick = 'lick_aligned_xarray.nc'
-        xarr_lick = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name_lick, substracted=False)
+        xarr_lick = imaging.load_mouse_xarray(mouse_id, folder, file_name_lick, subtracted=False)
         xarr_lick = xarr_lick.sel(trial=xarr_lick['day'].isin(days_learning))
         xarr_lick = xarr_lick.sel(time=slice(win_sec_lick[0], win_sec_lick[1]))
 
@@ -200,7 +199,7 @@ def compute_whisker_evolution(mouse_id, roi, folder):
     try:
         # Load learning data for Day 0 only
         file_name_learning = 'tensor_xarray_learning_data.nc'
-        xarr_learning = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name_learning, substracted=True)
+        xarr_learning = imaging.load_mouse_xarray(mouse_id, folder, file_name_learning, subtracted=True)
         xarr_learning = xarr_learning.sel(trial=xarr_learning['day'] == 0)
         xarr_learning = xarr_learning.sel(time=slice(win_sec_stim[0], win_sec_stim[1]))
 
@@ -673,8 +672,8 @@ with PdfPages(output_pdf) as pdf:
 
         # Load stimulus-aligned data
         file_name = 'tensor_xarray_learning_data.nc'
-        folder = os.path.join(io.processed_dir, 'mice')
-        xarr_stim = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, substracted=False)
+        folder = paths.tensor_dir
+        xarr_stim = imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=False)
         xarr_stim = xarr_stim.sel(trial=xarr_stim['day'] == 0)
         xarr_stim = xarr_stim.sel(time=slice(win_sec_stim[0], win_sec_stim[1]))
 
@@ -688,7 +687,7 @@ with PdfPages(output_pdf) as pdf:
 
         # Load lick-aligned data for false alarms
         file_name_lick = 'lick_aligned_xarray.nc'
-        xarr_lick = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name_lick, substracted=False)
+        xarr_lick = imaging.load_mouse_xarray(mouse_id, folder, file_name_lick, subtracted=False)
         xarr_lick = xarr_lick.sel(trial=xarr_lick['day'] == 0)
         xarr_lick = xarr_lick.sel(time=slice(win_sec_lick[0], win_sec_lick[1]))
         cell_idx_lick = np.where(xarr_lick['roi'].values == roi)[0]

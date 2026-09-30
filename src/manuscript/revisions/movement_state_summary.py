@@ -66,9 +66,8 @@ import seaborn as sns
 from scipy.stats import t as t_dist
 from scipy.stats import friedmanchisquare
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths, database
+from fast_learning.plotting import reward_palette
 
 DLC_DIR = '/mnt/lsens-analysis/Anthony_Renard/DLCTrialMatrices'
 
@@ -82,7 +81,7 @@ WINDOW = (0.0, 1.0)              # post-stimulus window, seconds relative to sti
 BASELINE_WINDOW = (-2.0, 0.0)    # pre-stimulus baseline window
 NORMALISED = False               # per-session (v - mean) / (max - min), see load_dlc.py; off here
 MIN_TRIALS = 5                    # skip a mouse x day with fewer usable trials
-OUTPUT_DIR = os.path.join(io.results_dir, 'behavior', 'passive_epoch_movement')
+OUTPUT_DIR = os.path.join(paths.results_dir, 'behavior', 'passive_epoch_movement')
 
 # (value column, y-axis phrase, output filename suffix)
 STATS = [
@@ -246,12 +245,12 @@ def build_dataset(dlc_dir=DLC_DIR):
     mice = discover_dlc_mice(dlc_dir)
     print(f"Found {len(mice)} DLC files: {mice}")
 
-    db = io.read_excel_db(io.db_path)
+    db = database.read_excel_db(paths.db_path)
     trial_parts = []
     skipped = []
     for mouse_id in mice:
         try:
-            reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id, db=db)
+            reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id, db=db)
         except (IndexError, KeyError):
             skipped.append(mouse_id)
             continue
@@ -312,13 +311,13 @@ def build_trace_dataset(dlc_dir=DLC_DIR, normalised=NORMALISED,
     subtracted).
     """
     mice = discover_dlc_mice(dlc_dir)
-    db = io.read_excel_db(io.db_path)
+    db = database.read_excel_db(paths.db_path)
 
     trace_parts = []
     skipped = []
     for mouse_id in mice:
         try:
-            reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id, db=db)
+            reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id, db=db)
         except (IndexError, KeyError):
             skipped.append(mouse_id)
             continue

@@ -20,11 +20,10 @@ import seaborn as sns
 from scipy.signal import find_peaks, savgol_filter
 from scipy.stats import pearsonr, linregress
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
 sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
 
 
 # ============================================================================
@@ -42,12 +41,12 @@ savgol_order = 2                  # Savitzky-Golay polynomial order
 days = [-2, -1, 0, 1, 2]
 
 # Paths
-save_dir = os.path.join(io.results_dir, 'reactivation')
+save_dir = os.path.join(paths.results_dir, 'reactivation')
 lmi_data_csv = os.path.join(save_dir, 'participation_vs_transient_lmi_day0_data.csv')
-participation_csv = os.path.join(io.processed_dir, 'reactivation', 'cell_participation_rates_per_day.csv')
-reactivation_results_pkl = os.path.join(io.processed_dir, 'reactivation', 'reactivation_results_p99.pkl')
-lmi_results_csv = os.path.join(io.processed_dir, 'lmi_results.csv')
-folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+participation_csv = os.path.join(paths.processed_dir, 'reactivation', 'cell_participation_rates_per_day.csv')
+reactivation_results_pkl = os.path.join(paths.processed_dir, 'reactivation', 'reactivation_results_p99.pkl')
+lmi_results_csv = os.path.join(paths.processed_dir, 'lmi_results.csv')
+folder = paths.tensor_dir
 
 os.makedirs(save_dir, exist_ok=True)
 
@@ -56,9 +55,9 @@ os.makedirs(save_dir, exist_ok=True)
 # MOUSE LOADING
 # ============================================================================
 
-_, _, all_mice, db = io.select_sessions_from_db(
-    io.db_path,
-    io.nwb_dir,
+_, _, all_mice, db = database.select_sessions_from_db(
+    paths.db_path,
+    paths.nwb_dir,
     two_p_imaging='yes'
 )
 
@@ -67,7 +66,7 @@ r_minus_mice = []
 
 for mouse in all_mice:
     try:
-        reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse, db=db)
+        reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db=db)
         if reward_group == 'R+':
             r_plus_mice.append(mouse)
         elif reward_group == 'R-':
@@ -105,8 +104,8 @@ def compute_transient_freq_per_cell(mouse_id, day=0):
     Uses no-stim trials only. Returns DataFrame: mouse_id, roi, transient_freq.
     """
     try:
-        xarr = utils_imaging.load_mouse_xarray(
-            mouse_id, folder, 'tensor_xarray_learning_data.nc', substracted=True
+        xarr = imaging.load_mouse_xarray(
+            mouse_id, folder, 'tensor_xarray_learning_data.nc', subtracted=True
         )
     except Exception as e:
         print(f"  Warning: Could not load data for {mouse_id}: {e}")

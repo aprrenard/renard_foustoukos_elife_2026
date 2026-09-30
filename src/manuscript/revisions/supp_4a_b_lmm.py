@@ -32,7 +32,7 @@ Execution modes and output layout mirror supp_4a_b.py:
     MODE = 'plot'    : load previously saved data and plot only
 
 Figures and CSVs are saved to
-    io.manuscript_output_dir/revisions/supp_4a_b_lmm/output/.
+    paths.manuscript_output_dir/revisions/supp_4a_b_lmm/output/.
 """
 
 import os
@@ -47,8 +47,8 @@ from scipy.stats import linregress
 from statsmodels.regression.mixed_linear_model import MixedLM
 
 sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths
+from fast_learning.plotting import reward_palette
 from src.manuscript.supp_4.supp_4a_b import LMI_DATA_CSV, compute_lmi_data_csv
 from src.manuscript.supp_4.supp_4c import _significance_stars
 
@@ -59,7 +59,7 @@ from src.manuscript.supp_4.supp_4c import _significance_stars
 # 'compute' only if that pipeline itself needs to be rerun.
 MODE = 'plot'
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'revisions', 'supp_4a_b_lmm', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'supp_4a_b_lmm', 'output')
 
 
 # ============================================================================

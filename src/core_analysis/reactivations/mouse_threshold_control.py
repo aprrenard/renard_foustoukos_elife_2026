@@ -26,11 +26,10 @@ import seaborn as sns
 from matplotlib.patches import Patch
 from joblib import Parallel, delayed
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
 sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
 from src.core_analysis.reactivations.reactivation import (
     create_whisker_template,
     compute_template_correlation,
@@ -64,24 +63,24 @@ sns.set_theme(context='paper', style='ticks', palette='deep',
               font='sans-serif', font_scale=1)
 
 # Output
-save_dir = os.path.join(io.results_dir, 'reactivation')
+save_dir = os.path.join(paths.results_dir, 'reactivation')
 os.makedirs(save_dir, exist_ok=True)
 
 # Surrogate threshold CSV (per-mouse)
 surrogate_csv_path = os.path.join(
-    io.results_dir, 'reactivation_surrogates_per_mouse',
+    paths.results_dir, 'reactivation_surrogates_per_mouse',
     'surrogate_thresholds_per_mouse.csv'
 )
 
 # Load database and split mice by reward group
-_, _, all_mice, db = io.select_sessions_from_db(
-    io.db_path, io.nwb_dir, two_p_imaging='yes'
+_, _, all_mice, db = database.select_sessions_from_db(
+    paths.db_path, paths.nwb_dir, two_p_imaging='yes'
 )
 
 r_plus_mice, r_minus_mice = [], []
 for mouse in all_mice:
     try:
-        rg = io.get_mouse_reward_group_from_db(io.db_path, mouse, db=db)
+        rg = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db=db)
         if rg == 'R+':
             r_plus_mice.append(mouse)
         elif rg == 'R-':
@@ -123,9 +122,9 @@ def process_single_mouse(mouse, days, threshold_dict, n_surrogates):
     threshold = get_threshold_for_mouse_day(threshold_dict, mouse, 0, default_threshold)
 
     # Load xarray once for all days
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
-    xarray = utils_imaging.load_mouse_xarray(
-        mouse, folder, 'tensor_xarray_learning_data.nc', substracted=True
+    folder = paths.tensor_dir
+    xarray = imaging.load_mouse_xarray(
+        mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=True
     )
 
     for day in days:
@@ -286,7 +285,7 @@ if __name__ == '__main__':
 
     df = pd.DataFrame(all_records)
     df['reward_group'] = df['mouse_id'].apply(
-        lambda m: io.get_mouse_reward_group_from_db(io.db_path, m, db=db)
+        lambda m: database.get_mouse_reward_group_from_db(paths.db_path, m, db=db)
     )
 
     # Save data

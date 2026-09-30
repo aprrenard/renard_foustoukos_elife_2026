@@ -27,12 +27,11 @@ from sklearn.utils import resample
 
 # sys.path.append(r'H:/anthony/repos/NWB_analysis')
 sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 # from nwb_wrappers import nwb_reader_functions as nwb_read
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
-from src.utils.utils_behavior import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
+from fast_learning.behavior import *
 
 
 
@@ -63,7 +62,7 @@ baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * samp
 days_str = ['-2', '-1', '0', '+1', '+2']
 days = [-2, -1, 0, 1, 2]
 n_map_trials = 40
-substract_baseline = True
+subtract_baseline = True
 select_responsive_cells = False
 select_lmi = False
 zscore = False
@@ -72,8 +71,8 @@ n_min_proj = 5
 similarity_metric = 'cosine'
 sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',)
 print(mice)
 
@@ -85,7 +84,7 @@ mice_nonrew = []
 
 # Load responsive cells.
 if select_responsive_cells:
-    test_df = os.path.join(io.processed_dir, f'response_test_results_win_300ms.csv')
+    test_df = os.path.join(paths.processed_dir, f'response_test_results_win_300ms.csv')
     test_df = pd.read_csv(test_df)
     test_df = test_df.loc[test_df['day'].isin(days)]
     # Select cells as responsive if they pass the test on at least one day.
@@ -93,17 +92,17 @@ if select_responsive_cells:
     selected_cells = selected_cells.loc[selected_cells['pval_mapping'] <= 0.05/5]
 
 if select_lmi:
-    lmi_df = os.path.join(io.processed_dir, f'lmi_results.csv')
+    lmi_df = os.path.join(paths.processed_dir, f'lmi_results.csv')
     lmi_df = pd.read_csv(lmi_df)
     selected_cells = lmi_df.loc[(lmi_df['lmi_p'] <= 0.025) | (lmi_df['lmi_p'] >= 0.975)]
 
 # Load and prepare data for each mouse.
 for mouse in mice:
     print(f"Processing mouse: {mouse}")
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = paths.tensor_dir
     file_name = 'tensor_xarray_mapping_data.nc'
-    xarray = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=substract_baseline)
-    rew_gp = io.get_mouse_reward_group_from_db(io.db_path, mouse, db)
+    xarray = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=subtract_baseline)
+    rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
 
     # Select days.
     xarray = xarray.sel(trial=xarray['day'].isin(days))
@@ -266,7 +265,7 @@ plt.tight_layout()
 
 # Save figure
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/correlation_matrices/mapping'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 zscore_str = '_zscore' if zscore else ''
 svg_file = f'trialwise_{similarity_metric}_matrices_ctype_{projection_type}_{celltype_str}{zscore_str}.svg'
 plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
@@ -997,20 +996,20 @@ baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * samp
 days = [-2, -1, 0, 1, 2]
 n_map_trials = 40  # Fixed number of mapping trials per day
 n_learning_trials = 80  # Number of learning trials to take (last 80)
-substract_baseline = True
+subtract_baseline = True
 select_responsive_cells = False
 select_lmi = False  # Use LMI-selected cells
 similarity_metric = 'cosine'  # 'pearson', 'spearman', or 'cosine'
 sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',)
 print(f"Total mice: {len(mice)}")
 
 # Load cell selection criteria
 if select_lmi:
-    lmi_df = os.path.join(io.processed_dir, f'lmi_results.csv')
+    lmi_df = os.path.join(paths.processed_dir, f'lmi_results.csv')
     lmi_df = pd.read_csv(lmi_df)
     selected_cells = lmi_df.loc[(lmi_df['lmi_p'] <= 0.025) | (lmi_df['lmi_p'] >= 0.975)]
 
@@ -1022,18 +1021,18 @@ mice_nonrew = []
 
 for mouse in mice:
     print(f"\nProcessing mouse: {mouse}")
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = paths.tensor_dir
     
     # Load mapping data
     file_name = 'tensor_xarray_mapping_data.nc'
-    xarray_map = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=substract_baseline)
+    xarray_map = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=subtract_baseline)
     
     # Load learning data
     file_name = 'tensor_xarray_learning_data.nc'
-    xarray_learning = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=substract_baseline)
+    xarray_learning = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=subtract_baseline)
     
     # Get reward group
-    rew_gp = io.get_mouse_reward_group_from_db(io.db_path, mouse, db)
+    rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
     
     # Select cells
     if select_lmi:
@@ -1257,7 +1256,7 @@ plt.tight_layout()
 
 # Save figure
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/correlation_matrices/learning_mapping'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 os.makedirs(output_dir, exist_ok=True)
 
 celltype_str = 'lmi_cells' if select_lmi else 'all_cells'
@@ -1286,7 +1285,7 @@ time_windows = [
 # Analysis parameters
 sampling_rate = 30
 n_learning_trials = 80  # Number of trials to analyze
-substract_baseline = True
+subtract_baseline = True
 select_lmi = False  # Use LMI-selected cells
 similarity_metric = 'cosine'  # 'pearson', 'spearman', or 'cosine'
 
@@ -1298,13 +1297,13 @@ print(f"Similarity metric: {similarity_metric}")
 print(f"Number of trials per mouse: {n_learning_trials}")
 
 # Load mice
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',)
 
 # Load cell selection criteria
 if select_lmi:
-    lmi_df = os.path.join(io.processed_dir, f'lmi_results.csv')
+    lmi_df = os.path.join(paths.processed_dir, f'lmi_results.csv')
     lmi_df = pd.read_csv(lmi_df)
     selected_cells = lmi_df.loc[(lmi_df['lmi_p'] <= 0.025) | (lmi_df['lmi_p'] >= 0.975)]
 
@@ -1317,14 +1316,14 @@ mice_nonrew_tw = []
 # Load and process data for each mouse
 for mouse in mice:
     print(f"\nProcessing mouse: {mouse}")
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = paths.tensor_dir
 
     # Load learning data
     file_name = 'tensor_xarray_learning_data.nc'
-    xarray_learning = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=substract_baseline)
+    xarray_learning = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=subtract_baseline)
 
     # Get reward group
-    rew_gp = io.get_mouse_reward_group_from_db(io.db_path, mouse, db)
+    rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
 
     # Select cells
     if select_lmi:
@@ -1475,7 +1474,7 @@ plt.tight_layout()
 
 # Save figure
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/correlation_matrices/day0_time_windows'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 os.makedirs(output_dir, exist_ok=True)
 
 celltype_str = 'lmi_cells' if select_lmi else 'all_cells'

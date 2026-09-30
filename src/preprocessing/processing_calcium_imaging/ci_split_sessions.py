@@ -7,8 +7,7 @@ import tifffile as tiff
 import matplotlib.pyplot as plt
 import yaml
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
+from fast_learning import paths
 
 
 mice_id = ['AR144']
@@ -16,7 +15,7 @@ mice_id = ['AR144']
 for mouse_id in mice_id:
 
     imaging_folder = f'//sv-nas1.rcp.epfl.ch/Petersen-Lab/data/{mouse_id}/Recording/Imaging'
-    imaging_folder = io.adjust_path_to_host(imaging_folder)
+    imaging_folder = paths.adjust_path_to_host(imaging_folder)
     # if mouse_id == "AR144":
     #     imaging_folder = ""
     if not os.path.exists(imaging_folder):
@@ -29,7 +28,7 @@ for mouse_id in mice_id:
 
     # Read traces of concatenated sessions.
     suite2p_folder = f'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data/{mouse_id}/suite2p/plane0'
-    suite2p_folder = io.adjust_path_to_host(suite2p_folder)
+    suite2p_folder = paths.adjust_path_to_host(suite2p_folder)
     F_raw = np.load(os.path.join(suite2p_folder, 'F_raw.npy'), allow_pickle=True)
     F_neu = np.load(os.path.join(suite2p_folder, 'F_neu.npy'), allow_pickle=True)
     F0_raw = np.load(os.path.join(suite2p_folder, 'F0_raw.npy'), allow_pickle=True)
@@ -69,7 +68,7 @@ for mouse_id in mice_id:
 
     for isession, session in enumerate(session_list):
         save_path = rf'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data/{mouse_id}/{session}/suite2p/plane0'
-        save_path = io.adjust_path_to_host(save_path)
+        save_path = paths.adjust_path_to_host(save_path)
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         a, b = start_stop[isession]
@@ -91,7 +90,7 @@ for mouse_id in mice_id:
 #         continue
 
 #     reg_tif_folder = f'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data/{mouse_id}/suite2p/plane0/reg_tif'
-#     reg_tif_folder = io.adjust_path_to_host(reg_tif_folder)
+#     reg_tif_folder = paths.adjust_path_to_host(reg_tif_folder)
 #     reg_tif_list = os.listdir(reg_tif_folder)
 #     reg_tif_list = [tif for tif in reg_tif_list if os.path.splitext(tif)[1] in ['.tif', '.tiff']]
 #     # Lexicographic ordering of tifs (bad padding from suite2p).
@@ -106,7 +105,7 @@ for mouse_id in mice_id:
 #     for itif, tif in enumerate(reg_tif_list):
 #         session = session_list[isession]
 #         save_path = f'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data/{mouse_id}/{session}/suite2p/plane0/reg_tif'
-#         save_path = io.adjust_path_to_host(save_path)
+#         save_path = paths.adjust_path_to_host(save_path)
 #         if not os.path.exists(save_path):
 #             os.mkdir(save_path)
         
@@ -134,12 +133,12 @@ for mouse_id in mice_id:
             
 #             # Set new location and names.
 #             left_path = f'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data/{mouse_id}/{session}/suite2p/plane0/reg_tif'
-#             left_path = io.adjust_path_to_host(left_path)
+#             left_path = paths.adjust_path_to_host(left_path)
 #             left_tif_name = os.path.splitext(os.path.basename(tif))[0] + f'_{session}.tif'
 #             tif_left_path = os.path.join(left_path, left_tif_name)
 #             next_session = session_list[isession+1]
 #             right_path = f'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data/{mouse_id}/{next_session}/suite2p/plane0/reg_tif'
-#             right_path = io.adjust_path_to_host(right_path)
+#             right_path = paths.adjust_path_to_host(right_path)
 #             if not os.path.exists(right_path):
 #                 os.mkdir(right_path)
 #             right_tif_name = os.path.splitext(os.path.basename(tif))[0] + f'_{next_session}.tif'

@@ -7,22 +7,21 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
+from fast_learning import paths
 from nwb_wrappers.nwb_reader_functions import get_image_mask
 
 
 # ---- Parameters ----
 MOUSE_ID = 'GF314'
-NWB_FILE = os.path.join(io.nwb_dir, 'GF314_28112020_171800.nwb')
-OPS_PATH = io.adjust_path_to_host(
+NWB_FILE = os.path.join(paths.nwb_dir, 'GF314_28112020_171800.nwb')
+OPS_PATH = paths.adjust_path_to_host(
     '/mnt/lsens-analysis/Anthony_Renard/Georgios_Foustoukos/Suite2PRois/GF314/ops.npy'
 )
 SEGMENTATION_INFO = ['ophys', 'all_cells', 'my_plane_segmentation']
 
 
 # ---- Load LMI data ----
-lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
 lmi_df = lmi_df[lmi_df['mouse_id'] == MOUSE_ID].reset_index(drop=True)
 n_lmi = len(lmi_df)
 print(f"LMI entries for {MOUSE_ID}: {n_lmi}")
@@ -74,7 +73,7 @@ cb.set_ticks([lmi_min, lmi_max_val])
 cb.set_ticklabels([f'{lmi_min:.2f}', f'{lmi_max_val:.2f}'])
 
 plt.tight_layout()
-save_path = os.path.join(io.results_dir, f'fov_{MOUSE_ID}.svg')
+save_path = os.path.join(paths.results_dir, f'fov_{MOUSE_ID}.svg')
 plt.savefig(save_path, dpi=300, bbox_inches='tight')
 plt.show()
 print(f"Saved to {save_path}")

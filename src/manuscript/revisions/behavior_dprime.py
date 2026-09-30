@@ -107,12 +107,11 @@ import seaborn as sns
 from scipy.stats import norm, mannwhitneyu, wilcoxon, ttest_1samp, pearsonr
 from statsmodels.stats.multitest import multipletests
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
 sys.path.append(r'/home/aprenard/repos/fast-learning')
 
-import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging
-from src.utils.utils_plot import stim_palette, reward_palette, behavior_palette
+from fast_learning import paths, database
+from fast_learning import imaging
+from fast_learning.plotting import stim_palette, reward_palette, behavior_palette
 from src.manuscript.revisions.figure_2b_c_execution import (
     TABLE_PATH as EXECUTION_TABLE_PATH,
     DAYS_OF_INTEREST as EXECUTION_DAYS_OF_INTEREST,
@@ -120,7 +119,7 @@ from src.manuscript.revisions.figure_2b_c_execution import (
 )
 
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'revisions', 'behavior_dprime', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'behavior_dprime', 'output')
 EPS = 1e-3  # clipping epsilon for already-smoothed probability curves
 
 
@@ -163,7 +162,7 @@ def _session_dprime(table, group_cols):
 
 
 def _load_trial_resolved_dprime(
-    table_path=os.path.join(io.processed_dir, 'behavior',
+    table_path=os.path.join(paths.processed_dir, 'behavior',
                              'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'),
     n_trials=120,
 ):
@@ -175,7 +174,7 @@ def _load_trial_resolved_dprime(
     and learning_curve_chance is the smoothed no-stim/catch false-alarm
     probability curve, already interpolated onto whisker-trial indices
     (utils_behavior.compute_learning_trial)."""
-    table_path = io.adjust_path_to_host(table_path)
+    table_path = paths.adjust_path_to_host(table_path)
     table = pd.read_csv(table_path)
 
     df = table.loc[(table.whisker_stim == 1) & (table.day == 0)].copy()
@@ -273,7 +272,7 @@ def _dprime_barplot_by_group(
 # ============================================================================
 
 def panel_1c_right_dprime(
-    table_path=os.path.join(io.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
+    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
     days_of_interest=[0, 1, 2],
     save_path=OUTPUT_DIR,
     save_format='svg',
@@ -284,7 +283,7 @@ def panel_1c_right_dprime(
     panel_c_right_performance_barplot, with dprime_w (whisker vs. catch)
     substituted for outcome_w (whisker hit rate)."""
 
-    table_path = io.adjust_path_to_host(table_path)
+    table_path = paths.adjust_path_to_host(table_path)
     table = pd.read_csv(table_path)
 
     table = table.loc[table.day.isin(days_of_interest)].copy()
@@ -312,7 +311,7 @@ def panel_1c_right_dprime(
 # ============================================================================
 
 def panel_1d_dprime(
-    table_path=os.path.join(io.processed_dir, 'behavior',
+    table_path=os.path.join(paths.processed_dir, 'behavior',
                              'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'),
     n_trials=120,
     save_path=OUTPUT_DIR,
@@ -407,7 +406,7 @@ def panel_1d_dprime(
 # ============================================================================
 
 def panel_2c_dprime(
-    table_path=os.path.join(io.processed_dir, 'behavior', 'behavior_muscimol.csv'),
+    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_muscimol.csv'),
     days_of_interest=['muscimol_1', 'muscimol_2', 'muscimol_3'],
     day_labels=['D0', 'D+1', 'D+2'],
     save_path=OUTPUT_DIR,
@@ -419,24 +418,24 @@ def panel_2c_dprime(
     figure_2b_c.py:panel_c_muscimol_barplot, with dprime_w substituted for
     outcome_w."""
 
-    table_path = io.adjust_path_to_host(table_path)
+    table_path = paths.adjust_path_to_host(table_path)
     table = pd.read_csv(table_path)
 
-    db_path = io.db_path
-    nwb_dir = io.nwb_dir
+    db_path = paths.db_path
+    nwb_dir = paths.nwb_dir
 
-    fpS1_mice = io.select_mice_from_db(
+    fpS1_mice = database.select_mice_from_db(
         db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
         pharmacology='yes', pharma_inactivation_type='learning', pharma_area='fpS1',
     )
-    wS1_mice = io.select_mice_from_db(
+    wS1_mice = database.select_mice_from_db(
         db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
         pharmacology='yes', pharma_inactivation_type='learning', pharma_area='wS1',
     )
     table.loc[table.mouse_id.isin(fpS1_mice), 'area'] = 'fpS1'
     table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
 
-    _, _, _, db = io.select_sessions_from_db(
+    _, _, _, db = database.select_sessions_from_db(
         db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
         pharma_inactivation_type=['learning'],
         pharma_day=["pre_-2", "pre_-1", "muscimol_1", "muscimol_2", "muscimol_3",
@@ -460,7 +459,7 @@ def panel_2c_dprime(
 # ============================================================================
 
 def panel_2f_dprime(
-    table_path=os.path.join(io.processed_dir, 'behavior', 'behavior_opto_learning.csv'),
+    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_opto_learning.csv'),
     days_of_interest=['opto', 'recovery_1'],
     day_labels=['D0', 'D+1'],
     save_path=OUTPUT_DIR,
@@ -472,24 +471,24 @@ def panel_2f_dprime(
     figure_2e_f.py:panel_f_opto_barplot, with dprime_w substituted for
     outcome_w."""
 
-    table_path = io.adjust_path_to_host(table_path)
+    table_path = paths.adjust_path_to_host(table_path)
     table = pd.read_csv(table_path)
 
-    db_path = io.db_path
-    nwb_dir = io.nwb_dir
+    db_path = paths.db_path
+    nwb_dir = paths.nwb_dir
 
-    fpS1_mice = io.select_mice_from_db(
+    fpS1_mice = database.select_mice_from_db(
         db_path, nwb_dir, experimenters=None, exclude_cols=['exclude', 'opto_exclude'],
         optogenetic='yes', opto_inactivation_type='learning', opto_area='fpS1',
     )
-    wS1_mice = io.select_mice_from_db(
+    wS1_mice = database.select_mice_from_db(
         db_path, nwb_dir, experimenters=None, exclude_cols=['exclude', 'opto_exclude'],
         optogenetic='yes', opto_inactivation_type='learning', opto_area='wS1',
     )
     table.loc[table.mouse_id.isin(fpS1_mice), 'area'] = 'fpS1'
     table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
 
-    _, _, _, db = io.select_sessions_from_db(
+    _, _, _, db = database.select_sessions_from_db(
         db_path, nwb_dir, experimenters=None, exclude_cols=['exclude', 'opto_exclude'],
         opto_inactivation_type=['learning'],
         opto_day=["pre_-2", "pre_-1", "opto", "recovery_1"],
@@ -526,24 +525,24 @@ def panel_2c_execution_dprime(
     behavior_muscimol_execution.csv to already exist -- run
     figure_2b_c_execution.py once with MODE='compute' first."""
 
-    table_path = io.adjust_path_to_host(table_path)
+    table_path = paths.adjust_path_to_host(table_path)
     table = pd.read_csv(table_path)
 
-    db_path = io.db_path
-    nwb_dir = io.nwb_dir
+    db_path = paths.db_path
+    nwb_dir = paths.nwb_dir
 
-    fpS1_mice = io.select_mice_from_db(
+    fpS1_mice = database.select_mice_from_db(
         db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
         pharmacology='yes', pharma_inactivation_type='execution', pharma_area='fpS1',
     )
-    wS1_mice = io.select_mice_from_db(
+    wS1_mice = database.select_mice_from_db(
         db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
         pharmacology='yes', pharma_inactivation_type='execution', pharma_area='wS1',
     )
     table.loc[table.mouse_id.isin(fpS1_mice), 'area'] = 'fpS1'
     table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
 
-    _, _, _, db = io.select_sessions_from_db(
+    _, _, _, db = database.select_sessions_from_db(
         db_path, nwb_dir, experimenters=None, exclude_cols=['exclude'],
         pharma_inactivation_type=['execution'],
         pharma_day=["pre_-2", "pre_-1", "muscimol_1", "ringer_1", "muscimol_2"],
@@ -566,7 +565,7 @@ def panel_2c_execution_dprime(
 # ============================================================================
 
 def panel_4c_dprime(
-    table_path=os.path.join(io.processed_dir, 'behavior',
+    table_path=os.path.join(paths.processed_dir, 'behavior',
                              'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'),
     cut_n_trials=100,
     save_path=OUTPUT_DIR,
@@ -615,10 +614,10 @@ def panel_4c_dprime(
 # ============================================================================
 
 def panel_4e_dprime_correlation(
-    table_path=os.path.join(io.processed_dir, 'behavior',
+    table_path=os.path.join(paths.processed_dir, 'behavior',
                              'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'),
     cut_n_trials=100,
-    weights_path=os.path.join(io.processed_dir, 'decoding', 'decoder_weights.pkl'),
+    weights_path=os.path.join(paths.processed_dir, 'decoding', 'decoder_weights.pkl'),
     window_size=10,
     step_size=1,
     save_path=OUTPUT_DIR,
@@ -648,10 +647,10 @@ def panel_4e_dprime_correlation(
         weights = pickle.load(f)
     print(f"Loaded decoder weights for {len(weights)} mice.")
 
-    folder = io.tensor_dir
+    folder = paths.tensor_dir
     results = []
     for mouse, w in weights.items():
-        xarr = utils_imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')
+        xarr = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')
         xarr = xarr.sel(trial=xarr['day'].isin([0]))
         xarr = xarr.sel(trial=xarr['whisker_stim'] == 1)
         xarr = xarr.sel(time=slice(win[0], win[1])).mean(dim='time')

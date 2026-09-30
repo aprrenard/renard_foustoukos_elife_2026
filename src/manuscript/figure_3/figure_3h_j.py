@@ -22,10 +22,9 @@ from scipy.stats import spearmanr, mannwhitneyu, wilcoxon, kruskal
 from statsmodels.formula.api import ols
 from statsmodels.stats.anova import anova_lm
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -38,7 +37,7 @@ BASELINE_WIN = (-1, 0)
 DAYS = [-2, -1, 0, 1, 2]
 N_MAP_TRIALS = 40
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
 
 
 # ============================================================================
@@ -51,7 +50,7 @@ def load_and_process_data(
     zscore=False,
     projection_type=None,
     n_min_proj=5,
-    substract_baseline=True,
+    subtract_baseline=True,
 ):
     """
     Load imaging data and compute trial-by-trial similarity matrices.
@@ -62,7 +61,7 @@ def load_and_process_data(
         zscore: If True, z-score responses within each day to remove recording drift
         projection_type: Cell type filter ('wS2', 'wM1', or None for all cells)
         n_min_proj: Minimum number of projection cells required to include a mouse
-        substract_baseline: If True, subtract baseline from traces
+        subtract_baseline: If True, subtract baseline from traces
 
     Returns:
         corr_matrices_rew: List of similarity matrices (one per R+ mouse)
@@ -75,12 +74,12 @@ def load_and_process_data(
             f"similarity_metric must be 'pearson', 'spearman', or 'cosine', got '{similarity_metric}'"
         )
 
-    _, _, mice, db = io.select_sessions_from_db(io.db_path, io.nwb_dir, two_p_imaging='yes')
+    _, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir, two_p_imaging='yes')
     print(mice)
 
     selected_cells = None
     if select_lmi:
-        processed_folder = io.solve_common_paths('processed_data')
+        processed_folder = paths.processed_dir
         lmi_df = pd.read_csv(os.path.join(processed_folder, 'lmi_results.csv'))
         selected_cells = lmi_df.loc[(lmi_df['lmi_p'] <= 0.025) | (lmi_df['lmi_p'] >= 0.975)]
 
@@ -89,11 +88,11 @@ def load_and_process_data(
 
     for mouse in mice:
         print(f"Processing mouse: {mouse}")
-        folder = io.tensor_dir
-        xarray = utils_imaging.load_mouse_xarray(
-            mouse, folder, 'tensor_xarray_mapping_data.nc', substracted=substract_baseline
+        folder = paths.tensor_dir
+        xarray = imaging.load_mouse_xarray(
+            mouse, folder, 'tensor_xarray_mapping_data.nc', subtracted=subtract_baseline
         )
-        rew_gp = io.get_mouse_reward_group_from_db(io.db_path, mouse, db)
+        rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
 
         xarray = xarray.sel(trial=xarray['day'].isin(DAYS))
 

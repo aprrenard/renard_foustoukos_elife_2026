@@ -38,7 +38,7 @@ reusing _compute_similarity_matrix(), _compute_within_day_metrics(), and
 _significance_stars() from figure_3h_j.py unchanged for everything else.
 
 Figures and CSVs are saved to
-    io.manuscript_output_dir/revisions/figure_3h_i_magnitude_reliability/output/.
+    paths.manuscript_output_dir/revisions/figure_3h_i_magnitude_reliability/output/.
 """
 
 import os
@@ -53,9 +53,9 @@ from statsmodels.formula.api import ols
 from statsmodels.stats.anova import anova_lm
 
 sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import reward_palette
 from src.manuscript.figure_3.figure_3h_j import (
     DAYS,
     N_MAP_TRIALS,
@@ -74,7 +74,7 @@ N_SPLITS = 100      # random splits averaged per (mouse, day) split-half estimat
 GLOBAL_SEED = 42    # fixed for reproducibility of this stochastic control
 
 OUTPUT_DIR = os.path.join(
-    io.manuscript_output_dir, 'revisions', 'figure_3h_i_magnitude_reliability', 'output')
+    paths.manuscript_output_dir, 'revisions', 'figure_3h_i_magnitude_reliability', 'output')
 
 
 # ============================================================================
@@ -88,7 +88,7 @@ def _load_vectors_and_matrices(
     zscore=False,
     projection_type=None,
     n_min_proj=5,
-    substract_baseline=True,
+    subtract_baseline=True,
 ):
     """Load imaging data and return both the raw (cell x trial) response
     vectors and their similarity matrices, per mouse.
@@ -99,11 +99,11 @@ def _load_vectors_and_matrices(
     unchanged for the similarity-matrix computation, so the matrices this
     returns are identical to what the original pipeline produces.
     """
-    _, _, mice, db = io.select_sessions_from_db(io.db_path, io.nwb_dir, two_p_imaging='yes')
+    _, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir, two_p_imaging='yes')
 
     selected_cells = None
     if select_lmi:
-        processed_folder = io.solve_common_paths('processed_data')
+        processed_folder = paths.processed_dir
         lmi_df = pd.read_csv(os.path.join(processed_folder, 'lmi_results.csv'))
         selected_cells = lmi_df.loc[(lmi_df['lmi_p'] <= 0.025) | (lmi_df['lmi_p'] >= 0.975)]
 
@@ -112,11 +112,11 @@ def _load_vectors_and_matrices(
 
     for mouse in mice:
         print(f"Processing mouse: {mouse}")
-        folder = io.tensor_dir
-        xarray = utils_imaging.load_mouse_xarray(
-            mouse, folder, 'tensor_xarray_mapping_data.nc', substracted=substract_baseline
+        folder = paths.tensor_dir
+        xarray = imaging.load_mouse_xarray(
+            mouse, folder, 'tensor_xarray_mapping_data.nc', subtracted=subtract_baseline
         )
-        rew_gp = io.get_mouse_reward_group_from_db(io.db_path, mouse, db)
+        rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
 
         xarray = xarray.sel(trial=xarray['day'].isin(DAYS))
 

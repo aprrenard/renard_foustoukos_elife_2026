@@ -25,12 +25,10 @@ from scipy.special import expit
 from joblib import Parallel, delayed
 import warnings
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
 
 # =============================================================================
 # PARAMETERS
@@ -55,13 +53,13 @@ LMI_POSITIVE_THRESHOLD = 0.975  # Top 2.5% LMI cells
 LMI_NEGATIVE_THRESHOLD = 0.025  # Bottom 2.5% LMI cells
 
 # Output directory
-OUTPUT_DIR = io.adjust_path_to_host(
+OUTPUT_DIR = paths.adjust_path_to_host(
     '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/day0_learning/plasticity'
 )
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Reactivation output directory (participation rates saved by reactivation_lmi_prediction.py)
-REACTIVATION_OUTPUT_DIR = io.adjust_path_to_host(
+REACTIVATION_OUTPUT_DIR = paths.adjust_path_to_host(
     '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/reactivation_lmi'
 )
 
@@ -93,9 +91,9 @@ def load_day0_data(mouse_id, response_type='mean', response_win=(0, 0.300)):
         Shape (n_cells,) - ROI identifiers
     """
     # Load xarray
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = paths.tensor_dir
     file_name = 'tensor_xarray_learning_data.nc'
-    xarray = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, substracted=False)
+    xarray = imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=False)
 
     # Select day 0 whisker trials
     xarray = xarray.sel(trial=xarray['day'] == 0)
@@ -533,7 +531,7 @@ def process_mouse(mouse_id, response_type='mean', response_win=(0, 0.300),
     responses, trial_indices, roi_ids = load_day0_data(mouse_id, response_type, response_win)
 
     # Get reward group
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
 
     # Process each cell
     results = []
@@ -604,7 +602,7 @@ def process_mouse_pre_post_inflection(mouse_id, mouse_cells_df, response_win, mi
     n_skipped : int
         Number of cells skipped
     """
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = paths.tensor_dir
 
     psth_list = []
     response_list = []
@@ -613,8 +611,8 @@ def process_mouse_pre_post_inflection(mouse_id, mouse_cells_df, response_win, mi
 
     try:
         # Load baseline-subtracted xarray data ONCE for this mouse
-        xarr = utils_imaging.load_mouse_xarray(
-            mouse_id, folder, 'tensor_xarray_learning_data.nc', substracted=True
+        xarr = imaging.load_mouse_xarray(
+            mouse_id, folder, 'tensor_xarray_learning_data.nc', subtracted=True
         )
 
         # Filter for day 0 and whisker trials once
@@ -2475,9 +2473,9 @@ def plot_cell_psth_split_by_inflection(ax, mouse_id, roi, inflection_trial, rewa
     """
 
     # Load xarray data (baseline-subtracted)¨
-    folder = os.path.join(io.processed_dir, 'mice')
-    xarr = utils_imaging.load_mouse_xarray(
-        mouse_id, folder, 'tensor_xarray_learning_data.nc', substracted=True)
+    folder = paths.tensor_dir
+    xarr = imaging.load_mouse_xarray(
+        mouse_id, folder, 'tensor_xarray_learning_data.nc', subtracted=True)
 
     # Filter for this cell
     xarr_cell = xarr.sel(cell=xarr['roi'] == roi)
@@ -2602,10 +2600,10 @@ def plot_5day_mapping_psth(axes, mouse_id, roi):
         Cell ROI number
     """
     # Load mapping data
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = paths.tensor_dir
     file_name_mapping = 'tensor_xarray_mapping_data.nc'
  
-    xarr_mapping = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name_mapping, substracted=True)
+    xarr_mapping = imaging.load_mouse_xarray(mouse_id, folder, file_name_mapping, subtracted=True)
     xarr_mapping = xarr_mapping.sel(cell=xarr_mapping['roi'] == roi)
     xarr_mapping.load()
 
@@ -2663,7 +2661,7 @@ def create_cell_pdf_report(results_df, output_dir, pdf_name, n_cells=50, sort_by
     results_sorted = results_df.sort_values(sort_by, ascending=False).head(n_cells)
 
     # Load behavior table for learning curves
-    behavior_path = io.adjust_path_to_host(
+    behavior_path = paths.adjust_path_to_host(
         r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/'
         r'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
     )
@@ -2819,7 +2817,7 @@ def plot_example_cell_plasticity(mouse_id, roi, results_df, output_dir):
     row = cell_data.iloc[0]
 
     # Load behavior table for learning curves
-    behavior_path = io.adjust_path_to_host(
+    behavior_path = paths.adjust_path_to_host(
         r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/'
         r'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
     )
@@ -2909,8 +2907,8 @@ def main(run_fitting=RUN_FITTING, generate_pdfs=GENERATE_PDFS):
         print("\nMode: Running sigmoid fitting and amplitude computation")
 
         # Load mice list
-        _, _, mice, db = io.select_sessions_from_db(
-            io.db_path, io.nwb_dir, two_p_imaging='yes'
+        _, _, mice, db = database.select_sessions_from_db(
+            paths.db_path, paths.nwb_dir, two_p_imaging='yes'
         )
 
         print(f"\nProcessing {len(mice)} mice in parallel using {N_CORES} cores...")
@@ -2934,7 +2932,7 @@ def main(run_fitting=RUN_FITTING, generate_pdfs=GENERATE_PDFS):
         results_df = pd.concat(all_results, ignore_index=True)
 
         # Add LMI information
-        lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+        lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
         results_df = results_df.merge(
             lmi_df[['mouse_id', 'roi', 'lmi', 'lmi_p']],
             on=['mouse_id', 'roi'],
@@ -2992,7 +2990,7 @@ def main(run_fitting=RUN_FITTING, generate_pdfs=GENERATE_PDFS):
         results_lmi = pd.concat([lmi_positive, lmi_negative], ignore_index=True)
 
         # Load and merge behavioral learning trial data
-        learning_path = io.adjust_path_to_host(
+        learning_path = paths.adjust_path_to_host(
             r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/'
             r'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
         )

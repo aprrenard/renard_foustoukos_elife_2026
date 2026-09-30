@@ -7,7 +7,7 @@ Supplementary Figure 3k, l: CDF comparison of wS2 vs wM1 projector neurons.
 Statistics: Kolmogorov-Smirnov test (two-sided, wS2 vs wM1) per reward group
 and sign.
 
-Classifier weights are loaded from io.processed_dir/decoding (saved by
+Classifier weights are loaded from paths.processed_dir/decoding (saved by
 figure_3m_o.py). Cell-type labels for the weight file are retrieved from the
 mapping xarrays.
 """
@@ -21,11 +21,9 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import ks_2samp
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import s2_m1_palette
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import s2_m1_palette
 
 
 # ============================================================================
@@ -34,8 +32,8 @@ from src.utils.utils_plot import s2_m1_palette
 
 CELL_TYPES = ['wS2', 'wM1']
 CELL_TYPE_COLORS = {'wS2': s2_m1_palette[0], 'wM1': s2_m1_palette[1]}
-RESULTS_DIR = os.path.join(io.processed_dir, 'decoding')
-OUTPUT_DIR  = os.path.join(io.manuscript_output_dir, 'supp_3', 'output')
+RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
+OUTPUT_DIR  = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
 
 
 # ============================================================================
@@ -109,10 +107,10 @@ def plot_cdf_panel(ax, data, value_col, reward_group, positive_only, ks_df, xlab
 # Load LMI data
 # ============================================================================
 
-lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
 for mouse in lmi_df['mouse_id'].unique():
     lmi_df.loc[lmi_df['mouse_id'] == mouse, 'reward_group'] = \
-        io.get_mouse_reward_group_from_db(io.db_path, mouse)
+        database.get_mouse_reward_group_from_db(paths.db_path, mouse)
 lmi_df['cell_type_group'] = lmi_df['cell_type'].replace({'na': 'non_projector'})
 
 print(f"LMI: {len(lmi_df)} cells, {lmi_df['mouse_id'].nunique()} mice")
@@ -127,8 +125,8 @@ weights_df = pd.read_csv(os.path.join(RESULTS_DIR, 'classifier_weights.csv'))
 cell_type_info = []
 for mouse_id in weights_df['mouse_id'].unique():
     try:
-        xarr = utils_imaging.load_mouse_xarray(
-            mouse_id, io.tensor_dir,
+        xarr = imaging.load_mouse_xarray(
+            mouse_id, paths.tensor_dir,
             'tensor_xarray_mapping_data.nc')
         rois = xarr.coords['roi'].values
         cts  = (xarr.coords['cell_type'].values if 'cell_type' in xarr.coords

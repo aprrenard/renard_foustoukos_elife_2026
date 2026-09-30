@@ -35,11 +35,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 from scipy.stats import percentileofscore
 from joblib import Parallel, delayed
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
 sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
 from src.core_analysis.reactivations.reactivation import (
     create_whisker_template,
     compute_template_correlation
@@ -74,15 +73,15 @@ n_jobs = 35
 sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
 # Load database
-_, _, all_mice, db = io.select_sessions_from_db(
-    io.db_path, io.nwb_dir, two_p_imaging='yes'
+_, _, all_mice, db = database.select_sessions_from_db(
+    paths.db_path, paths.nwb_dir, two_p_imaging='yes'
 )
 
 r_plus_mice = []
 r_minus_mice = []
 for mouse in all_mice:
     try:
-        rg = io.get_mouse_reward_group_from_db(io.db_path, mouse, db=db)
+        rg = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db=db)
         if rg == 'R+':
             r_plus_mice.append(mouse)
         elif rg == 'R-':
@@ -130,9 +129,9 @@ def analyze_mouse_surrogates(mouse, threshold_dff=None, n_surrogates=1000,
 
     # Load xarray once for all pre-learning days
     try:
-        folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
-        xarray_learning = utils_imaging.load_mouse_xarray(
-            mouse, folder, 'tensor_xarray_learning_data.nc', substracted=False
+        folder = paths.tensor_dir
+        xarray_learning = imaging.load_mouse_xarray(
+            mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=False
         )
     except Exception as e:
         if verbose:
@@ -330,7 +329,7 @@ def plot_threshold_summary_across_mice(all_results_df, save_path):
     """
     all_results_df = all_results_df.copy()
     all_results_df['reward_group'] = all_results_df['mouse_id'].apply(
-        lambda m: io.get_mouse_reward_group_from_db(io.db_path, m, db=db)
+        lambda m: database.get_mouse_reward_group_from_db(paths.db_path, m, db=db)
     )
     percentile_val = int(all_results_df['percentile_value'].iloc[0])
 
@@ -400,7 +399,7 @@ if __name__ == "__main__":
     print(f"  Parallel jobs: {n_jobs}")
 
     output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/reactivation_surrogates_per_mouse'
-    output_dir = io.adjust_path_to_host(output_dir)
+    output_dir = paths.adjust_path_to_host(output_dir)
     os.makedirs(output_dir, exist_ok=True)
     print(f"\nResults will be saved to: {output_dir}")
 

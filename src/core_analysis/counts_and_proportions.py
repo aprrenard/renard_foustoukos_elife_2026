@@ -17,11 +17,10 @@ import xarray as xr
 
 # sys.path.append(r'H:/anthony/repos/NWB_analysis')
 sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 # from nwb_wrappers import nwb_reader_functions as nwb_read
-import src.utils.utils_imaging as utils_imaging 
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
 from scipy.stats import ks_2samp
 from matplotlib_venn import venn3
 import colorsys
@@ -32,8 +31,8 @@ from matplotlib import colors as mcolors
 # Count the number of cells and proportion of cell types.
 # #############################################################################
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',
                                             experimenters=['GF', 'MI', 'AR'])
 
@@ -43,11 +42,11 @@ for mouse_id in mice:
     # Disregard these mice as the number of trials is too low.
     # if mouse_id in ['GF307', 'GF310', 'GF333', 'AR144', 'AR135']:
     #     continue
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
     file_name = 'tensor_xarray_mapping_data.nc'
-    folder = os.path.join(io.processed_dir, 'mice')
-    data = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name)
-    data = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name)
+    folder = paths.tensor_dir
+    data = imaging.load_mouse_xarray(mouse_id, folder, file_name)
+    data = imaging.load_mouse_xarray(mouse_id, folder, file_name)
     
     rois = data.coords['roi'].values
     cts = data.coords['cell_type'].values
@@ -85,7 +84,7 @@ if not missing_proj.empty:
 
 # Save figures to PDF.
 save_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/counts'
-save_dir = io.adjust_path_to_host(save_dir)
+save_dir = paths.adjust_path_to_host(save_dir)
 pdf_file = f'cell_counts.pdf'  # TODO set correct path
 
 with PdfPages(os.path.join(save_dir, pdf_file)) as pdf:
@@ -120,7 +119,7 @@ print(cell_count[['mouse_id', 'reward_group']].drop_duplicates().groupby('reward
 print(prop_ct[['mouse_id', 'reward_group']].drop_duplicates().groupby('reward_group').count().reset_index())
 
 # Read counts from file.
-cell_count = io.adjust_path_to_host('/mnt/lsens-analysis/Anthony_Renard/analysis_output/counts/cell_counts.csv')
+cell_count = paths.adjust_path_to_host('/mnt/lsens-analysis/Anthony_Renard/analysis_output/counts/cell_counts.csv')
 cell_count = pd.read_csv(cell_count)
 cell_count
 mice_AR = [m for m in mice if m.startswith('AR')]
@@ -133,16 +132,16 @@ cell_count.loc[cell_count.mouse_id.isin(mice_GF)].groupby(['reward_group', 'cell
 # Proportion of responsive cells across days.
 # #############################################################################
 
-processed_folder = io.solve_common_paths('processed_data')
+processed_folder = paths.processed_dir
 tests = pd.read_csv(os.path.join(processed_folder, 'response_test_results_win_180ms.csv'))
 
-_, _, mice, _ = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, _ = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',
                                             experimenters=['AR', 'GF', 'MI'])
 
 for mouse in tests.mouse_id.unique():
-    tests.loc[tests.mouse_id==mouse, 'reward_group'] = io.get_mouse_reward_group_from_db(io.db_path, mouse)
+    tests.loc[tests.mouse_id==mouse, 'reward_group'] = database.get_mouse_reward_group_from_db(paths.db_path, mouse)
 
 # Select days.
 tests = tests.loc[tests.day.isin([-2, -1, 0, 1, 2])]
@@ -268,16 +267,16 @@ plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
 # Proportion of responsive cells all days pulled together.
 # #############################################################################
 
-processed_folder = io.solve_common_paths('processed_data')
+processed_folder = paths.processed_dir
 tests = pd.read_csv(os.path.join(processed_folder, 'response_test_results_alldaystogether_win_180ms.csv'))
 
-_, _, mice, _ = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, _ = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',
                                             experimenters=['AR', 'GF', 'MI'])
 
 for mouse in tests.mouse_id.unique():
-    tests.loc[tests.mouse_id==mouse, 'reward_group'] = io.get_mouse_reward_group_from_db(io.db_path, mouse)
+    tests.loc[tests.mouse_id==mouse, 'reward_group'] = database.get_mouse_reward_group_from_db(paths.db_path, mouse)
 
 tests['thr_5%_aud'] = tests['pval_aud'] <= 0.01
 tests['thr_5%_wh'] = tests['pval_wh'] <= 0.01
@@ -403,16 +402,16 @@ plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
 # Proportion of responsive cells based on ROC analysis.
 # #############################################################################
 
-processed_folder = io.solve_common_paths('processed_data')
+processed_folder = paths.processed_dir
 tests = pd.read_csv(os.path.join(processed_folder, 'response_test_results_mapping_ROC.csv'))
 
-_, _, mice, _ = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, _ = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',
                                             experimenters=['AR', 'GF', 'MI'])
 
 for mouse in tests.mouse_id.unique():
-    tests.loc[tests.mouse_id==mouse, 'reward_group'] = io.get_mouse_reward_group_from_db(io.db_path, mouse)
+    tests.loc[tests.mouse_id==mouse, 'reward_group'] = database.get_mouse_reward_group_from_db(paths.db_path, mouse)
 
 tests['thr_5%'] = tests['roc_p'] <= 0.05
 
@@ -516,15 +515,15 @@ plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
 # Proportion of LMI.
 # #############################################################################
 
-processed_folder = io.solve_common_paths('processed_data')
+processed_folder = paths.processed_dir
 lmi_df = pd.read_csv(os.path.join(processed_folder, 'lmi_results.csv'))
 
-_, _, mice, _ = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, _ = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',)
 
 for mouse in lmi_df.mouse_id.unique():
-    lmi_df.loc[lmi_df.mouse_id==mouse, 'reward_group'] = io.get_mouse_reward_group_from_db(io.db_path, mouse)
+    lmi_df.loc[lmi_df.mouse_id==mouse, 'reward_group'] = database.get_mouse_reward_group_from_db(paths.db_path, mouse)
 
 lmi_df = lmi_df.loc[lmi_df.mouse_id.isin(mice)]
 

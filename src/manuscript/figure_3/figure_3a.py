@@ -18,9 +18,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging
+from fast_learning import paths
+from fast_learning import imaging
 from nwb_wrappers.nwb_reader_functions import get_image_mask
 
 
@@ -29,9 +28,9 @@ from nwb_wrappers.nwb_reader_functions import get_image_mask
 # #############################################################################
 
 MOUSE_ID        = 'GF314'
-NWB_FILE        = os.path.join(io.nwb_dir, 'GF314_28112020_171800.nwb')
+NWB_FILE        = os.path.join(paths.nwb_dir, 'GF314_28112020_171800.nwb')
 # suite2p ops file is an input stored next to the pre-refactor tensors.
-OPS_PATH        = os.path.join(os.path.dirname(io.tensor_dir), 'GF314_ops.npy')
+OPS_PATH        = os.path.join(os.path.dirname(paths.tensor_dir), 'GF314_ops.npy')
 SEGMENTATION_INFO = ['ophys', 'all_cells', 'my_plane_segmentation']
 
 sampling_rate   = 30
@@ -42,9 +41,9 @@ nan_gap         = 60         # NaN frames inserted between trials
 offset_step     = 400        # % dF/F vertical offset between cells
 
 file_name = 'tensor_xarray_mapping_data.nc'
-folder    = io.tensor_dir
+folder    = paths.tensor_dir
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
 
 
 # #############################################################################
@@ -66,7 +65,7 @@ lmi_cmap = mcolors.LinearSegmentedColormap.from_list(
 # Load FOV data.
 # #############################################################################
 
-lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
 lmi_df = lmi_df[lmi_df['mouse_id'] == MOUSE_ID].reset_index(drop=True)
 print(f"LMI entries for {MOUSE_ID}: {len(lmi_df)}")
 
@@ -93,7 +92,7 @@ for roi, lmi_val in zip(roi_indices, lmi_values):
 # Load calcium data and select cells by ROI.
 # #############################################################################
 
-xarr     = utils_imaging.load_mouse_xarray(MOUSE_ID, folder, file_name, substracted=False)
+xarr     = imaging.load_mouse_xarray(MOUSE_ID, folder, file_name, subtracted=False)
 xarr_day = xarr.sel(trial=xarr['day'] == day_for_trials)
 
 if xarr_day.sizes['trial'] < trials_range[1]:

@@ -16,11 +16,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 import pymc as pm 
 import scipy as sp
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
-from src.utils.utils_behavior import *
+from fast_learning import paths, database
+from fast_learning.plotting import *
+from fast_learning.behavior import *
 from nwb_wrappers import nwb_reader_functions as nwb_read
 from scipy.stats import mannwhitneyu, wilcoxon
 from matplotlib.colors import Normalize
@@ -79,31 +78,31 @@ import matplotlib.cm as cm
 # ############################
 
 # Read behavior results.
-db_path = io.db_path
+db_path = paths.db_path
 # db_path = 'C://Users//aprenard//recherches//fast-learning//docs//sessions_muscimol_GF.xlsx'
-nwb_dir = io.nwb_dir
-stop_flag_yaml = io.stop_flags_yaml
-trial_indices_yaml = io.trial_indices_yaml
+nwb_dir = paths.nwb_dir
+stop_flag_yaml = paths.stop_flags_yaml
+trial_indices_yaml = paths.trial_indices_yaml
 
-mice_behavior = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_behavior = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude'],
                                     optogenetic = ['no', np.nan],
                                     pharmacology = ['no',np.nan],
                                     )
 # Add mice with inactivation done after D0 learning.
-mice_pharma_execution = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_pharma_execution = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude'],
                                     optogenetic = ['no', np.nan],
                                     pharmacology = ['yes'],
                                     pharma_inactivation_type = ['execution'],
                                     )
-mice_opto_execution = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_opto_execution = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude'],
                                     optogenetic = ['yes', np.nan],
                                     pharmacology = ['no',np.nan],
                                     opto_inactivation_type = ['execution'],
                                     )
-mice_opto_learning = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_opto_learning = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude'],
                                     optogenetic = ['yes', np.nan],
                                     pharmacology = ['no',np.nan],
@@ -117,7 +116,7 @@ mice_behavior = sorted(mice_behavior)
 
 len(mice_behavior)
 
-session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
+session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
     db_path, nwb_dir, experimenters=None,
     exclude_cols = ['exclude',],
     day = ["-2", "-1", '0', '+1', '+2'],
@@ -126,18 +125,18 @@ session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
 table = make_behavior_table(nwb_list, session_list, db_path, cut_session=True, stop_flag_yaml=stop_flag_yaml, trial_indices_yaml=trial_indices_yaml)
 # Save the table to a CSV file
 save_path = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_behaviormice_table_5days_cut.csv'
-save_path = io.adjust_path_to_host(save_path)
+save_path = paths.adjust_path_to_host(save_path)
 table.to_csv(save_path, index=False)
 
 
-mice_imaging = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_imaging = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude',  'two_p_exclude'],
                                     optogenetic = ['no', np.nan],
                                     pharmacology = ['no',np.nan],
                                     two_p_imaging = 'yes',
                                     )
 
-session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
+session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
     db_path, nwb_dir, experimenters=None,
     exclude_cols = ['exclude',  'two_p_exclude'],
     day = ["-2", "-1", '0', '+1', '+2'],
@@ -147,18 +146,18 @@ session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
 table = make_behavior_table(nwb_list, session_list, db_path, cut_session=True, stop_flag_yaml=stop_flag_yaml, trial_indices_yaml=trial_indices_yaml)
 # Save the table to a CSV file
 save_path = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut.csv'
-save_path = io.adjust_path_to_host(save_path)
+save_path = paths.adjust_path_to_host(save_path)
 table.to_csv(save_path, index=False)
 
 # Auditory days for imaging mice.
-mice_imaging = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_imaging = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude',  'two_p_exclude'],
                                     optogenetic = ['no', np.nan],
                                     pharmacology = ['no',np.nan],
                                     two_p_imaging = 'yes',
                                     )
 
-session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
+session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
     db_path, nwb_dir, experimenters=None,
     exclude_cols = ['exclude',  'two_p_exclude'],
     day = [f"-{i}" for i in range(8,1,-1)],
@@ -168,10 +167,10 @@ session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
 table = make_behavior_table(nwb_list, session_list, db_path, cut_session=True, stop_flag_yaml=stop_flag_yaml, trial_indices_yaml=trial_indices_yaml)
 # Save the table to a CSV file
 save_path = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_pretraining_cut.csv'
-save_path = io.adjust_path_to_host(save_path)
+save_path = paths.adjust_path_to_host(save_path)
 table.to_csv(save_path, index=False)
 
-mice_opto = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_opto = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude'],
                                     optogenetic = ['yes'],
                                     pharmacology = ['no',np.nan],
@@ -179,14 +178,14 @@ mice_opto = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
 
 # Read behavior results.
 
-particle_test_mice = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+particle_test_mice = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude'],
                                     day = ['whisker_on_1', 'whisker_off', 'whisker_on_2'],
                                     optogenetic = ['no', np.nan],
                                     pharmacology = ['no',np.nan],
                                     two_p_imaging = 'yes',)
 
-session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
+session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
     db_path, nwb_dir, experimenters=None,
     exclude_cols=['exclude', 'two_p_exclude'],
     day = ['whisker_on_1', 'whisker_off', 'whisker_on_2'],
@@ -196,24 +195,24 @@ session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
 table_particle_test = make_behavior_table(nwb_list, session_list, db_path, cut_session=False, stop_flag_yaml=stop_flag_yaml, trial_indices_yaml=trial_indices_yaml)
 # Save the table to a CSV file
 save_path = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_particle_test.csv'
-save_path = io.adjust_path_to_host(save_path)
+save_path = paths.adjust_path_to_host(save_path)
 table_particle_test.to_csv(save_path, index=False)
 
 
-mice_behavior = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_behavior = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude'],
                                     optogenetic = ['no', np.nan],
                                     pharmacology = ['no',np.nan],
                                     )
 
-mice_imaging = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_imaging = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude',  'two_p_exclude'],
                                     optogenetic = ['no', np.nan],
                                     pharmacology = ['no',np.nan],
                                     two_p_imaging = 'yes',
                                     )
 
-mice_opto = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_opto = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude'],
                                     optogenetic = ['yes'],
                                     pharmacology = ['no',np.nan],
@@ -226,7 +225,7 @@ mice_opto = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
 # Plot lick trace for a trial.
 # ------------------------
 
-session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
+session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
     db_path, nwb_dir, experimenters=None,
     exclude_cols=['exclude'],
     # day = ["-2", "-1", '0', '+1', '+2'],
@@ -236,7 +235,7 @@ session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
 
 
 #     bin_file = "//sv-nas1.rcp.epfl.ch/Petersen-Lab/data/AR184/Training/AR184_20250319_175559/log_continuous.bin"
-#     bin_file = io.adjust_path_to_host(bin_file)
+#     bin_file = paths.adjust_path_to_host(bin_file)
 #     # Read binary file using numpy
 #     bin_data = np.fromfile(bin_file)
 #     ttl = bin_data[2::6]
@@ -245,7 +244,7 @@ session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
 table = make_behavior_table(nwb_list, session_list, db_path= db_path, cut_session=True, stop_flag_yaml=stop_flag_yaml, trial_indices_yaml=trial_indices_yaml)
 # Save the table to a CSV file
 save_path = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut.csv'
-save_path = io.adjust_path_to_host(save_path)
+save_path = paths.adjust_path_to_host(save_path)
 table.to_csv(save_path, index=False)
 
 
@@ -256,7 +255,7 @@ table.to_csv(save_path, index=False)
 # table = pd.read_csv(r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_table_muscimol.csv')
 # table = table.loc[table.pharma_inactivation_type=='learning']
 
-# session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
+# session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
 #     db_path, nwb_dir, experimenters=['AR'],
 #     exclude_cols=['exclude'],
 #     pharma_day = ['pre_-1', 'pre_-2', 'muscimol_1', 'muscimol_2', 'muscimol_3', 'recovery_1', 'recovery_2', 'recovery_3'],
@@ -264,12 +263,12 @@ table.to_csv(save_path, index=False)
 #     )
 
 # Load the table from the CSV file.
-table_file = io.adjust_path_to_host(r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_table_all_mice_5days.csv')
+table_file = paths.adjust_path_to_host(r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_table_all_mice_5days.csv')
 table = pd.read_csv(table_file)
 
 session_list = table.loc[table.day==0].session_id.drop_duplicates().to_list()
 pdf_path = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/analysis_output/behaviorsingle_sessions_allmice.pdf'
-pdf_path = io.adjust_path_to_host(pdf_path)
+pdf_path = paths.adjust_path_to_host(pdf_path)
 
 with PdfPages(pdf_path) as pdf:
     for session_id in session_list:
@@ -282,7 +281,7 @@ with PdfPages(pdf_path) as pdf:
 # ################################
 
 pdf_path = '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/analysis_output/behaviorsingle_sessions_muscimol.pdf'
-pdf_path = io.adjust_path_to_host(pdf_path)
+pdf_path = paths.adjust_path_to_host(pdf_path)
 
 with PdfPages(pdf_path) as pdf:
     for session_id in session_list:
@@ -295,7 +294,7 @@ with PdfPages(pdf_path) as pdf:
 # ################################
 
 table_path = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut.csv'
-table_path = io.adjust_path_to_host(table_path)
+table_path = paths.adjust_path_to_host(table_path)
 table = pd.read_csv(table_path)
 
 # mouse_id = 'AR180'
@@ -334,7 +333,7 @@ plt.savefig(os.path.join(output_dir, f'behavior_single_mouse_{mouse_id}.svg'), d
 # table.to_csv(save_path, index=False)
 
 # Load table.
-table_file = io.adjust_path_to_host(r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut.csv')
+table_file = paths.adjust_path_to_host(r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut.csv')
 table = pd.read_csv(table_file)
 
 # Remove spurious whisker trials coming mapping session.
@@ -468,7 +467,7 @@ output_dir = r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/
 plt.savefig(os.path.join(output_dir, 'firsthit_D0.svg'), dpi=300)
 
 # Save the first hit data to CSV
-output_dir = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
+output_dir = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
 fh.to_csv(os.path.join(output_dir, 'firsthit_D0_data.csv'), index=False)
 
 # Mann-Whitney U test for first hit trial between reward groups
@@ -485,10 +484,10 @@ with open(os.path.join(output_dir, 'firsthit_D0_stats.csv'), 'w') as f:
 # ---------------------
 
 table_path = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_particle_test.csv'
-table_path = io.adjust_path_to_host(table_path)
+table_path = paths.adjust_path_to_host(table_path)
 table_particle_test = pd.read_csv(table_path)
 
-output_dir = io.adjust_path_to_host('/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
+output_dir = paths.adjust_path_to_host('/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
 on_off_order = ['whisker_on_1', 'whisker_off', 'whisker_on_2']
 
 
@@ -622,15 +621,15 @@ pd.DataFrame([
 # #####################################################################
 
 # Read behavior results.
-db_path = io.db_path
+db_path = paths.db_path
 # db_path = 'C://Users//aprenard//recherches//fast-learning//docs//sessions_muscimol_GF.xlsx'
-nwb_dir = io.nwb_dir
-stop_flag_yaml = io.stop_flags_yaml
-trial_indices_yaml = io.trial_indices_yaml
+nwb_dir = paths.nwb_dir
+stop_flag_yaml = paths.stop_flags_yaml
+trial_indices_yaml = paths.trial_indices_yaml
 
 # Load the table from the CSV file.
-table_file = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut.csv')
-# table_file = io.adjust_path_to_host(r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_behaviormice_table_5days_cut.csv')
+table_file = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut.csv')
+# table_file = paths.adjust_path_to_host(r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_behaviormice_table_5days_cut.csv')
 table = pd.read_csv(table_file)
 table.mouse_id.unique().size
 
@@ -658,7 +657,7 @@ plot_perf_across_blocks(data, "R+", 2, behavior_palette, nmax_trials=240, ax=axe
 
 
 # Save the figure
-output_dir = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
+output_dir = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
 output_file = os.path.join(output_dir, 'performance_over_blocks_imagingmice.svg')
 plt.savefig(output_file, format='svg', dpi=300)
 
@@ -668,7 +667,7 @@ plt.savefig(output_file, format='svg', dpi=300)
 # --------------------------------------------------------------------
 
 # Load the table from the CSV file.
-table_file = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
+table_file = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table = pd.read_csv(table_file)
 
 table.columns
@@ -721,7 +720,7 @@ axes[0].set_ylabel('Lick probability')
 sns.despine()
 
 # Save the figure
-output_dir = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
+output_dir = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
 output_file = os.path.join(output_dir, 'performance_over_blocks_imagingmice.svg')
 plt.savefig(output_file, format='svg', dpi=300)
 
@@ -732,7 +731,7 @@ plt.savefig(output_file, format='svg', dpi=300)
 # ----------------------------------------------------------------
 
 # Load the table from the CSV file.
-table_file = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
+table_file = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table = pd.read_csv(table_file)
 
 # Parameter: maximum number of trials per type to plot
@@ -909,7 +908,7 @@ sns.despine()
 plt.tight_layout()
 
 # Save the figure
-output_dir = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
+output_dir = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
 output_file = os.path.join(output_dir, 'performance_D0_comparison_2x2.svg')
 plt.savefig(output_file, format='svg', dpi=300)
 
@@ -930,7 +929,7 @@ for key, pvals in all_stats.items():
 # reward group. X-axis is time (min) from session start, cut at the 100th
 # whisker trial per mouse.
 
-table_file = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
+table_file = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table = pd.read_csv(table_file)
 
 day = 0
@@ -1008,7 +1007,7 @@ ax.set_xlim(right=50)
 sns.despine()
 plt.tight_layout()
 
-output_dir = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
+output_dir = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
 output_file = os.path.join(output_dir, 'performance_D0_all_stim_time_axis.svg')
 plt.savefig(output_file, format='svg', dpi=300)
 
@@ -1023,7 +1022,7 @@ df_interp.to_csv(os.path.join(output_dir, 'performance_D0_all_stim_time_axis_dat
 
 WHISKER_TRIAL_OF_INTEREST = 22
 
-table_file = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
+table_file = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table = pd.read_csv(table_file)
 
 df_day0_whisker = table.loc[(table.day == 0) & (table.whisker_stim == 1)].copy()
@@ -1065,7 +1064,7 @@ sns.despine()
 plt.tight_layout()
 
 # Save.
-output_dir = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
+output_dir = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
 plt.savefig(os.path.join(output_dir, f'time_whisker_trial_{WHISKER_TRIAL_OF_INTEREST}.svg'), dpi=300)
 df_t22.drop(columns='all').to_csv(os.path.join(output_dir, f'time_whisker_trial_{WHISKER_TRIAL_OF_INTEREST}_data.csv'), index=False)
 
@@ -1075,19 +1074,19 @@ df_t22.drop(columns='all').to_csv(os.path.join(output_dir, f'time_whisker_trial_
 # ############################################################
 
 # Read behavior results.
-db_path = io.db_path
+db_path = paths.db_path
 # db_path = 'C://Users//aprenard//recherches//fast-learning//docs//sessions_muscimol_GF.xlsx'
-nwb_dir = io.nwb_dir
-stop_flag_yaml = io.stop_flags_yaml
-trial_indices_yaml = io.trial_indices_yaml
+nwb_dir = paths.nwb_dir
+stop_flag_yaml = paths.stop_flags_yaml
+trial_indices_yaml = paths.trial_indices_yaml
 
-mice_muscimol = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_muscimol = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude'],
                                     pharmacology = 'yes',
                                     )
 
 # Read behavior results.
-session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
+session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
     db_path, nwb_dir, experimenters=None,
     exclude_cols=['exclude'],
     pharma_inactivation_type = ['learning'],
@@ -1098,25 +1097,25 @@ session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
     mouse_id = mice_muscimol,
     )
 
-# table_muscimol_learning = make_behavior_table(nwb_list, session_list, db_path, cut_session=True, stop_flag_yaml=io.stop_flags_yaml, trial_indices_yaml=io.trial_indices_yaml)
+# table_muscimol_learning = make_behavior_table(nwb_list, session_list, db_path, cut_session=True, stop_flag_yaml=paths.stop_flags_yaml, trial_indices_yaml=paths.trial_indices_yaml)
 # # Save the table to a CSV file
 # save_path = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_muscimol.csv'
-# save_path = io.adjust_path_to_host(save_path)
+# save_path = paths.adjust_path_to_host(save_path)
 # table_muscimol_learning.to_csv(save_path, index=False)
 
 # Load table.
 table_path = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_muscimol.csv'
-table_path = io.adjust_path_to_host(table_path)
+table_path = paths.adjust_path_to_host(table_path)
 table = pd.read_csv(table_path)
 
-fpS1_mice = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+fpS1_mice = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude'],
                                     pharmacology = 'yes',
                                     pharma_inactivation_type = 'learning',
                                     pharma_area = 'fpS1',
                                     )
 
-wS1_mice = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+wS1_mice = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude'],
                                     pharmacology = 'yes',
                                     pharma_inactivation_type = 'learning',
@@ -1199,7 +1198,7 @@ sns.despine(trim=True)
 
 # Save figure
 output_dir = fr'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 svg_file = f'muscimol_learning.svg'
 plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
 # Save data.
@@ -1261,7 +1260,7 @@ for day, label in zip(days_of_interest, day_labels):
     plt.text(xpos, 90, f'p={p_value:.3g}', ha='center', va='bottom', color='black', fontsize=10)
 
 # Save the results to CSV files
-output_dir = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
+output_dir = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
 plt.savefig(os.path.join(output_dir, 'muscimol_learning_day0_day1_day2.svg'), format='svg', dpi=300)
 day_data.to_csv(os.path.join(output_dir, 'muscimol_learning_day0_day1_day2_data.csv'), index=False)
 pd.DataFrame(stats).to_csv(os.path.join(output_dir, 'muscimol_learning_day0_day1_day2_stats.csv'), index=False)
@@ -1274,7 +1273,7 @@ pd.DataFrame(stats).to_csv(os.path.join(output_dir, 'muscimol_learning_day0_day1
 # Reaction time: per stim type across days (bar) + across day 0 trials (line)
 # ----------------------------------------------------------------------------
 
-table_file = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut.csv')
+table_file = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut.csv')
 table = pd.read_csv(table_file)
 
 table = table[table['lick_flag']==1]
@@ -1363,7 +1362,7 @@ for ax, (stim_col, outcome_col, trial_col, stim_label, days_plot, rpi, rmi) in z
 
 sns.despine()
 plt.tight_layout()
-output_dir = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
+output_dir = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
 plt.savefig(os.path.join(output_dir, 'reaction_time_per_stim_across_days.svg'), format='svg', dpi=300)
 
 # ── Line plot: mean RT across trials within day 0 ────────────────────────────
@@ -1418,20 +1417,20 @@ plt.savefig(os.path.join(output_dir, 'reaction_time_day0_per_stim_line.svg'), fo
 # ############################################################
 
 # Read behavior results.
-db_path = io.db_path
+db_path = paths.db_path
 # db_path = 'C://Users//aprenard//recherches//fast-learning//docs//sessions_muscimol_GF.xlsx'
-nwb_dir = io.nwb_dir
-stop_flag_yaml = io.stop_flags_yaml
-trial_indices_yaml = io.trial_indices_yaml
+nwb_dir = paths.nwb_dir
+stop_flag_yaml = paths.stop_flags_yaml
+trial_indices_yaml = paths.trial_indices_yaml
 
-mice_opto = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_opto = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols=['exclude', 'opto_exclude'],
                                     opto_inactivation_type = ['learning'],
                                     optogenetic = 'yes',
                                     )
 
 # Read behavior results.
-session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
+session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
     db_path, nwb_dir, experimenters=None,
     exclude_cols=['exclude', 'opto_exclude'],
     opto_inactivation_type = ['learning'],
@@ -1441,25 +1440,25 @@ session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
     mouse_id = mice_opto,
     )
 
-table_opto_learning = make_behavior_table(nwb_list, session_list, db_path, cut_session=True, stop_flag_yaml=io.stop_flags_yaml, trial_indices_yaml=io.trial_indices_yaml)
+table_opto_learning = make_behavior_table(nwb_list, session_list, db_path, cut_session=True, stop_flag_yaml=paths.stop_flags_yaml, trial_indices_yaml=paths.trial_indices_yaml)
 # Save the table to a CSV file
 save_path = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_opto_learning.csv'
-save_path = io.adjust_path_to_host(save_path)
+save_path = paths.adjust_path_to_host(save_path)
 table_opto_learning.to_csv(save_path, index=False)
 
 # Load table.
 table_path = r'//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_opto_learning.csv'
-table_path = io.adjust_path_to_host(table_path)
+table_path = paths.adjust_path_to_host(table_path)
 table = pd.read_csv(table_path)
 
-fpS1_mice = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+fpS1_mice = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude', 'opto_exclude'],
                                     optogenetic = 'yes',
                                     opto_inactivation_type = 'learning',
                                     opto_area = 'fpS1',
                                     )
 
-wS1_mice = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+wS1_mice = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols = ['exclude', 'opto_exclude'],
                                     optogenetic = 'yes',
                                     opto_inactivation_type = 'learning',
@@ -1551,7 +1550,7 @@ sns.despine(trim=True)
 
 # Save figure
 output_dir = fr'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 svg_file = f'opto_learning.svg'
 plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
 # Save data.
@@ -1617,7 +1616,7 @@ for day, label in zip(days_of_interest, day_labels):
     plt.text(xpos, 90, f'p={p_value:.3g}', ha='center', va='bottom', color='black', fontsize=10)
 
 # Save the results to CSV files
-output_dir = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
+output_dir = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/behavior')
 plt.savefig(os.path.join(output_dir, 'opto_learning_day0_day1.svg'), format='svg', dpi=300)
 day_data.to_csv(os.path.join(output_dir, 'opto_learning_day0_day1_data.csv'), index=False)
 pd.DataFrame(stats).to_csv(os.path.join(output_dir, 'opto_learning_day0_day1_stats.csv'), index=False)
@@ -1630,14 +1629,14 @@ pd.DataFrame(stats).to_csv(os.path.join(output_dir, 'opto_learning_day0_day1_sta
 # Load behavior results.
 # ----------------------
 
-db_path = io.db_path
+db_path = paths.db_path
 # db_path = 'C://Users//aprenard//recherches//fast-learning//docs//sessions_muscimol_GF.xlsx'
-nwb_dir = io.nwb_dir
-stop_flag_yaml = io.stop_flags_yaml
-trial_indices_yaml = io.trial_indices_yaml
+nwb_dir = paths.nwb_dir
+stop_flag_yaml = paths.stop_flags_yaml
+trial_indices_yaml = paths.trial_indices_yaml
 
 experimenters = ['AR', 'GF', 'MI']
-mice_imaging = io.select_mice_from_db(db_path, nwb_dir,
+mice_imaging = database.select_mice_from_db(db_path, nwb_dir,
                                     experimenters = experimenters,
                                     exclude_cols = ['exclude',  'two_p_exclude'],
                                     optogenetic = ['no', np.nan],
@@ -1645,8 +1644,8 @@ mice_imaging = io.select_mice_from_db(db_path, nwb_dir,
                                     two_p_imaging = 'yes'
                                     )
 # Load the table from the CSV file.
-# table_file = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut.csv')
-table_file = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
+# table_file = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut.csv')
+table_file = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table = pd.read_csv(table_file)
 
 # Fit learning curves and define learning trial.
@@ -1654,7 +1653,7 @@ table = compute_learning_curves(table)
 table = compute_learning_trial(table, n_consecutive_trials=10)
 
 # Save updated table.
-save_path = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
+save_path = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table.to_csv(save_path, index=False)
 
 # table = pd.read_csv(save_path)
@@ -1679,7 +1678,7 @@ table.to_csv(save_path, index=False)
 
 # Day 0 learning curves pdf
 pdf_path = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/day0_learning/behavior/learning_curves_day0.pdf'
-pdf_path = io.adjust_path_to_host(pdf_path)
+pdf_path = paths.adjust_path_to_host(pdf_path)
 session_list = table.session_id.unique()
 sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
@@ -1724,7 +1723,7 @@ plot_learning_curves_pdf(table, session_list, pdf_path)
 # Distribution of learning trials across mice (day 0).
 # ------------------------------------------------------
 
-output_dir = io.adjust_path_to_host(
+output_dir = paths.adjust_path_to_host(
     r'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/day0_learning/behavior'
 )
 
@@ -1844,7 +1843,7 @@ fig.savefig(
 
 # ── Mice used in the study ────────────────────────────────────────────────────
 
-mice_imaging = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_imaging = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols=['exclude', 'two_p_exclude'],
                                     optogenetic=['no', np.nan],
                                     pharmacology=['no', np.nan],
@@ -1854,7 +1853,7 @@ mice_imaging = sorted(mice_imaging)
 print(f"Two-photon imaging mice (n={len(mice_imaging)}):")
 print(mice_imaging)
 
-mice_muscimol = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_muscimol = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols=['exclude'],
                                     optogenetic=['no', np.nan],
                                     pharmacology=['yes'],
@@ -1867,7 +1866,7 @@ mice_muscimol = sorted(mice_muscimol)
 print(f"\nMuscimol inactivation mice (n={len(mice_muscimol)}):")
 print(mice_muscimol)
 
-mice_opto = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_opto = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols=['exclude', 'opto_exclude'],
                                     optogenetic=['yes'],
                                     pharmacology=['no', np.nan],
@@ -1877,7 +1876,7 @@ mice_opto = sorted(mice_opto)
 print(f"\nOpto inactivation mice (n={len(mice_opto)}):")
 print(mice_opto)
 
-mice_particle_test = io.select_mice_from_db(db_path, nwb_dir, experimenters=None,
+mice_particle_test = database.select_mice_from_db(db_path, nwb_dir, experimenters=None,
                                     exclude_cols=['exclude', 'two_p_exclude'],
                                     day=['whisker_on_1', 'whisker_off', 'whisker_on_2'],
                                     optogenetic=['no', np.nan],

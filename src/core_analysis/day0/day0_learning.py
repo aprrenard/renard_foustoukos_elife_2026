@@ -17,12 +17,11 @@ import xarray as xr
 
 # sys.path.append(r'H:/anthony/repos/NWB_analysis')
 sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 # from nwb_wrappers import nwb_reader_functions as nwb_read
-import src.utils.utils_imaging as imaging_utils 
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
-from src.utils.utils_behavior import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
+from fast_learning.behavior import *
 from statannotations.Annotator import Annotator
 from scipy.stats import mannwhitneyu
 from scipy.stats import wilcoxon
@@ -43,14 +42,14 @@ win_length = f'{int(np.round((win[1]-win[0]) * 1000))}'  # for file naming.
 # win = (int(win[0] * sampling_rate), int(win[1] * sampling_rate))
 days_str = ['-2', '-1', '0', '+1', '+2']
 days = [-2, -1, 0, 1, 2]
-substract_baseline = True
+subtract_baseline = True
 realigned_to_learning = False
 sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
-processed_folder = io.solve_common_paths('processed_data')  
+processed_folder = paths.processed_dir  
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',)
 
 
@@ -67,7 +66,7 @@ lmi_df = pd.read_csv(os.path.join(processed_folder, 'lmi_results.csv'))
 # learning_trials = {'GF305':138, 'GF306': 200, 'GF317': 96, 'GF323': 211, 'GF318': 208, 'GF313': 141}
 
 # Load behaviour table with learning trials.
-path = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
+path = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table = pd.read_csv(path)
 
 
@@ -77,11 +76,11 @@ table = pd.read_csv(path)
 dfs = []
 for mouse in mice:
     print(mouse)
-    processed_dir = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    processed_dir = paths.tensor_dir
     file_name = 'tensor_xarray_learning_data.nc'
-    xarray = utils_imaging.load_mouse_xarray(mouse, processed_dir, file_name, substracted=True)
-    xarray = utils_imaging.load_mouse_xarray(mouse, processed_dir, file_name, substracted=True)
-    rew_gp = io.get_mouse_reward_group_from_db(io.db_path, mouse, db)
+    xarray = utils_imaging.load_mouse_xarray(mouse, processed_dir, file_name, subtracted=True)
+    xarray = utils_imaging.load_mouse_xarray(mouse, processed_dir, file_name, subtracted=True)
+    rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
     
     # Select day 0. 
     xarray = xarray.sel(trial=xarray['day'] == 0)
@@ -137,7 +136,7 @@ dfs = pd.concat(dfs)
 # # Select specific group of cells.
 # # -------------------------------
 
-# roc_df = os.path.join(io.processed_dir, 'roc_stimvsbaseline_results.csv')
+# roc_df = os.path.join(paths.processed_dir, 'roc_stimvsbaseline_results.csv')
 # roc_df = pd.read_csv(roc_df)
 
 # # Create a dataframe with columns 'mouse_id' and 'roi' for ROIs significant at day 0 but not at day -2 or -1
@@ -268,7 +267,7 @@ def plot_gradual_learning(data, data_behav, reward_palette, stim_palette, realig
 
 # Load clustering results.
 clustering_df = "/mnt/lsens-analysis/Anthony_Renard/data_processed/clustering/cluster_id_day0_learning_nclust_3.csv"
-clustering_df = io.adjust_path_to_host(clustering_df)
+clustering_df = paths.adjust_path_to_host(clustering_df)
 clust_df = pd.read_csv(clustering_df)
 dfs = dfs.merge(clust_df[['mouse_id', 'roi', 'cluster_id']], on=['mouse_id', 'roi'], how='inner')
 
@@ -317,7 +316,7 @@ plot_gradual_learning(data, data_behav, reward_palette, stim_palette, realigned_
 
 # # First, add reward group info to correlation_df
 # correlation_df['reward_group'] = correlation_df['mouse_id'].map(
-#     lambda m: io.get_mouse_reward_group_from_db(io.db_path, m, db)
+#     lambda m: database.get_mouse_reward_group_from_db(paths.db_path, m, db)
 # )
 
 # for group in ['R+', 'R-']:
@@ -404,8 +403,8 @@ baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * samp
 days = [0]
 days_str = ['0']
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',
                                             experimenters=['AR', 'GF', 'MI'])
 
@@ -415,12 +414,12 @@ _, _, mice, db = io.select_sessions_from_db(io.db_path,
 
 psth = []
 for mouse_id in mice:
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
 
     file_name = 'tensor_xarray_learning_data.nc'
-    folder = os.path.join(io.processed_dir, 'mice')
-    xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, substracted=True)
-    xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, substracted=True)
+    folder = paths.tensor_dir
+    xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=True)
+    xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=True)
 
     # Select days.
     xarr = xarr.sel(trial=xarr['day'].isin(days))
@@ -517,7 +516,7 @@ sns.despine()
 
 # Save figure for all cells.
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/day0_learning/psth'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 svg_file = f'psth_day0_three_stim_on_{variance}.svg'
 plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
 
@@ -568,7 +567,7 @@ sns.despine()
 
 # Save figure for all cells.
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/day0_learning/psth'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 svg_file = f'psth_day0_three_stim_projectors_on_{variance}.svg'
 plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
 
@@ -604,8 +603,8 @@ days_str = ['0']
 early_trials = range(0, 20)
 late_trials = range(30, 100)  # Last trials of the session.
 variance = "mice"
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',
                                             experimenters=['AR', 'GF', 'MI'])
 
@@ -615,10 +614,10 @@ _, _, mice, db = io.select_sessions_from_db(io.db_path,
 
 psth = []
 for mouse_id in mice:
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
 
     file_name = 'tensor_xarray_learning_data.nc'
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = paths.tensor_dir
     xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name)
     xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name)
 
@@ -657,7 +656,7 @@ psth = pd.concat(psth)
 # Select specific group of cells.
 # -------------------------------
 
-# roc_df = os.path.join(io.processed_dir, 'roc_stimvsbaseline_results.csv')
+# roc_df = os.path.join(paths.processed_dir, 'roc_stimvsbaseline_results.csv')
 # roc_df = pd.read_csv(roc_df)
 
 # # Create a dataframe with columns 'mouse_id' and 'roi' for ROIs significant at day 0 but not at day -2 or -1
@@ -683,12 +682,12 @@ psth = pd.concat(psth)
 
 # Alternatively, select clusters of interest.
 clustering_df = "/mnt/lsens-analysis/Anthony_Renard/data_processed/clustering/cluster_id_day0_learning_nclust_3.csv"
-clustering_df = io.adjust_path_to_host(clustering_df)
+clustering_df = paths.adjust_path_to_host(clustering_df)
 clust_df = pd.read_csv(clustering_df)
 
 # Select LMI
 
-lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
 # Select significant LMI cells (positive and negative)
 lmi_sig = lmi_df.loc[(lmi_df['lmi_p'] <= 0.025) | (lmi_df['lmi_p'] >= 0.975), ['mouse_id', 'roi']]
 psth = psth.merge(lmi_sig, on=['mouse_id', 'roi'], how='inner')
@@ -787,7 +786,7 @@ def plot_psth_early_vs_late(data, early_trials, late_trials, reward_palette, out
     sns.despine()
 
     # Save figure for all cells.
-    output_dir = io.adjust_path_to_host(output_dir)
+    output_dir = paths.adjust_path_to_host(output_dir)
     if cluster_id is not None:
         cluster_str = f'_cluster{cluster_id}'
     else:
@@ -857,7 +856,7 @@ sns.despine()
 
 # Save figure for all cells.
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/day0_learning/psth/early_vs_late/'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 svg_file = f'psth_day0_earlyvslate_projectors_on_{variance}_{early_trials}_{late_trials}.svg'
 plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
 
@@ -871,7 +870,7 @@ def plot_and_save_barplot_early_vs_late(data_bin, data_bin_proj, variance, early
     Also computes and saves Wilcoxon stats and exports data to CSV.
     Generates two figures: one for all cells, one for projectors.
     """
-    output_dir = io.adjust_path_to_host(output_dir)
+    output_dir = paths.adjust_path_to_host(output_dir)
     if cluster_id is not None:
         cluster_str = f'_cluster{cluster_id}'
         cluster_title = f" (cluster {cluster_id})"
@@ -981,8 +980,8 @@ win_psth = (-0.5, 4)
 win_bin = (0, 0.180)
 days = [0]
 days_str = ['0']
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',
                                             experimenters=['AR', 'GF', 'MI'])
 
@@ -992,10 +991,10 @@ _, _, mice, db = io.select_sessions_from_db(io.db_path,
 
 psth = []
 for mouse_id in mice:
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
 
     file_name = 'tensor_xarray_learning_data.nc'
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = paths.tensor_dir
     xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name)
     xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name)
 
@@ -1112,7 +1111,7 @@ sns.despine()
 
 # Save figure for all cells.
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/day0_learning/psth/hit_vs_miss/'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 svg_file = f'psth_day0_hitvsmiss_on_{variance}.svg'
 plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
 
@@ -1160,7 +1159,7 @@ sns.despine()
 
 # Save figure for projector neurons.
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/day0_learning/psth/hit_vs_miss/'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 svg_file = f'psth_day0_hitvsmiss_projectors_on_{variance}.svg'
 plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
 
@@ -1228,7 +1227,7 @@ for stim in ['whisker', 'no_stim']:
 
     # Save figure for all cells and projectors.
     output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/day0_learning/psth/hit_vs_miss/'
-    output_dir = io.adjust_path_to_host(output_dir)
+    output_dir = paths.adjust_path_to_host(output_dir)
     svg_file = f'barplot_day0_hitvsmiss_{stim}_on_{variance}_all_wS2_wM1.svg'
     plt.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)
     plt.close(fig)
@@ -1297,20 +1296,20 @@ win_length = f'{int(np.round((win[1]-win[0]) * 1000))}'  # for file naming.
 baseline_win = (-1, 0)
 baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * sampling_rate))
 days_str = ['-2', '-1', '0', '+1', '+2']
-substract_baseline = True
+subtract_baseline = True
 n_first = 15
 n_last = 15
 
 sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
-processed_folder = io.solve_common_paths('processed_data')  
+processed_folder = paths.processed_dir  
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',)
 
 # Load day 0 LMI.
-lmi_df = os.path.join(io.processed_dir, f'lmi_day0_results.csv')
+lmi_df = os.path.join(paths.processed_dir, f'lmi_day0_results.csv')
 lmi_df = pd.read_csv(lmi_df)
 selected_cells = lmi_df.loc[(lmi_df['lmi_p'] <= 0.025) | (lmi_df['lmi_p'] >= 0.975)]
 
@@ -1319,14 +1318,14 @@ for mouse_id in mice:
     # Disregard these mice as the number of trials is too low.
     # if mouse_id in ['GF307', 'GF310', 'GF333', 'AR144', 'AR135']:
     #     continue
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
 
     file_name = 'tensor_xarray_learning_data.nc'
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = paths.tensor_dir
     xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name)
-    xarr = utils_imaging.substract_baseline(xarr, 2, baseline_win)
+    xarr = utils_imaging.subtract_baseline(xarr, 2, baseline_win)
     xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name)
-    xarr = utils_imaging.substract_baseline(xarr, 2, baseline_win)
+    xarr = utils_imaging.subtract_baseline(xarr, 2, baseline_win)
     
     
     # Keep days of interest.
@@ -1349,7 +1348,7 @@ psth = pd.concat(psth)
 # day 0.
 
 # Compute and plot proportion across mice for both reward groups
-lmi_df['reward_group'] = lmi_df['mouse_id'].map(lambda m: io.get_mouse_reward_group_from_db(io.db_path, m, db))
+lmi_df['reward_group'] = lmi_df['mouse_id'].map(lambda m: database.get_mouse_reward_group_from_db(paths.db_path, m, db))
 mouse_props = []
 for mouse, group in lmi_df.groupby('mouse_id'):
     reward_group = group['reward_group'].iloc[0]
@@ -1393,7 +1392,7 @@ plt.show()
 # Performance at whisker trial n-1 vs n+1 depending on performance at trial n.
 
 # Load behavior table for all imaging mice, day 0
-behavior_path = io.adjust_path_to_host(
+behavior_path = paths.adjust_path_to_host(
     '/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
 )
 behavior_df = pd.read_csv(behavior_path)
@@ -1443,7 +1442,7 @@ axes[1].set_xticklabels(['Miss', 'Hit'])
 
 
 # Load behavior table for all imaging mice, day 0
-behavior_path = io.adjust_path_to_host(
+behavior_path = paths.adjust_path_to_host(
     '//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_pretraining_cut.csv'
 )
 behavior_df = pd.read_csv(behavior_path)

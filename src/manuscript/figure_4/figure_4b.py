@@ -21,12 +21,10 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import imaging
+from fast_learning import paths
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -43,8 +41,8 @@ cut_n_trials = 100
 EXAMPLE_MOUSE_RPLUS = None   # e.g. 'GF314'
 EXAMPLE_MOUSE_RMINUS = None  # e.g. 'AR127'
 
-RESULTS_DIR = os.path.join(io.processed_dir, 'decoding')
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_4', 'output')
+RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 
 
 # ============================================================================
@@ -78,15 +76,15 @@ print(f"Example mice: R+ = {EXAMPLE_MOUSE_RPLUS}, R- = {EXAMPLE_MOUSE_RMINUS}")
 # Load behaviour and Day-0 learning data for example mice
 # ============================================================================
 
-bh_path = os.path.join(io.processed_dir, 'behavior',
+bh_path = os.path.join(paths.processed_dir, 'behavior',
                         'behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table = pd.read_csv(bh_path)
 bh_df = table.loc[(table['day'] == 0) & (table['whisker_stim'] == 1)]
 
-folder = io.tensor_dir
+folder = paths.tensor_dir
 xarrays_learning = {}
 for mouse in example_mice:
-    xarr = utils_imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')
+    xarr = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')
     xarr = xarr.sel(trial=xarr['day'].isin([0]))
     xarr = xarr.sel(trial=xarr['whisker_stim'] == 1)
     xarr = xarr.sel(time=slice(win[0], win[1])).mean(dim='time')

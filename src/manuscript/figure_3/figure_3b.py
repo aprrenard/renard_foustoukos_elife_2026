@@ -12,10 +12,8 @@ import numpy as np
 import pandas as pd
 from matplotlib.gridspec import GridSpec
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging
+from fast_learning import paths
+from fast_learning import imaging
 
 
 # #############################################################################
@@ -29,14 +27,14 @@ baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * samp
 days = [-2, -1, 0, 1, 2]
 days_str = ['Day -2', 'Day -1', 'Day 0', 'Day +1', 'Day +2']
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
 
 
 # #############################################################################
 # Load LMI data.
 # #############################################################################
 
-lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
 
 
 # #############################################################################
@@ -60,9 +58,9 @@ print(f"Found {len(mouse_lmi)} cells with LMI data for {session_mouse_id}")
 
 # Load activity data for this mouse
 file_name = 'tensor_xarray_mapping_data.nc'
-folder = io.tensor_dir
-xarr = utils_imaging.load_mouse_xarray(session_mouse_id, folder, file_name)
-xarr = utils_imaging.substract_baseline(xarr, 2, baseline_win)
+folder = paths.tensor_dir
+xarr = imaging.load_mouse_xarray(session_mouse_id, folder, file_name)
+xarr = imaging.subtract_baseline(xarr, 2, baseline_win)
 
 xarr = xarr.sel(trial=xarr['day'].isin(days))
 xarr = xarr.sel(time=slice(win_sec[0], win_sec[1]))

@@ -9,11 +9,9 @@ from itertools import combinations
 from scipy.stats import pearsonr, wilcoxon, mannwhitneyu
 from multiprocessing import Pool
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
 
 
 # #############################################################################
@@ -55,15 +53,15 @@ ANALYSIS_MODE = 'analyze'  # Options: 'compute' or 'analyze'
 DATA_TYPE = 'mapping'  # Options: 'mapping' or 'learning'
 
 # Select sessions from database
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',
                                             experimenters=['AR', 'GF', 'MI'])
 
 # Separate mice by reward group
 mice_by_group = {}
 for mouse_id in mice:
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
     if reward_group not in mice_by_group:
         mice_by_group[reward_group] = []
     mice_by_group[reward_group].append(mouse_id)
@@ -94,12 +92,12 @@ def process_mouse(mouse_id):
     mouse_results = []
 
     # Get reward group for this mouse
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
 
     # Load xarray data for this mouse
     file_name = f'tensor_xarray_{DATA_TYPE}_data.nc'
-    folder = os.path.join(io.processed_dir, 'mice')
-    xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, substracted=False)
+    folder = paths.tensor_dir
+    xarr = imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=False)
     xarr.name = 'dff'
 
     # Filter to only include pre and post days
@@ -229,7 +227,7 @@ if __name__ == '__main__':
 
         # Set up output directory
         output_dir = f'/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/pairwise_correlations/{reward_group}/{DATA_TYPE}'
-        output_dir = io.adjust_path_to_host(output_dir)
+        output_dir = paths.adjust_path_to_host(output_dir)
         os.makedirs(output_dir, exist_ok=True)
 
         # Check if we should compute or load existing data

@@ -18,7 +18,7 @@ Execution modes:
 
 Intermediate data (participation rates, merged day-0 dataset) are saved to
 data_processed/reactivation/.
-Figures and data/stats CSVs are saved to io.manuscript_output_dir/supp_4/output/.
+Figures and data/stats CSVs are saved to paths.manuscript_output_dir/supp_4/output/.
 
 NOTE (revision): per reviewer comment (3), both panels' Pearson correlations
 (raw and partial) pool cells across mice as independent observations. A
@@ -41,10 +41,9 @@ from scipy.signal import find_peaks, savgol_filter
 from scipy.stats import pearsonr, linregress
 from joblib import Parallel, delayed
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths, database
+from fast_learning import imaging
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -70,13 +69,13 @@ SAVGOL_ORDER = 2
 
 N_JOBS = 10
 
-RESULTS_DIR = os.path.join(io.processed_dir, 'reactivation')
+RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 REACTIVATION_RESULTS_FILE = os.path.join(RESULTS_DIR, 'reactivation_results_p99.pkl')
 PARTICIPATION_CSV = os.path.join(RESULTS_DIR, 'cell_participation_rates_per_day.csv')
-LMI_RESULTS_CSV = os.path.join(io.processed_dir, 'lmi_results.csv')
+LMI_RESULTS_CSV = os.path.join(paths.processed_dir, 'lmi_results.csv')
 LMI_DATA_CSV = os.path.join(RESULTS_DIR, 'supp4ab_lmi_data_day0.csv')
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_4', 'output')
-FOLDER = io.tensor_dir
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_4', 'output')
+FOLDER = paths.tensor_dir
 
 # Execution mode ('compute' or 'plot'); FAST_LEARNING_MODE overrides the default.
 MODE = os.environ.get('FAST_LEARNING_MODE', 'plot')
@@ -86,14 +85,14 @@ MODE = os.environ.get('FAST_LEARNING_MODE', 'plot')
 # Mouse loading
 # ============================================================================
 
-_, _, _all_mice, _db = io.select_sessions_from_db(
-    io.db_path, io.nwb_dir, two_p_imaging='yes'
+_, _, _all_mice, _db = database.select_sessions_from_db(
+    paths.db_path, paths.nwb_dir, two_p_imaging='yes'
 )
 
 r_plus_mice, r_minus_mice = [], []
 for _mouse in _all_mice:
     try:
-        _rg = io.get_mouse_reward_group_from_db(io.db_path, _mouse, db=_db)
+        _rg = database.get_mouse_reward_group_from_db(paths.db_path, _mouse, db=_db)
         if _rg == 'R+':
             r_plus_mice.append(_mouse)
         elif _rg == 'R-':
@@ -120,8 +119,8 @@ def _extract_event_responses(mouse, day, preloaded_events):
     or None if insufficient data (<10 no-stim trials or no valid events).
     """
     # Baseline-subtracted dF/F, as in figure_4i_j and supp_4c.
-    xarr = utils_imaging.load_mouse_xarray(
-        mouse, FOLDER, 'tensor_xarray_learning_data.nc', substracted=True
+    xarr = imaging.load_mouse_xarray(
+        mouse, FOLDER, 'tensor_xarray_learning_data.nc', subtracted=True
     )
     xarr_day = xarr.sel(trial=xarr['day'] == day)
     nostim = xarr_day.sel(trial=xarr_day['no_stim'] == 1)
@@ -247,8 +246,8 @@ def _compute_transient_freq_per_cell(mouse_id, day=0):
     Returns DataFrame: mouse_id, roi, transient_freq.
     """
     try:
-        xarr = utils_imaging.load_mouse_xarray(
-            mouse_id, FOLDER, 'tensor_xarray_learning_data.nc', substracted=False
+        xarr = imaging.load_mouse_xarray(
+            mouse_id, FOLDER, 'tensor_xarray_learning_data.nc', subtracted=False
         )
     except Exception as e:
         print(f"  Warning: Could not load data for {mouse_id}: {e}")

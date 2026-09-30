@@ -28,9 +28,9 @@ import seaborn as sns
 from scipy.stats import pearsonr, linregress
 
 sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths
+from fast_learning import imaging
+from fast_learning.plotting import reward_palette
 from src.manuscript.preprocessing.reactivation_preprocessing import (
     create_whisker_template, r_plus_mice, r_minus_mice,
 )
@@ -41,9 +41,9 @@ from src.manuscript.preprocessing.reactivation_preprocessing import (
 # ============================================================================
 
 DAYS_TO_CHECK = [-2, -1, 0, 1, 2]
-LMI_RESULTS_CSV = os.path.join(io.processed_dir, 'lmi_results.csv')
-FOLDER = os.path.join(io.solve_common_paths('processed_data'), 'mice')
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_4', 'diagnostics')
+LMI_RESULTS_CSV = os.path.join(paths.processed_dir, 'lmi_results.csv')
+FOLDER = paths.tensor_dir
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'diagnostics')
 
 
 def _significance_stars(p):
@@ -76,8 +76,8 @@ def collect_template_lmi_data(days, lmi_df):
     rows = []
     for mouse in r_plus_mice + r_minus_mice:
         try:
-            xarr = utils_imaging.load_mouse_xarray(
-                mouse, FOLDER, 'tensor_xarray_mapping_data.nc', substracted=True)
+            xarr = imaging.load_mouse_xarray(
+                mouse, FOLDER, 'tensor_xarray_mapping_data.nc', subtracted=True)
         except Exception as e:
             print(f"  Skipping {mouse}: could not load mapping xarray ({e})")
             continue

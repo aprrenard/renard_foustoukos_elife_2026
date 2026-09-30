@@ -26,7 +26,7 @@ Execution modes and output layout mirror supp_4c.py:
     MODE = 'plot'    : load previously saved CSV and plot only
 
 Figures and CSVs are saved to
-    io.manuscript_output_dir/revisions/supp_4c_lmm/output/.
+    paths.manuscript_output_dir/revisions/supp_4c_lmm/output/.
 """
 
 import os
@@ -39,7 +39,7 @@ import seaborn as sns
 from scipy.stats import linregress, wilcoxon
 
 sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
+from fast_learning import paths
 from src.manuscript.supp_4.supp_4c import (
     DAYS,
     _compute_binary_participation,
@@ -54,7 +54,7 @@ from src.manuscript.supp_4.supp_4c import (
 # (expensive, N_SHIFTS x mice x days) circular-shift control.
 MODE = 'plot'
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'revisions', 'supp_4c_lmm', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'supp_4c_lmm', 'output')
 
 
 # ============================================================================

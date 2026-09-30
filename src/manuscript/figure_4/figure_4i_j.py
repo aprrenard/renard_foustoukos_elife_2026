@@ -24,7 +24,7 @@ Execution modes:
     MODE = 'plot'    : load previously saved CSVs and plot only
 
 Processed data files are saved/loaded from data_processed/reactivation/.
-Figures and CSVs are saved to io.manuscript_output_dir/figure_4/output/.
+Figures and CSVs are saved to paths.manuscript_output_dir/figure_4/output/.
 """
 
 import os
@@ -38,9 +38,9 @@ from scipy.stats import pearsonr, linregress, kruskal
 from joblib import Parallel, delayed
 
 sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths, database
+from fast_learning import imaging
+from fast_learning.plotting import reward_palette
 from src.manuscript.preprocessing.reactivation_preprocessing import select_trials_by_type
 
 
@@ -66,7 +66,7 @@ N_JOBS = 35
 # are only valid for the exact trial selection that produced them.
 NO_LICK_ONLY = False
 
-RESULTS_DIR = os.path.join(io.processed_dir, 'reactivation')
+RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 NOLICK_RESULTS_DIR = os.path.join(RESULTS_DIR, 'nolick')
 
 if NO_LICK_ONLY:
@@ -76,9 +76,9 @@ else:
     TIME_WINDOW = None
     REACTIVATION_RESULTS_FILE = os.path.join(RESULTS_DIR, 'reactivation_results_p99.pkl')
 
-LMI_RESULTS_CSV = os.path.join(io.processed_dir, 'lmi_results.csv')
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_4', 'output')
-FOLDER = io.tensor_dir
+LMI_RESULTS_CSV = os.path.join(paths.processed_dir, 'lmi_results.csv')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
+FOLDER = paths.tensor_dir
 
 # Participation-threshold robustness check: main value (10%) plus the two
 # additional values requested for the revision (20%, 50%).
@@ -116,14 +116,14 @@ MODE = os.environ.get('FAST_LEARNING_MODE', 'compute')
 # Mouse loading
 # ============================================================================
 
-_, _, _all_mice, _db = io.select_sessions_from_db(
-    io.db_path, io.nwb_dir, two_p_imaging='yes'
+_, _, _all_mice, _db = database.select_sessions_from_db(
+    paths.db_path, paths.nwb_dir, two_p_imaging='yes'
 )
 
 r_plus_mice, r_minus_mice = [], []
 for _mouse in _all_mice:
     try:
-        _rg = io.get_mouse_reward_group_from_db(io.db_path, _mouse, db=_db)
+        _rg = database.get_mouse_reward_group_from_db(paths.db_path, _mouse, db=_db)
         if _rg == 'R+':
             r_plus_mice.append(_mouse)
         elif _rg == 'R-':
@@ -162,8 +162,8 @@ def _extract_event_responses(mouse, day, preloaded_events,
     preloaded_events (reactivation_preprocessing_nolick.py), since event_idx
     is an index into that selection's concatenated trial/time axes.
     """
-    xarr = utils_imaging.load_mouse_xarray(
-        mouse, FOLDER, 'tensor_xarray_learning_data.nc', substracted=True)
+    xarr = imaging.load_mouse_xarray(
+        mouse, FOLDER, 'tensor_xarray_learning_data.nc', subtracted=True)
     xarr_day = xarr.sel(trial=xarr['day'] == day)
     nostim, _ = select_trials_by_type(
         xarr_day, no_lick_only=NO_LICK_ONLY, time_window=TIME_WINDOW)

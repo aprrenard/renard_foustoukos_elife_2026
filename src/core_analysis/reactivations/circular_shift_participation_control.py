@@ -25,11 +25,10 @@ from scipy.stats import pearsonr, ttest_rel
 from joblib import Parallel, delayed
 import warnings
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
 sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
 from src.core_analysis.reactivations.reactivation import create_whisker_template
 
 
@@ -65,7 +64,7 @@ percentile_to_use = 99
 mode = 'compute'
 
 # Paths
-save_dir = os.path.join(io.processed_dir, 'reactivation')
+save_dir = os.path.join(paths.processed_dir, 'reactivation')
 _p_str = (str(int(percentile_to_use))
           if percentile_to_use == int(percentile_to_use)
           else str(int(percentile_to_use * 10)))
@@ -83,13 +82,13 @@ SIGNIFICANT_PARTICIPATION_CSV  = os.path.join(
 os.makedirs(save_dir, exist_ok=True)
 
 # Load database
-_, _, all_mice, db = io.select_sessions_from_db(
-    io.db_path, io.nwb_dir, two_p_imaging='yes')
+_, _, all_mice, db = database.select_sessions_from_db(
+    paths.db_path, paths.nwb_dir, two_p_imaging='yes')
 
 r_plus_mice, r_minus_mice = [], []
 for mouse in all_mice:
     try:
-        rg = io.get_mouse_reward_group_from_db(io.db_path, mouse, db=db)
+        rg = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db=db)
         if rg == 'R+':
             r_plus_mice.append(mouse)
         elif rg == 'R-':
@@ -183,9 +182,9 @@ def compute_participation_with_shifts(mouse, day, n_shifts, preloaded_events,
         # Load neural data
         template, _ = create_whisker_template(mouse, day, threshold_dff,
                                               verbose=False)
-        folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
-        xr = utils_imaging.load_mouse_xarray(
-            mouse, folder, 'tensor_xarray_learning_data.nc', substracted=True)
+        folder = paths.tensor_dir
+        xr = imaging.load_mouse_xarray(
+            mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=True)
         xr_day   = xr.sel(trial=xr['day'] == day)
         nostim   = xr_day.sel(trial=xr_day['no_stim'] == 1)
 
@@ -543,7 +542,7 @@ print(f"\nDay-0 significant cells: {len(sig_cells)} / {len(day0_df)} "
       f"({100*len(sig_cells)/len(day0_df):.1f}%)")
 
 # --- Load LMI data ---
-lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
 if 'reward_group' not in lmi_df.columns:
     mice_rg = db[['mouse_id', 'reward_group']].drop_duplicates()
     lmi_df['reward_group'] = lmi_df['mouse_id'].map(

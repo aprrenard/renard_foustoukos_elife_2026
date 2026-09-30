@@ -21,8 +21,8 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths
+from fast_learning.plotting import reward_palette
 from src.manuscript.figure_3.figure_3l_n import load_and_process_data
 
 
@@ -33,7 +33,7 @@ from src.manuscript.figure_3.figure_3l_n import load_and_process_data
 PERCENTILES  = np.arange(0, 91, 5)   # % of most-modulated cells to remove
 N_SPLITS     = 10
 SEED         = 42
-OUTPUT_DIR   = os.path.join(io.manuscript_output_dir, 'supp_2', 'output')
+OUTPUT_DIR   = os.path.join(paths.manuscript_output_dir, 'supp_2', 'output')
 
 
 # ============================================================================
@@ -42,7 +42,7 @@ OUTPUT_DIR   = os.path.join(io.manuscript_output_dir, 'supp_2', 'output')
 
 vectors_rew, vectors_nonrew, mice_rew, mice_nonrew = load_and_process_data()
 
-lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
 
 le = LabelEncoder()
 le.fit(['pre', 'post'])

@@ -16,13 +16,11 @@ import matplotlib.cm as cm
 import seaborn as sns
 from matplotlib.backends.backend_pdf import PdfPages
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
-from src.utils.utils_behavior import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
+from fast_learning.behavior import *
 
 
 # =============================================================================
@@ -40,7 +38,7 @@ SAMPLING_RATE = 30
 
 # Output directory
 OUTPUT_DIR = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/lmi_characterisation'
-OUTPUT_DIR = io.adjust_path_to_host(OUTPUT_DIR)
+OUTPUT_DIR = paths.adjust_path_to_host(OUTPUT_DIR)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
@@ -51,16 +49,16 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 print("Loading LMI results and session database...")
 
 # Load session database
-_, _, all_mice, db = io.select_sessions_from_db(
-    io.db_path,
-    io.nwb_dir,
+_, _, all_mice, db = database.select_sessions_from_db(
+    paths.db_path,
+    paths.nwb_dir,
     two_p_imaging='yes',
     experimenters=['AR', 'GF', 'MI']
 )
 mice_count = db[['mouse_id', 'reward_group']].drop_duplicates()
 
 # Load LMI results
-lmi_df_path = os.path.join(io.processed_dir, 'lmi_results.csv')
+lmi_df_path = os.path.join(paths.processed_dir, 'lmi_results.csv')
 lmi_df = pd.read_csv(lmi_df_path)
 
 # Add reward group to LMI dataframe
@@ -142,7 +140,7 @@ def compute_cell_psth_summary(cell_list, lmi_group, reward_group):
     print(f"\n  Computing PSTH summary for {reward_group} {lmi_group} cells (n={len(cell_list)})...")
 
     psth_data = {}
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = paths.tensor_dir
 
     for cell_key in cell_list:
         meta = cell_metadata[cell_key]
@@ -154,7 +152,7 @@ def compute_cell_psth_summary(cell_list, lmi_group, reward_group):
         # Load mapping data for each day
         try:
             file_name_mapping = 'tensor_xarray_mapping_data.nc'
-            xarr_mapping = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name_mapping, substracted=True)
+            xarr_mapping = imaging.load_mouse_xarray(mouse_id, folder, file_name_mapping, subtracted=True)
             xarr_mapping = xarr_mapping.sel(cell=xarr_mapping['roi'] == roi)
             xarr_mapping.load()  # Load into memory and close file handle
 
@@ -175,7 +173,7 @@ def compute_cell_psth_summary(cell_list, lmi_group, reward_group):
         # Load learning data for trial types
         try:
             file_name_learning = 'tensor_xarray_learning_data.nc'
-            xarr_learning = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name_learning, substracted=True)
+            xarr_learning = imaging.load_mouse_xarray(mouse_id, folder, file_name_learning, subtracted=True)
             xarr_learning = xarr_learning.sel(cell=xarr_learning['roi'] == roi)
             xarr_learning = xarr_learning.sel(trial=xarr_learning['day'].isin(DAYS_LEARNING))
             xarr_learning.load()  # Load into memory and close file handle
@@ -239,7 +237,7 @@ def compute_cell_lick_aligned_psth(cell_list, lmi_group, reward_group):
     print(f"\n  Computing lick-aligned PSTH for {reward_group} {lmi_group} cells...")
 
     psth_data = {}
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = paths.tensor_dir
 
     for cell_key in cell_list:
         meta = cell_metadata[cell_key]
@@ -251,7 +249,7 @@ def compute_cell_lick_aligned_psth(cell_list, lmi_group, reward_group):
         # Load lick-aligned data for trial types with licks
         try:
             file_name_lick = 'lick_aligned_xarray.nc'
-            xarr_lick = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name_lick, substracted=False)
+            xarr_lick = imaging.load_mouse_xarray(mouse_id, folder, file_name_lick, subtracted=False)
             xarr_lick = xarr_lick.sel(cell=xarr_lick['roi'] == roi)
             xarr_lick = xarr_lick.sel(trial=xarr_lick['day'].isin(DAYS_LEARNING))
             xarr_lick.load()  # Load into memory and close file handle
@@ -312,7 +310,7 @@ def compute_cell_whisker_evolution(cell_list, lmi_group, reward_group):
     print(f"\n  Computing whisker evolution for {reward_group} {lmi_group} cells (n={len(cell_list)})...")
 
     evolution_data = {}
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = paths.tensor_dir
 
     # First, we need to find the first hit for each mouse
     mouse_first_hits = {}
@@ -326,7 +324,7 @@ def compute_cell_whisker_evolution(cell_list, lmi_group, reward_group):
         if mouse_id not in mouse_first_hits:
             try:
                 file_name = 'tensor_xarray_learning_data.nc'
-                xarr_temp = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, substracted=True)
+                xarr_temp = imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=True)
                 xarr_temp = xarr_temp.sel(trial=xarr_temp['day'] == 0)
                 whisker_trials_temp = xarr_temp.sel(trial=xarr_temp['whisker_stim'] == 1)
 
@@ -350,7 +348,7 @@ def compute_cell_whisker_evolution(cell_list, lmi_group, reward_group):
         try:
             # Load Day 0 learning data for this cell
             file_name = 'tensor_xarray_learning_data.nc'
-            xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, substracted=True)
+            xarr = imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=True)
             xarr = xarr.sel(cell=xarr['roi'] == roi)
             xarr = xarr.sel(trial=xarr['day'] == 0)
             xarr.load()  # Load into memory and close file handle

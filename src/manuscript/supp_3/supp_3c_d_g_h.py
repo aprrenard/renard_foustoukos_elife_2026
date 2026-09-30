@@ -20,11 +20,9 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import wilcoxon
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
+from fast_learning import imaging
+from fast_learning import paths, database
 
 
 # ============================================================================
@@ -49,25 +47,25 @@ COLORS = {
 }
 BAR_COLORS = {'R+': '#1b9e77', 'R-': '#c959affe'}
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
 
 
 # ============================================================================
 # Load imaging data
 # ============================================================================
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path, io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir,
                                              two_p_imaging='yes',
                                              experimenters=['AR', 'GF', 'MI'])
 
 avg_resp_list, psth_list = [], []
 
 for mouse_id in mice:
-    reward_group = io.get_mouse_reward_group_from_db(io.db_path, mouse_id)
-    folder = io.tensor_dir
-    xarr = utils_imaging.load_mouse_xarray(mouse_id, folder,
+    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
+    folder = paths.tensor_dir
+    xarr = imaging.load_mouse_xarray(mouse_id, folder,
                                             'tensor_xarray_mapping_data.nc')
-    xarr = utils_imaging.substract_baseline(xarr, 2, BASELINE_WIN)
+    xarr = imaging.subtract_baseline(xarr, 2, BASELINE_WIN)
 
     # Average response (amplitude window)
     avg = xarr.sel(trial=xarr['day'].isin(DAYS))
@@ -103,9 +101,9 @@ psth['learning_period']     = psth['day'].map(lambda x: 'pre' if x in [-2, -1] e
 # Aggregate per mouse, filter to projection cell types
 # ============================================================================
 
-avg_resp_filt = utils_imaging.filter_data_by_cell_count(
+avg_resp_filt = imaging.filter_data_by_cell_count(
     avg_resp[avg_resp['day'].isin(DAYS_SELECTED)], MIN_CELLS)
-psth_filt = utils_imaging.filter_data_by_cell_count(
+psth_filt = imaging.filter_data_by_cell_count(
     psth[psth['day'].isin(DAYS_SELECTED)], MIN_CELLS)
 
 data_avg_proj  = (avg_resp_filt[avg_resp_filt['cell_type'].isin(CELL_TYPES)]

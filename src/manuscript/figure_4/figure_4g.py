@@ -13,8 +13,7 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
+from fast_learning import paths
 
 
 # ============================================================================
@@ -26,8 +25,8 @@ DAYS = [-2, -1, 0, 1, 2]
 SAMPLING_RATE = 30
 TIME_WINDOW_PER_DAY = 180  # seconds; None = full trace
 
-RESULTS_FILE = os.path.join(io.processed_dir, 'reactivation', 'reactivation_results_p99.pkl')
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_4', 'output')
+RESULTS_FILE = os.path.join(paths.processed_dir, 'reactivation', 'reactivation_results_p99.pkl')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 
 
 # ============================================================================

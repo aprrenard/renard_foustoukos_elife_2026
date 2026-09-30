@@ -26,13 +26,11 @@ from scipy.stats import wilcoxon, ttest_1samp, pearsonr, linregress
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.preprocessing import StandardScaler
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
-from src.utils.utils_behavior import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
+from fast_learning.behavior import *
 
 
 # ============================================================================
@@ -47,7 +45,7 @@ baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * samp
 days_str = ['-2', '-1', '0', '+1', '+2']
 days = [-2, -1, 0, 1, 2]
 n_map_trials = 40
-substract_baseline = True
+subtract_baseline = True
 select_responsive_cells = False
 select_lmi = False
 projection_type = None  # 'wS2', 'wM1' or None
@@ -65,14 +63,14 @@ cut_n_trials = 100  # For plotting
 # LOAD DATA
 # ============================================================================
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path,
-                                            io.nwb_dir,
+_, _, mice, db = database.select_sessions_from_db(paths.db_path,
+                                            paths.nwb_dir,
                                             two_p_imaging='yes',)
 print(f"Found {len(mice)} mice: {mice}")
 
 # Load responsive cells if needed
 if select_responsive_cells:
-    test_df = os.path.join(io.processed_dir, f'response_test_results_win_180ms.csv')
+    test_df = os.path.join(paths.processed_dir, f'response_test_results_win_180ms.csv')
     test_df = pd.read_csv(test_df)
     test_df = test_df.loc[test_df['day'].isin(days)]
     # Select cells as responsive if they pass the test on at least one day
@@ -80,7 +78,7 @@ if select_responsive_cells:
     selected_cells = selected_cells.loc[selected_cells['pval_mapping'] <= 0.05/5]
 
 if select_lmi:
-    lmi_df = os.path.join(io.processed_dir, f'lmi_results.csv')
+    lmi_df = os.path.join(paths.processed_dir, f'lmi_results.csv')
     lmi_df = pd.read_csv(lmi_df)
     selected_cells = lmi_df.loc[(lmi_df['lmi_p'] <= 0.025) | (lmi_df['lmi_p'] >= 0.975)]
 
@@ -93,7 +91,7 @@ vectors_nonrew_day0_learning = []
 vectors_rew_day0_learning = []
 
 # Load behaviour table with learning trials
-path = io.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
+path = paths.adjust_path_to_host(r'/mnt/lsens-analysis/Anthony_Renard/data_processed/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table = pd.read_csv(path)
 # Select day 0 performance for whisker trials
 bh_df = table.loc[(table['day'] == 0) & (table['whisker_stim'] == 1)]
@@ -105,10 +103,10 @@ for mouse in mice:
     # ------------------
 
     print(f"Processing mouse: {mouse}")
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
+    folder = paths.tensor_dir
     file_name = 'tensor_xarray_mapping_data.nc'
-    xarray = utils_imaging.load_mouse_xarray(mouse, folder, file_name, substracted=True)
-    rew_gp = io.get_mouse_reward_group_from_db(io.db_path, mouse, db)
+    xarray = imaging.load_mouse_xarray(mouse, folder, file_name, subtracted=True)
+    rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
 
     # Select days
     xarray = xarray.sel(trial=xarray['day'].isin(days))
@@ -151,8 +149,8 @@ for mouse in mice:
     # -----------------------------
 
     file_name = 'tensor_xarray_learning_data.nc'
-    xarray = utils_imaging.load_mouse_xarray(mouse, folder, file_name)
-    rew_gp = io.get_mouse_reward_group_from_db(io.db_path, mouse, db)
+    xarray = imaging.load_mouse_xarray(mouse, folder, file_name)
+    rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
 
     # Select days
     xarray = xarray.sel(trial=xarray['day'].isin([0]))
@@ -522,7 +520,7 @@ print("SAVING CLASSIFIER WEIGHTS")
 print("="*80 + "\n")
 
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/decoding'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 os.makedirs(output_dir, exist_ok=True)
 
 # Combine all weights dictionaries
@@ -629,7 +627,7 @@ sns.despine()
 
 # Save figure
 output_dir_gradual = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/day0_learning/gradual_learning'
-output_dir_gradual = io.adjust_path_to_host(output_dir_gradual)
+output_dir_gradual = paths.adjust_path_to_host(output_dir_gradual)
 os.makedirs(output_dir_gradual, exist_ok=True)
 plt.savefig(os.path.join(output_dir_gradual, 'decoder_decision_value_day0_learning_with_alignment_to_learning.svg'), format='svg', dpi=300)
 print(f"Saved: decoder_decision_value_day0_learning_with_alignment_to_learning.svg")

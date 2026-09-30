@@ -5,9 +5,8 @@ import sys
 import numpy as np
 import pandas as pd
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging
+from fast_learning import paths, database
+from fast_learning import imaging
 
 
 # =============================================================================
@@ -24,14 +23,14 @@ baseline_win = (-1, 0)
 nshuffles = 1000
 
 # Get directories and files.
-db_path = io.solve_common_paths('db')
-nwb_path = io.solve_common_paths('nwb')
-processed_data_folder = io.solve_common_paths('processed_data')
+db_path = paths.db_path
+nwb_path = paths.nwb_dir
+processed_data_folder = paths.processed_dir
 result_file = os.path.join(processed_data_folder, 'lmi_results.csv')
 
 # Get mice list.
 days = ['-3', '-2', '-1', '0', '+1', '+2']
-_, _, mice_list, _ = io.select_sessions_from_db(db_path, nwb_path,
+_, _, mice_list, _ = database.select_sessions_from_db(db_path, nwb_path,
                                                 exclude_cols=['exclude', 'two_p_exclude'],
                                                 experimenters=['AR', 'GF', 'MI'],
                                                 day=days,
@@ -53,8 +52,8 @@ for mouse_id in mice_list:
     print(f'Processing {mouse_id}')
     # Load through load_mouse_xarray so artefact cells are excluded as in
     # every other analysis.
-    data_mapping = utils_imaging.load_mouse_xarray(
-        mouse_id, io.tensor_dir, 'tensor_xarray_mapping_data.nc', substracted=False)
+    data_mapping = imaging.load_mouse_xarray(
+        mouse_id, paths.tensor_dir, 'tensor_xarray_mapping_data.nc', subtracted=False)
     data_mapping = data_mapping - np.nanmean(data_mapping.sel(time=slice(*baseline_win)), axis=2, keepdims=True)
     
     data_pre = data_mapping.sel(trial=data_mapping.coords['day'].isin([-2, -1]))
@@ -62,7 +61,7 @@ for mouse_id in mice_list:
     data_post = data_mapping.sel(trial=data_mapping.coords['day'].isin([1, 2]))
     data_post = data_post.sel(time=slice(*response_win)).mean(dim='time')
 
-    lmi, lmi_p = utils_imaging.compute_roc(data_pre, data_post, nshuffles=nshuffles)
+    lmi, lmi_p = imaging.compute_roc(data_pre, data_post, nshuffles=nshuffles)
     df.append(pd.DataFrame({'mouse_id': mouse_id,
                             'roi': data_mapping.roi.values,
                             'cell_type': data_mapping.cell_type.values,

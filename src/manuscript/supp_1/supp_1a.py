@@ -14,23 +14,22 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import mannwhitneyu
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
 # Parameters
 # ============================================================================
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
 
 
 # ============================================================================
 # Load behaviour table
 # ============================================================================
 
-bh_path = os.path.join(io.processed_dir, 'behavior',
+bh_path = os.path.join(paths.processed_dir, 'behavior',
                        'behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table = pd.read_csv(bh_path)
 

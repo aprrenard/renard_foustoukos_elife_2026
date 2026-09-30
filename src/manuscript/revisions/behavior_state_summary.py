@@ -26,10 +26,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import mannwhitneyu
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_behavior import make_behavior_table
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths, database
+from fast_learning.behavior import make_behavior_table
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -38,7 +37,7 @@ from src.utils.utils_plot import reward_palette
 
 REWARD_UL_PER_TRIAL = 5
 DAYS = [-2, -1, 0, 1, 2]
-OUTPUT_DIR = os.path.join(io.results_dir, 'behavior', 'session_state_check')
+OUTPUT_DIR = os.path.join(paths.results_dir, 'behavior', 'session_state_check')
 
 
 def _significance_stars(p):
@@ -58,24 +57,24 @@ def _significance_stars(p):
 def load_behavior_table():
     """Fresh trial table for the imaging cohort (same selection pattern as
     behavior.py's mice_imaging block)."""
-    db_path = io.db_path
-    nwb_dir = io.nwb_dir
+    db_path = paths.db_path
+    nwb_dir = paths.nwb_dir
 
-    mice_imaging = io.select_mice_from_db(
+    mice_imaging = database.select_mice_from_db(
         db_path, nwb_dir, experimenters=None,
         exclude_cols=['exclude', 'two_p_exclude'],
         optogenetic=['no', np.nan], pharmacology=['no', np.nan],
         two_p_imaging='yes',
     )
-    session_list, nwb_list, mice_list, db = io.select_sessions_from_db(
+    session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
         db_path, nwb_dir, experimenters=None,
         exclude_cols=['exclude', 'two_p_exclude'],
         day=["-2", "-1", '0', '+1', '+2'], mouse_id=mice_imaging,
     )
     table = make_behavior_table(
         nwb_list, session_list, db_path, cut_session=True,
-        stop_flag_yaml=io.stop_flags_yaml,
-        trial_indices_yaml=io.trial_indices_yaml)
+        stop_flag_yaml=paths.stop_flags_yaml,
+        trial_indices_yaml=paths.trial_indices_yaml)
     return table
 
 

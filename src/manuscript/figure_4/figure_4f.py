@@ -21,8 +21,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import AutoLocator
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
+from fast_learning import paths
 
 
 # ============================================================================
@@ -36,8 +35,8 @@ TIME_WINDOW = 180  # seconds
 
 HEATMAP_CMAP = 'RdBu_r'
 
-RESULTS_DIR = os.path.join(io.processed_dir, 'reactivation')
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_4', 'output')
+RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 
 
 # ============================================================================
@@ -103,7 +102,7 @@ def panel_f_reactivation_heatmap(
     # Load per-cell metrics
     roi_ids_orig = selected_trials.coords['roi'].values
 
-    lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+    lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
     mouse_lmi = lmi_df[lmi_df['mouse_id'] == mouse].set_index('roi')
     lmi_orig = np.array([
         mouse_lmi.loc[r, 'lmi'] if r in mouse_lmi.index else np.nan

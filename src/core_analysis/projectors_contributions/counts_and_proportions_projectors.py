@@ -7,11 +7,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as imaging_utils
-import src.utils.utils_io as io
-from src.utils.utils_plot import *
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import *
 
 
 # #############################################################################
@@ -25,7 +23,7 @@ print("="*80 + "\n")
 
 # Output directory
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/projectors_contributions'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 os.makedirs(output_dir, exist_ok=True)
 
 cell_types = ['non_projector', 'wS2', 'wM1']
@@ -45,12 +43,12 @@ print("-"*80 + "\n")
 
 # Load LMI data
 print("Loading LMI data...")
-processed_folder = io.solve_common_paths('processed_data')
+processed_folder = paths.processed_dir
 lmi_df = pd.read_csv(os.path.join(processed_folder, 'lmi_results.csv'))
 
 # Add reward group information
 for mouse in lmi_df.mouse_id.unique():
-    lmi_df.loc[lmi_df.mouse_id==mouse, 'reward_group'] = io.get_mouse_reward_group_from_db(io.db_path, mouse)
+    lmi_df.loc[lmi_df.mouse_id==mouse, 'reward_group'] = database.get_mouse_reward_group_from_db(paths.db_path, mouse)
 
 print(f"LMI data: {len(lmi_df)} cells from {lmi_df['mouse_id'].nunique()} mice")
 
@@ -124,7 +122,7 @@ print("-"*80 + "\n")
 # Load classifier weights
 print("Loading classifier weights...")
 weights_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/decoding'
-weights_dir = io.adjust_path_to_host(weights_dir)
+weights_dir = paths.adjust_path_to_host(weights_dir)
 weights_df = pd.read_csv(os.path.join(weights_dir, 'classifier_weights.csv'))
 
 print(f"Weights data: {len(weights_df)} cells from {weights_df['mouse_id'].nunique()} mice")
@@ -134,9 +132,9 @@ print("Loading cell type information from xarray data...")
 cell_type_info = []
 for mouse_id in weights_df['mouse_id'].unique():
     file_name = 'tensor_xarray_mapping_data.nc'
-    folder = os.path.join(io.processed_dir, 'mice')
+    folder = paths.tensor_dir
     try:
-        data_xr = imaging_utils.load_mouse_xarray(mouse_id, folder, file_name)
+        data_xr = imaging.load_mouse_xarray(mouse_id, folder, file_name)
         rois = data_xr.coords['roi'].values
         cell_types_arr = data_xr.coords['cell_type'].values if 'cell_type' in data_xr.coords else [None] * len(rois)
 

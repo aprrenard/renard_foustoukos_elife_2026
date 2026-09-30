@@ -7,11 +7,9 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import ks_2samp
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as imaging_utils
-import src.utils.utils_io as io
-from src.utils.utils_plot import s2_m1_palette
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import s2_m1_palette
 
 
 # #############################################################################
@@ -25,7 +23,7 @@ print("="*80 + "\n")
 
 # Output directory
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/projectors_contributions'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 os.makedirs(output_dir, exist_ok=True)
 
 # Cell types and colors
@@ -53,12 +51,12 @@ def pvalue_to_stars(p):
 # =============================================================================
 
 print("Loading LMI data...")
-processed_folder = io.solve_common_paths('processed_data')
+processed_folder = paths.processed_dir
 lmi_df = pd.read_csv(os.path.join(processed_folder, 'lmi_results.csv'))
 
 # Add reward group
 for mouse in lmi_df.mouse_id.unique():
-    lmi_df.loc[lmi_df.mouse_id == mouse, 'reward_group'] = io.get_mouse_reward_group_from_db(io.db_path, mouse)
+    lmi_df.loc[lmi_df.mouse_id == mouse, 'reward_group'] = database.get_mouse_reward_group_from_db(paths.db_path, mouse)
 
 # Define cell type groups
 lmi_df['cell_type_group'] = lmi_df['cell_type'].replace({'na': 'non_projector'})
@@ -73,7 +71,7 @@ print(f"Cell types: {lmi_df['cell_type_group'].value_counts().to_dict()}")
 
 print("\nLoading classifier weights data...")
 weights_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/decoding'
-weights_dir = io.adjust_path_to_host(weights_dir)
+weights_dir = paths.adjust_path_to_host(weights_dir)
 weights_df = pd.read_csv(os.path.join(weights_dir, 'classifier_weights.csv'))
 
 print(f"Weights data: {len(weights_df)} cells from {weights_df['mouse_id'].nunique()} mice")
@@ -82,9 +80,9 @@ print(f"Weights data: {len(weights_df)} cells from {weights_df['mouse_id'].nuniq
 cell_type_info = []
 for mouse_id in weights_df['mouse_id'].unique():
     try:
-        data_xr = imaging_utils.load_mouse_xarray(
+        data_xr = imaging.load_mouse_xarray(
             mouse_id,
-            os.path.join(io.processed_dir, 'mice'),
+            paths.tensor_dir,
             'tensor_xarray_mapping_data.nc'
         )
         rois = data_xr.coords['roi'].values

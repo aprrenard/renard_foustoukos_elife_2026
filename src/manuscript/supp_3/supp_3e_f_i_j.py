@@ -20,9 +20,8 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import mannwhitneyu, ks_2samp
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths, database
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -31,21 +30,21 @@ from src.utils.utils_plot import reward_palette
 
 LMI_POS_THRESHOLD = 0.975
 LMI_NEG_THRESHOLD = 0.025
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
 
 
 # ============================================================================
 # Load LMI data and assign reward groups
 # ============================================================================
 
-lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
 
-_, _, mice, _ = io.select_sessions_from_db(io.db_path, io.nwb_dir,
+_, _, mice, _ = database.select_sessions_from_db(paths.db_path, paths.nwb_dir,
                                              two_p_imaging='yes')
 
 for mouse in lmi_df['mouse_id'].unique():
     lmi_df.loc[lmi_df['mouse_id'] == mouse, 'reward_group'] = \
-        io.get_mouse_reward_group_from_db(io.db_path, mouse)
+        database.get_mouse_reward_group_from_db(paths.db_path, mouse)
 
 lmi_df = lmi_df.loc[lmi_df['mouse_id'].isin(mice)]
 

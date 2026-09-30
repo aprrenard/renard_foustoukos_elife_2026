@@ -17,9 +17,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import AutoLocator
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
+from fast_learning import paths
 
 # ============================================================================
 # PARAMETERS
@@ -30,10 +28,10 @@ DAY = 0              # Which day to display
 SAMPLING_RATE = 30   # Hz
 TIME_WINDOW = 180    # seconds to show (3 minutes)
 
-RESULTS_DIR = os.path.join(io.results_dir, 'reactivation')
+RESULTS_DIR = os.path.join(paths.results_dir, 'reactivation')
 RESULTS_FILE = os.path.join(RESULTS_DIR, 'reactivation_results.pkl')
 
-OUTPUT_DIR = os.path.join(io.results_dir, 'reactivation', 'illustrations')
+OUTPUT_DIR = os.path.join(paths.results_dir, 'reactivation', 'illustrations')
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # Heatmap colormap
@@ -116,7 +114,7 @@ def plot_reactivation_heatmap(r_plus_results, r_minus_results,
     roi_ids_orig = selected_trials.coords['roi'].values  # (n_cells,)
 
     # LMI
-    lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+    lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
     mouse_lmi = lmi_df[lmi_df['mouse_id'] == mouse].set_index('roi')
     lmi_orig = np.array([
         mouse_lmi.loc[r, 'lmi'] if r in mouse_lmi.index else np.nan
@@ -124,7 +122,7 @@ def plot_reactivation_heatmap(r_plus_results, r_minus_results,
     ])
 
     # Participation rate for this day
-    part_csv = os.path.join(io.results_dir, 'reactivation_lmi',
+    part_csv = os.path.join(paths.results_dir, 'reactivation_lmi',
                             'cell_participation_rates_per_day.csv')
     part_df = pd.read_csv(part_csv)
     mouse_part = (part_df[(part_df['mouse_id'] == mouse) & (part_df['day'] == day)]
@@ -138,7 +136,7 @@ def plot_reactivation_heatmap(r_plus_results, r_minus_results,
     # 3d. Restrict to significantly-participating cells (optional)
     # ------------------------------------------------------------------
     if sig_only:
-        sig_csv = os.path.join(io.results_dir, 'reactivation',
+        sig_csv = os.path.join(paths.results_dir, 'reactivation',
                                'circular_shift_significant_participation.csv')
         sig_df  = pd.read_csv(sig_csv)
         sig_rois = set(sig_df[sig_df['mouse_id'] == mouse]['roi'].values)

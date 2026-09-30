@@ -18,12 +18,10 @@ from scipy.stats import wilcoxon, ttest_1samp, pearsonr, linregress
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import imaging
+from fast_learning import paths, database
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -39,17 +37,17 @@ n_map_trials = 40
 window_size = 10
 step_size = 1
 
-RESULTS_DIR = os.path.join(io.processed_dir, 'decoding')
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_4', 'output')
+RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 
 
 # ============================================================================
 # Load data
 # ============================================================================
 
-_, _, mice, db = io.select_sessions_from_db(io.db_path, io.nwb_dir, two_p_imaging='yes')
+_, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir, two_p_imaging='yes')
 
-bh_path = os.path.join(io.processed_dir, 'behavior',
+bh_path = os.path.join(paths.processed_dir, 'behavior',
                         'behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table = pd.read_csv(bh_path)
 bh_df = table.loc[(table['day'] == 0) & (table['whisker_stim'] == 1)]
@@ -62,12 +60,12 @@ vectors_rew_day0_learning = []
 vectors_nonrew_day0_learning = []
 
 for mouse in mice:
-    folder = io.tensor_dir
-    rew_gp = io.get_mouse_reward_group_from_db(io.db_path, mouse, db)
+    folder = paths.tensor_dir
+    rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
 
     # --- mapping data ---
-    xarray = utils_imaging.load_mouse_xarray(
-        mouse, folder, 'tensor_xarray_mapping_data.nc', substracted=True)
+    xarray = imaging.load_mouse_xarray(
+        mouse, folder, 'tensor_xarray_mapping_data.nc', subtracted=True)
     xarray = xarray.sel(trial=xarray['day'].isin(days))
 
     n_trials = xarray[0, :, 0].groupby('day').count(dim='trial').values
@@ -80,7 +78,7 @@ for mouse in mice:
     d = d.fillna(0)
 
     # --- Day 0 learning data ---
-    xarray_l = utils_imaging.load_mouse_xarray(
+    xarray_l = imaging.load_mouse_xarray(
         mouse, folder, 'tensor_xarray_learning_data.nc')
     xarray_l = xarray_l.sel(trial=xarray_l['day'].isin([0]))
     xarray_l = xarray_l.sel(trial=xarray_l['whisker_stim'] == 1)

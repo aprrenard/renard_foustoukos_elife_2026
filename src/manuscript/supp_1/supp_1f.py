@@ -15,9 +15,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import behavior_palette
+from fast_learning import paths
+from fast_learning.plotting import behavior_palette
 
 
 # ============================================================================
@@ -27,14 +26,14 @@ from src.utils.utils_plot import behavior_palette
 DAY = 0
 TIME_RESOLUTION = 5    # seconds between interpolation grid points
 MAX_WHISKER_TRIALS = 100
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
 
 
 # ============================================================================
 # Load data
 # ============================================================================
 
-bh_path = os.path.join(io.processed_dir, 'behavior',
+bh_path = os.path.join(paths.processed_dir, 'behavior',
                        'behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
 table = pd.read_csv(bh_path)
 df_day0 = table.loc[table['day'] == DAY].copy()

@@ -12,10 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-sys.path.append(r'/home/aprenard/repos/NWB_analysis')
-import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging
+from fast_learning import paths
+from fast_learning import imaging
 
 
 # #############################################################################
@@ -30,14 +28,14 @@ trials_range = (10, 16)  # (start, stop) indices into the day's trials, e.g. (10
 n_cells_to_plot = 20
 
 file_name = 'tensor_xarray_mapping_data.nc'
-folder = os.path.join(io.processed_dir, 'mice')
+folder = paths.tensor_dir
 
 
 # #############################################################################
 # Load data and compute SNR for each cell.
 # #############################################################################
 
-xarr = utils_imaging.load_mouse_xarray(mouse_id, folder, file_name, substracted=False)
+xarr = imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=False)
 
 # Select trials from target day
 xarr_day = xarr.sel(trial=xarr['day'] == day_for_trials)
@@ -144,7 +142,7 @@ plt.tight_layout()
 # #############################################################################
 
 output_dir = '/mnt/lsens-analysis/Anthony_Renard/analysis_output/fast-learning/illustrations'
-output_dir = io.adjust_path_to_host(output_dir)
+output_dir = paths.adjust_path_to_host(output_dir)
 
 svg_file = f'calcium_transient_traces_{mouse_id}.svg'
 fig.savefig(os.path.join(output_dir, svg_file), format='svg', dpi=300)

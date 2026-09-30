@@ -19,7 +19,7 @@ Execution modes:
     MODE = 'plot'    : load previously saved CSV and plot only
 
 Processed data files are saved/loaded from data_processed/reactivation/.
-Figures and CSVs are saved to io.manuscript_output_dir/supp_4/output/.
+Figures and CSVs are saved to paths.manuscript_output_dir/supp_4/output/.
 
 NOTE (revision): per reviewer comment (3), the per-group Kruskal-Wallis test
 treats the 5 repeated days per mouse as independent cross-sections. A
@@ -43,10 +43,9 @@ import seaborn as sns
 from scipy.stats import kruskal
 from joblib import Parallel, delayed
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-import src.utils.utils_imaging as utils_imaging
-from src.utils.utils_plot import reward_palette
+from fast_learning import paths
+from fast_learning import imaging
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -58,10 +57,10 @@ LMI_POSITIVE_THRESHOLD = 0.975
 LMI_NEGATIVE_THRESHOLD = 0.025
 N_JOBS = 35
 
-RESULTS_DIR = os.path.join(io.processed_dir, 'reactivation')
+RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 REACTIVATION_RESULTS_FILE = os.path.join(RESULTS_DIR, 'reactivation_results_p99.pkl')
 BINARY_PARTICIPATION_CSV = os.path.join(RESULTS_DIR, 'binary_participation_with_lmi.csv')
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'supp_4', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_4', 'output')
 
 # Execution mode
 #   'compute' : run circular-shift control, save CSV, then plot
@@ -141,10 +140,10 @@ def _compute_participation_with_shifts(mouse, day, n_shifts, preloaded_events):
     or None on failure.
     """
     try:
-        folder = io.tensor_dir
+        folder = paths.tensor_dir
         # Baseline-subtracted dF/F, as in figure_4i_j and supp_4a_b.
-        xr = utils_imaging.load_mouse_xarray(
-            mouse, folder, 'tensor_xarray_learning_data.nc', substracted=True)
+        xr = imaging.load_mouse_xarray(
+            mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=True)
         xr_day = xr.sel(trial=xr['day'] == day)
         nostim  = xr_day.sel(trial=xr_day['no_stim'] == 1)
 
@@ -255,7 +254,7 @@ def _compute_binary_participation():
     participation_df = pd.concat(dfs, ignore_index=True)
     participation_df['reward_group'] = participation_df['mouse_id'].map(reward_group_map)
 
-    lmi_df = pd.read_csv(os.path.join(io.processed_dir, 'lmi_results.csv'))
+    lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
     lmi_df['lmi_category'] = 'neutral'
     lmi_df.loc[lmi_df['lmi_p'] >= LMI_POSITIVE_THRESHOLD, 'lmi_category'] = 'positive'
     lmi_df.loc[lmi_df['lmi_p'] <= LMI_NEGATIVE_THRESHOLD, 'lmi_category'] = 'negative'

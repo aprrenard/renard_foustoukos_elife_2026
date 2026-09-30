@@ -7,8 +7,7 @@ import matplotlib.pyplot as plt
 
 # sys.path.append(r'H:/anthony/repos/NWB_analysis')
 # sys.path.append(r'C:/Users/aprenard/repos/fast-learning/src')
-sys.path.append(r'/home/aprenard/repos/fast-learning/src')
-import utils.utils_io as io
+from fast_learning import paths, database
 
 
 def set_merged_roi_to_non_cell(stat, iscell):
@@ -112,7 +111,7 @@ EXPERIMENTER_MAP = {
 
 def get_data_folder():
     data_folder = os.path.join(r'//sv-nas1.rcp.epfl.ch', 'Petersen-Lab', 'data')
-    data_folder = io.adjust_path_to_host(data_folder)
+    data_folder = paths.adjust_path_to_host(data_folder)
     return data_folder  
 
 
@@ -121,7 +120,7 @@ def get_experimenter_analysis_folder(initials):
     experimenter = EXPERIMENTER_MAP[initials]
     analysis_folder = os.path.join(r'//sv-nas1.rcp.epfl.ch', 'Petersen-Lab', 'analysis',
                                    experimenter, 'data')
-    analysis_folder = io.adjust_path_to_host(analysis_folder)
+    analysis_folder = paths.adjust_path_to_host(analysis_folder)
     return analysis_folder
 
 
@@ -131,8 +130,8 @@ def get_experimenter_analysis_folder(initials):
 experimenter = 'AS'
 
 # db_path = io.dir_path
-# nwb_dir = io.nwb_dir
-# _, _, mice_ids, _ = io.select_sessions_from_db(db_path, nwb_dir, experimenters=experimenter,
+# nwb_dir = paths.nwb_dir
+# _, _, mice_ids, _ = database.select_sessions_from_db(db_path, nwb_dir, experimenters=experimenter,
 #                             exclude_cols=['exclude', 'two_p_exclude'], two_p_imaging='yes')
 mice_ids = ['AS026',]
 session_ids = ['AS026_20250728_161930']
@@ -187,7 +186,7 @@ for suite2p_folder in suite2p_folders:
 # # mice_ids = ['AR127']
 # db_path = r"//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/mice_info/session_metadata.xlsx"
 # nwb_dir = r"//sv-nas1.rcp.epfl.ch/Petersen-Lab/analysis/Anthony_Renard/NWB"
-# session_list, _, mice_ids, _ = io.select_sessions_from_db(db_path, nwb_dir, experimenters=['GF','MI'],
+# session_list, _, mice_ids, _ = database.select_sessions_from_db(db_path, nwb_dir, experimenters=['GF','MI'],
 #                             exclude_cols=['exclude', 'two_p_exclude'], two_p_imaging='yes')
 
 # for session in session_list:

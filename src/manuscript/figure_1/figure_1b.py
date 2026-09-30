@@ -12,13 +12,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_io as io
-from src.utils.utils_plot import behavior_palette
-from src.utils.utils_behavior import plot_single_session
+from fast_learning import paths
+from fast_learning.plotting import behavior_palette
+from fast_learning.behavior import plot_single_session
 
 
-OUTPUT_DIR = os.path.join(io.manuscript_output_dir, 'figure_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_1', 'output')
 
 
 # ============================================================================
@@ -29,7 +28,7 @@ def generate_panel(
     mouse_ids=['GF305', 'AR180'],
     days=[-2, -1, 0, 1, 2],
     max_trials=180,
-    table_path=os.path.join(io.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
+    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
     save_path=OUTPUT_DIR,
     save_format='svg',
     dpi=300
@@ -51,7 +50,7 @@ def generate_panel(
     """
 
     # Load behavioral data
-    table_path = io.adjust_path_to_host(table_path)
+    table_path = paths.adjust_path_to_host(table_path)
     table = pd.read_csv(table_path)
 
     # Set plotting theme

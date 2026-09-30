@@ -30,7 +30,7 @@ template-matching or event detection:
 No windowing/binning: reactivation count is computed per individual trial,
 not aggregated into blocks.
 
-Outputs are saved to io.results_dir/reactivation_day0_dynamics/.
+Outputs are saved to paths.results_dir/reactivation_day0_dynamics/.
 """
 
 import os
@@ -43,10 +43,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import wilcoxon
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-import src.utils.utils_imaging as utils_imaging
-import src.utils.utils_io as io
-from src.utils.utils_plot import reward_palette
+from fast_learning import imaging
+from fast_learning import paths
+from fast_learning.plotting import reward_palette
 
 
 # ============================================================================
@@ -54,8 +53,8 @@ from src.utils.utils_plot import reward_palette
 # ============================================================================
 
 DAY = 0
-RESULTS_FILE = os.path.join(io.processed_dir, 'reactivation', 'reactivation_results_p99.pkl')
-OUTPUT_DIR = os.path.join(io.results_dir, 'reactivation_day0_dynamics')
+RESULTS_FILE = os.path.join(paths.processed_dir, 'reactivation', 'reactivation_results_p99.pkl')
+OUTPUT_DIR = os.path.join(paths.results_dir, 'reactivation_day0_dynamics')
 MIN_MICE_PER_POSITION = 3  # trim first-hit-aligned positions with fewer contributing mice
 
 
@@ -106,9 +105,9 @@ def _find_first_hit_trial_id(mouse, day=DAY):
 
     Returns None if the mouse had no whisker hit on Day 0.
     """
-    folder = os.path.join(io.solve_common_paths('processed_data'), 'mice')
-    xarr = utils_imaging.load_mouse_xarray(
-        mouse, folder, 'tensor_xarray_learning_data.nc', substracted=False)
+    folder = paths.tensor_dir
+    xarr = imaging.load_mouse_xarray(
+        mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=False)
     xarr_day = xarr.sel(trial=xarr['day'] == day)
 
     whisker_stim = xarr_day['whisker_stim'].values
