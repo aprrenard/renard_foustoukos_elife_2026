@@ -1,3 +1,16 @@
+"""Pipeline step 05: learning modulation index (LMI) of each cell.
+
+ROC analysis of each cell's mean response (0-300 ms, baseline-subtracted)
+to passive whisker mapping trials of days -2/-1 vs days +1/+2 (day 0 is not
+used): LMI = 2 * (AUC - 0.5), from -1 to +1. Significance from 1000 label
+shuffles: lmi_p >= 0.975 is LMI+, <= 0.025 is LMI-.
+
+Inputs:  mapping tensors (tensor_dir), session metadata.
+Outputs: <processed_dir>/lmi_results.csv (mouse_id, roi, cell_type, lmi, lmi_p)
+
+Usage:
+    python pipeline/05_lmi.py
+"""
 
 import os
 import sys

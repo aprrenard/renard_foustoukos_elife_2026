@@ -66,11 +66,11 @@ Data are stored in [NWB format](https://www.nwb.org/). The full dataset will be 
 
 ## Reproducing the Figures
 
-Each panel has a dedicated script under `src/manuscript/`. Scripts load preprocessed data, run the analysis, and save output to a configured directory.
+Each panel has a dedicated script under `figures/`. Scripts load preprocessed data, run the analysis, and save output to a configured directory.
 
 ```bash
 # Example: reproduce Figure 1b (behavioral performance across learning days)
-python src/manuscript/figure_1/figure_1b.py
+python figures/figure_1/figure_1b.py
 ```
 
 Computationally heavy analyses (decoding, reactivation surrogates) use a `mode` flag:

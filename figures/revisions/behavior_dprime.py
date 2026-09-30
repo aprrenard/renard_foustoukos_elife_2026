@@ -91,7 +91,7 @@ Panel-specific notes / scope decisions
   NWB/network-drive access to load the Day-0 imaging tensors.
 
 - Execution panel c: reuses the trial-level table of the execution sessions
-  (behavior_muscimol_execution.csv, built by make_behavior_tables.py).
+  (behavior_muscimol_execution.csv, built by 03_behavior_tables.py).
 """
 
 import os
@@ -518,7 +518,7 @@ def panel_2c_execution_dprime(
     wS1 vs fpS1 (muscimol inactivation during execution). Mirrors
     figure_2b_c_execution.py:panel_c_muscimol_barplot_execution, with
     dprime_w substituted for outcome_w. Requires
-    behavior_muscimol_execution.csv (make_behavior_tables.py
+    behavior_muscimol_execution.csv (03_behavior_tables.py
     --tables muscimol_execution)."""
 
     table_path = paths.adjust_path_to_host(table_path)

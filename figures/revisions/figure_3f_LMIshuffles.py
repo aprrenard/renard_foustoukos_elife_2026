@@ -19,7 +19,7 @@ would give too few null points for a stable histogram).
 
 The null distribution (slow) is computed when its cache is missing or with
 --recompute, and loaded from the cache otherwise:
-    python src/manuscript/revisions/figure_3f_LMIshuffles.py [--recompute]
+    python figures/revisions/figure_3f_LMIshuffles.py [--recompute]
 
 Real LMI values are loaded as-is from lmi_results.csv (already computed).
 """
@@ -93,7 +93,7 @@ def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
         print(f'Processing {mouse_id}')
         reward_group = database.get_mouse_reward_group_from_db(db_path, mouse_id)
 
-        # Same loader as compute_LMI.py, so artefact cells are excluded.
+        # Same loader as 05_lmi.py, so artefact cells are excluded.
         data_mapping = imaging.load_mouse_xarray(
             mouse_id, paths.tensor_dir, 'tensor_xarray_mapping_data.nc', subtracted=False)
         data_mapping = data_mapping - np.nanmean(

@@ -25,7 +25,7 @@ NOTE (revision): per reviewer comment (3), the per-group Kruskal-Wallis test
 treats the 5 repeated days per mouse as independent cross-sections. A
 corrected version (per-mouse day-slope fit, then a one-sample t-test of
 those slopes across mice within each reward_group x lmi_category group) is
-implemented in src/manuscript/revisions/supp_4c_lmm.py, on the same data.
+implemented in figures/revisions/supp_4c_lmm.py, on the same data.
 (A random-intercept mixed model was tried first but gave anti-conservative
 p-values with this few mice per group — see that script's docstring.)
 """

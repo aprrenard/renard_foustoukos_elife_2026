@@ -1,5 +1,21 @@
-"""This script generates yaml files associating a (start, stop) tuple trial
-index for each session to know when to cut the session.
+"""Pipeline step 01: session stop flags and trial indices.
+
+For each session, the (start, stop) trial range to analyse and the matching
+trial ids:
+    - end of session: stop three trials before the first run of three auditory
+      misses followed by at most two auditory hits (disengagement);
+    - sensory mapping: the last 50 unrewarded whisker trials of the passive
+      mapping block at the end of imaging sessions.
+Session-specific exceptions are listed in the code.
+
+The published YAML files are part of the dataset (config: stop_flags_dir);
+this step regenerates them for checking, it is not run by default.
+
+Inputs:  NWB files, session metadata.
+Outputs: <processed_dir>/stop_flags/{stop_flags,trial_indices}_{end_session,sensory_map}.yaml
+
+Usage:
+    python pipeline/01_session_flags.py
 """
 import os
 

@@ -1,8 +1,7 @@
-"""Build the trial-level behaviour tables used by the manuscript figures.
+"""Pipeline step 03: trial-level behaviour tables.
 
-Extracted from core_analysis/behavior/behavior.py, keeping the same session
-selections and make_behavior_table() calls. Each table is written to
-paths.processed_dir/behavior/:
+Same session selections and make_behavior_table() calls as the original
+analysis. Each table is written to <processed_dir>/behavior/:
 
     behavior_imagingmice_table_5days_cut.csv   Imaging mice, days -2..+2, sessions cut
                                                at the stop flag (Figs 1, 4, S1).
@@ -15,11 +14,14 @@ paths.processed_dir/behavior/:
     behavior_muscimol_execution.csv            Muscimol inactivation in expert mice
                                                (execution revision of Fig 2b-c).
 
-Learning curves are fitted separately by fit_learning_curves.py, which reads
+Learning curves are fitted separately by 04_learning_curves.py, which reads
 the first table and writes behavior_imagingmice_table_5days_cut_with_learning_curves.csv.
 
 Reads NWB files, the session database and the stop-flag YAML files; never
 writes to them.
+
+Usage:
+    python pipeline/03_behavior_tables.py [--tables imaging particle opto muscimol muscimol_execution]
 """
 
 import argparse

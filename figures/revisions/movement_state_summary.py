@@ -5,7 +5,7 @@ across days.
 Addresses the concern that the brain state during the post-session passive
 whisker-stimulation block (cf. figure_3c.py, figure_4) might not be matched
 across training days. This complements
-src/manuscript/revisions/behavior_state_summary.py (session duration, trial
+figures/revisions/behavior_state_summary.py (session duration, trial
 count, total water), by directly quantifying movement during the passive
 epoch itself.
 

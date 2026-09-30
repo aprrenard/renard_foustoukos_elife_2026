@@ -16,7 +16,7 @@ two independently-obtained p-values to each other (panel j), rather than
 accounting for within-mouse correlation or testing the day x LMI-category
 interaction directly. A mixed-effects version (mouse_id as random
 intercept, non-modulated cells reinstated as a third category in panel j)
-is implemented in src/manuscript/revisions/figure_4i_j_lmm.py, reusing this
+is implemented in figures/revisions/figure_4i_j_lmm.py, reusing this
 module's data pipeline unchanged.
 
 Mice: those in the participation mouse selection (>= 3 reactivation events

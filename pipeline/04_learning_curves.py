@@ -1,10 +1,10 @@
-"""Fit learning curves and define the learning trial for the imaging mice.
+"""Pipeline step 04: learning curves and learning trial of the imaging mice.
 
 Reads  paths.processed_dir/behavior/behavior_imagingmice_table_5days_cut.csv
-       (written by make_behavior_tables.py).
+       (written by 03_behavior_tables.py).
 Writes paths.processed_dir/behavior/behavior_imagingmice_table_5days_cut_with_learning_curves.csv
 
-Uses utils_behavior.compute_learning_curves / compute_learning_trial, the
+Uses fast_learning.behavior.compute_learning_curves / compute_learning_trial, the
 implementation that produced the published learning trials: for R+ mice
 learning is the first of 10 consecutive whisker trials whose lower 80%
 credible bound exceeds the interpolated false-alarm rate; for R- mice it is

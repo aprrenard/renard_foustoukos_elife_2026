@@ -1,4 +1,19 @@
-"""This script generates PSTH numpy arrays from lists of NWB files.
+"""Pipeline step 02: per-mouse dF/F tensors.
+
+For each imaging mouse, dF/F aligned to trial onsets (cells x trials x time)
+as xarrays with the trial table as coordinates:
+    tensor_xarray_learning_data.nc   task trials of days -2..+2 (cut at the stop flag)
+    tensor_xarray_mapping_data.nc    passive whisker mapping trials
+    *_baselinesubstracted.nc         the same, minus the pre-stimulus baseline
+    lick_aligned_xarray.nc           learning trials aligned to the first lick
+                                     (exploratory analyses only)
+
+Inputs:  NWB files, session metadata, stop-flag YAMLs.
+Outputs: <processed_dir>/mice/<mouse>/*.nc. The other steps read tensors from
+         tensor_dir (config.yaml); set it to <processed_dir>/mice to use these.
+
+Usage:
+    python pipeline/02_tensors.py
 """
 
 import os

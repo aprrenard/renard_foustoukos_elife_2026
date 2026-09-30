@@ -13,7 +13,7 @@ muscimol day: pre_-2, pre_-1, muscimol_1, ringer_1, muscimol_2. Only
 muscimol (no optogenetic) inactivation exists for this cohort.
 
 Inputs:  behavior_muscimol_execution.csv, the trial-level table of the
-         execution sessions (make_behavior_tables.py, same builder as the
+         execution sessions (03_behavior_tables.py, same builder as the
          learning table behavior_muscimol.csv used by figure_2b_c.py).
 
 Figures and CSVs are saved to
@@ -46,7 +46,7 @@ DAY_LABELS = ['M1', 'Ringer', 'M2']
 def _load_behavior_table(table_path=TABLE_PATH):
     if not os.path.exists(table_path):
         raise FileNotFoundError(
-            f"{table_path} not found. Run make_behavior_tables.py --tables muscimol_execution first.")
+            f"{table_path} not found. Run 03_behavior_tables.py --tables muscimol_execution first.")
     return pd.read_csv(table_path)
 
 

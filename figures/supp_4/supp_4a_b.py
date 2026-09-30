@@ -24,7 +24,7 @@ NOTE (revision): per reviewer comment (3), both panels' Pearson correlations
 (raw and partial) pool cells across mice as independent observations. A
 mixed-effects version (mouse_id as random intercept; the partial correlation
 becomes the lmi coefficient of a participation_rate ~ lmi + transient_freq
-model) is implemented in src/manuscript/revisions/supp_4a_b_lmm.py, on the
+model) is implemented in figures/revisions/supp_4a_b_lmm.py, on the
 same data.
 """
 

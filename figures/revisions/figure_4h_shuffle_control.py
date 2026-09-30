@@ -37,7 +37,7 @@ in fast_learning.reactivations does not apply to event rates).
 The shuffle detection (expensive, ~n_mice x n_days x 1000 shuffles) runs
 when its cached CSVs are missing or with --recompute; otherwise the cached
 CSVs are plotted:
-    python src/manuscript/revisions/figure_4h_shuffle_control.py [--recompute]
+    python figures/revisions/figure_4h_shuffle_control.py [--recompute]
 
 Figures and CSVs are saved to
     paths.manuscript_output_dir/revisions/figure_4h_shuffle_control/output/.
