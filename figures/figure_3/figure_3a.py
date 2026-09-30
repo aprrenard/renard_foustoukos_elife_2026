@@ -29,8 +29,8 @@ from fast_learning.plotting import save_figure, lmi_cmap
 
 MOUSE_ID = 'GF314'
 NWB_FILE = os.path.join(paths.nwb_dir, 'GF314_28112020_171800.nwb')
-# suite2p ops file is an input stored next to the pre-refactor tensors.
-OPS_PATH = os.path.join(os.path.dirname(paths.tensor_dir), 'GF314_ops.npy')
+# suite2p ops file (mean image of the field of view); not part of the NWB file.
+OPS_PATH = paths.fov_ops
 SEGMENTATION_INFO = ['ophys', 'all_cells', 'my_plane_segmentation']
 
 sampling_rate = 30

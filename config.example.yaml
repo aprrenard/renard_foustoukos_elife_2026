@@ -15,6 +15,7 @@ output_root: /path/to/fast-learning-outputs
 # session_metadata: /path/to/sessions.csv      # .csv or .xlsx
 # stop_flags_dir: /path/to/stop_flags
 # tensor_dir: /path/to/processed/mice
+# fov_ops: /path/to/GF314_ops.npy              # suite2p ops, Figure 3a mean image
 #
 # To rebuild everything from the NWB files, pipeline step 02 writes new
 # tensors to <output_root>/processed/mice; point tensor_dir there so the
