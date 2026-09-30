@@ -84,7 +84,7 @@ for mouse in mice_list:
         # Parameters for tensor array.
         cell_types = ['na', 'wM1', 'wS2']
         rrs_keys = ['ophys', 'fluorescence_all_cells', 'dff']
-        time_range = (2, 7)
+        time_range = (1, 6)  # seconds before and after the stimulus
         epoch_name = None
         trial_selection = None
 
@@ -217,7 +217,7 @@ for mouse in mice_list:
         # Parameters for tensor array.
         cell_types = ['na', 'wM1', 'wS2']
         rrs_keys = ['ophys', 'fluorescence_all_cells', 'dff']
-        time_range = (2, 7)
+        time_range = (1, 6)  # seconds before and after the stimulus
         epoch_name = None
         trial_selection = None
 
@@ -295,9 +295,14 @@ trial_indices_sensory_map_yaml = paths.trial_indices_sensory_map_yaml
 stop_flag_sensory_map_yaml = paths.stop_flags_sensory_map_yaml
 processed_data_dir = paths.processed_dir
 days = ['-2', '-1', '0', '+1', '+2']
-sampling_rate = 30  # Hz, for imaging data.
-baseline_win = (0, 1)
-baseline_win = (int(baseline_win[0] * sampling_rate), int(baseline_win[1] * sampling_rate))
+baseline_win_s = (-1, 0)  # seconds, relative to the stimulus
+
+
+def baseline_frames(xarr, win=baseline_win_s):
+    """Frame index range (start, stop) of the baseline window, from the time coordinate."""
+    idx = np.flatnonzero((xarr.time.values >= win[0]) & (xarr.time.values < win[1]))
+    return idx[0], idx[-1] + 1
+
 
 _, nwb_list, mice_list, _ = database.select_sessions_from_db(
     db_path,
@@ -315,7 +320,7 @@ for mouse_id in mice_list:
     file_name = 'tensor_xarray_learning_data.nc'
     folder = os.path.join(paths.processed_dir, 'mice')
     xarr = imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=False)
-    xarr = imaging.subtract_baseline(xarr, 2, baseline_win)
+    xarr = imaging.subtract_baseline(xarr, 2, baseline_frames(xarr))
 
     # Save the xarray.
     save_path = os.path.join(folder, mouse_id, 'tensor_xarray_learning_data_baselinesubstracted.nc')
@@ -325,7 +330,7 @@ for mouse_id in mice_list:
     folder = os.path.join(paths.processed_dir, 'mice')
 
     xarr = imaging.load_mouse_xarray(mouse_id, folder, file_name, subtracted=False)
-    xarr = imaging.subtract_baseline(xarr, 2, baseline_win)
+    xarr = imaging.subtract_baseline(xarr, 2, baseline_frames(xarr))
     # Save the xarray.
     save_path = os.path.join(folder, mouse_id, 'tensor_xarray_mapping_data_baselinesubstracted.nc')
     xarr.to_netcdf(save_path)
