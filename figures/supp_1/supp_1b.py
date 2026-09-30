@@ -31,81 +31,82 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
 
 bh_path = os.path.join(paths.processed_dir, 'behavior',
                        'behavior_imagingmice_table_5days_cut_with_learning_curves.csv')
-table = pd.read_csv(bh_path)
+if __name__ == '__main__':
+    table = pd.read_csv(bh_path)
 
 
-# ============================================================================
-# Compute per-mouse average per day
-# ============================================================================
+    # ============================================================================
+    # Compute per-mouse average per day
+    # ============================================================================
 
-day_data = table[table['day'].isin(DAYS)]
-avg_performance = (day_data
-                   .groupby(['day', 'mouse_id', 'reward_group'])['outcome_w']
-                   .mean()
-                   .reset_index())
-avg_performance['outcome_w'] *= 100  # convert to percentage
-
-
-# ============================================================================
-# Statistics: Mann-Whitney U test per day
-# ============================================================================
-
-stats_rows = []
-for day in DAYS:
-    df_day = avg_performance[avg_performance['day'] == day]
-    group_rp = df_day[df_day['reward_group'] == 'R+']['outcome_w']
-    group_rm = df_day[df_day['reward_group'] == 'R-']['outcome_w']
-    stat, p_value = mannwhitneyu(group_rp, group_rm, alternative='two-sided')
-    stats_rows.append({'day': day, 'group_1': 'R+', 'group_2': 'R-',
-                       'test': 'Mann-Whitney U', 'statistic': stat, 'p_value': p_value})
-    print(f"Day {day:+d}: U={stat:.3f}, p={p_value:.4f}")
-
-stats_df = pd.DataFrame(stats_rows)
+    day_data = table[table['day'].isin(DAYS)]
+    avg_performance = (day_data
+                       .groupby(['day', 'mouse_id', 'reward_group'])['outcome_w']
+                       .mean()
+                       .reset_index())
+    avg_performance['outcome_w'] *= 100  # convert to percentage
 
 
-# ============================================================================
-# Figure
-# ============================================================================
+    # ============================================================================
+    # Statistics: Mann-Whitney U test per day
+    # ============================================================================
 
-sns.set_theme(context='paper', style='ticks', font='sans-serif', font_scale=1,
-              rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'})
+    stats_rows = []
+    for day in DAYS:
+        df_day = avg_performance[avg_performance['day'] == day]
+        group_rp = df_day[df_day['reward_group'] == 'R+']['outcome_w']
+        group_rm = df_day[df_day['reward_group'] == 'R-']['outcome_w']
+        stat, p_value = mannwhitneyu(group_rp, group_rm, alternative='two-sided')
+        stats_rows.append({'day': day, 'group_1': 'R+', 'group_2': 'R-',
+                           'test': 'Mann-Whitney U', 'statistic': stat, 'p_value': p_value})
+        print(f"Day {day:+d}: U={stat:.3f}, p={p_value:.4f}")
 
-fig, ax = plt.subplots(figsize=(8, 6))
-
-sns.barplot(data=avg_performance, x='day', y='outcome_w', hue='reward_group',
-            hue_order=['R+', 'R-'], palette=behavior_palette[2:4][::-1],
-            width=0.3, dodge=True, ax=ax)
-sns.swarmplot(data=avg_performance, x='day', y='outcome_w', hue='reward_group',
-              hue_order=['R+', 'R-'], dodge=True, color='grey', alpha=0.6, ax=ax)
-
-# Significance stars
-for row in stats_rows:
-    xpos = DAYS.index(row['day'])
-    p = row['p_value']
-    stars = '***' if p < 0.001 else '**' if p < 0.01 else '*' if p < 0.05 else ''
-    if stars:
-        ax.text(xpos, 95, stars, ha='center', va='bottom', color='black', fontsize=14)
-
-ax.set_xlabel('Day')
-ax.set_ylabel('Lick probability (%)')
-ax.set_ylim([0, 100])
-ax.legend(title='Reward group')
-sns.despine(trim=True)
+    stats_df = pd.DataFrame(stats_rows)
 
 
-# ============================================================================
-# Save
-# ============================================================================
+    # ============================================================================
+    # Figure
+    # ============================================================================
 
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+    sns.set_theme(context='paper', style='ticks', font='sans-serif', font_scale=1,
+                  rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'})
 
-fig.savefig(os.path.join(OUTPUT_DIR, 'supp_1b.svg'), format='svg', dpi=300, bbox_inches='tight')
-print(f"Saved: supp_1b.svg")
+    fig, ax = plt.subplots(figsize=(8, 6))
 
-avg_performance.to_csv(os.path.join(OUTPUT_DIR, 'supp_1b_data.csv'), index=False)
-print(f"Saved: supp_1b_data.csv")
+    sns.barplot(data=avg_performance, x='day', y='outcome_w', hue='reward_group',
+                hue_order=['R+', 'R-'], palette=behavior_palette[2:4][::-1],
+                width=0.3, dodge=True, ax=ax)
+    sns.swarmplot(data=avg_performance, x='day', y='outcome_w', hue='reward_group',
+                  hue_order=['R+', 'R-'], dodge=True, color='grey', alpha=0.6, ax=ax)
 
-stats_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1b_stats.csv'), index=False)
-print(f"Saved: supp_1b_stats.csv")
+    # Significance stars
+    for row in stats_rows:
+        xpos = DAYS.index(row['day'])
+        p = row['p_value']
+        stars = '***' if p < 0.001 else '**' if p < 0.01 else '*' if p < 0.05 else ''
+        if stars:
+            ax.text(xpos, 95, stars, ha='center', va='bottom', color='black', fontsize=14)
 
-plt.show()
+    ax.set_xlabel('Day')
+    ax.set_ylabel('Lick probability (%)')
+    ax.set_ylim([0, 100])
+    ax.legend(title='Reward group')
+    sns.despine(trim=True)
+
+
+    # ============================================================================
+    # Save
+    # ============================================================================
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    fig.savefig(os.path.join(OUTPUT_DIR, 'supp_1b.svg'), format='svg', dpi=300, bbox_inches='tight')
+    print(f"Saved: supp_1b.svg")
+
+    avg_performance.to_csv(os.path.join(OUTPUT_DIR, 'supp_1b_data.csv'), index=False)
+    print(f"Saved: supp_1b_data.csv")
+
+    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1b_stats.csv'), index=False)
+    print(f"Saved: supp_1b_stats.csv")
+
+    plt.close()

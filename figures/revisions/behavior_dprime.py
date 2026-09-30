@@ -328,12 +328,12 @@ def panel_1d_dprime(
         hue='reward_group', errorbar='ci', err_style='band', ax=ax,
     )
 
-    # Same p-value color code as figure_1g.py: p > 0.05 (not significant)
+    # Same p-value color code as figure_1d.py: p > 0.05 (not significant)
     # is pure white (via cmap.set_over(), not part of the gradient); p <=
     # 0.05 uses a log10 gradient from a visible grey right at the p=0.05
     # boundary down to black as p keeps shrinking. PVALUE_FLOOR is where
     # the gradient bottoms out at pure black -- tuned to 1e-3 here (vs.
-    # 1e-6 in figure_1g.py) to match the smaller dynamic range of p-values
+    # 1e-6 in figure_1d.py) to match the smaller dynamic range of p-values
     # this panel's d' test actually produces.
     PVALUE_FLOOR = 1e-3
     NONSIG_GREY = 0.8  # grey at p=0.05

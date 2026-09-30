@@ -103,132 +103,133 @@ def plot_cdf_panel(ax, data, value_col, reward_group, positive_only, ks_df, xlab
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
 
-# ============================================================================
-# Load LMI data
-# ============================================================================
+if __name__ == '__main__':
+    # ============================================================================
+    # Load LMI data
+    # ============================================================================
 
-lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
-for mouse in lmi_df['mouse_id'].unique():
-    lmi_df.loc[lmi_df['mouse_id'] == mouse, 'reward_group'] = \
-        database.get_mouse_reward_group_from_db(paths.db_path, mouse)
-lmi_df['cell_type_group'] = lmi_df['cell_type'].replace({'na': 'non_projector'})
+    lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
+    for mouse in lmi_df['mouse_id'].unique():
+        lmi_df.loc[lmi_df['mouse_id'] == mouse, 'reward_group'] = \
+            database.get_mouse_reward_group_from_db(paths.db_path, mouse)
+    lmi_df['cell_type_group'] = lmi_df['cell_type'].replace({'na': 'non_projector'})
 
-print(f"LMI: {len(lmi_df)} cells, {lmi_df['mouse_id'].nunique()} mice")
-
-
-# ============================================================================
-# Load classifier weights + cell-type labels
-# ============================================================================
-
-weights_df = pd.read_csv(os.path.join(RESULTS_DIR, 'classifier_weights.csv'))
-
-cell_type_info = []
-for mouse_id in weights_df['mouse_id'].unique():
-    try:
-        xarr = imaging.load_mouse_xarray(
-            mouse_id, paths.tensor_dir,
-            'tensor_xarray_mapping_data.nc')
-        rois = xarr.coords['roi'].values
-        cts  = (xarr.coords['cell_type'].values if 'cell_type' in xarr.coords
-                else [None] * len(rois))
-        for roi, ct in zip(rois, cts):
-            cell_type_info.append({'mouse_id': mouse_id, 'roi': roi, 'cell_type_xr': ct})
-    except Exception as e:
-        print(f"Warning: could not load cell types for {mouse_id}: {e}")
-
-if cell_type_info:
-    weights_df = weights_df.merge(pd.DataFrame(cell_type_info), on=['mouse_id', 'roi'], how='left')
-else:
-    weights_df['cell_type_xr'] = None
-
-weights_df['cell_type_group'] = weights_df['cell_type_xr'].copy()
-weights_df.loc[weights_df['cell_type_xr'].isna() |
-               (weights_df['cell_type_xr'] == 'na'), 'cell_type_group'] = 'non_projector'
-
-print(f"Weights: {len(weights_df)} cells, {weights_df['mouse_id'].nunique()} mice")
+    print(f"LMI: {len(lmi_df)} cells, {lmi_df['mouse_id'].nunique()} mice")
 
 
-# ============================================================================
-# KS tests
-# ============================================================================
+    # ============================================================================
+    # Load classifier weights + cell-type labels
+    # ============================================================================
 
-ks_lmi_pos    = compute_ks_test(lmi_df,     'lmi',                ['R+', 'R-'], positive_only=True)
-ks_lmi_neg    = compute_ks_test(lmi_df,     'lmi',                ['R+', 'R-'], negative_only=True)
-ks_weight_pos = compute_ks_test(weights_df, 'classifier_weight',  ['R+', 'R-'], positive_only=True)
-ks_weight_neg = compute_ks_test(weights_df, 'classifier_weight',  ['R+', 'R-'], negative_only=True)
+    weights_df = pd.read_csv(os.path.join(RESULTS_DIR, 'classifier_weights.csv'))
 
-stats_lmi    = pd.concat([ks_lmi_pos,    ks_lmi_neg],    ignore_index=True)
-stats_weight = pd.concat([ks_weight_pos, ks_weight_neg], ignore_index=True)
-print(stats_lmi)
-print(stats_weight)
+    cell_type_info = []
+    for mouse_id in weights_df['mouse_id'].unique():
+        try:
+            xarr = imaging.load_mouse_xarray(
+                mouse_id, paths.tensor_dir,
+                'tensor_xarray_mapping_data.nc')
+            rois = xarr.coords['roi'].values
+            cts  = (xarr.coords['cell_type'].values if 'cell_type' in xarr.coords
+                    else [None] * len(rois))
+            for roi, ct in zip(rois, cts):
+                cell_type_info.append({'mouse_id': mouse_id, 'roi': roi, 'cell_type_xr': ct})
+        except Exception as e:
+            print(f"Warning: could not load cell types for {mouse_id}: {e}")
 
+    if cell_type_info:
+        weights_df = weights_df.merge(pd.DataFrame(cell_type_info), on=['mouse_id', 'roi'], how='left')
+    else:
+        weights_df['cell_type_xr'] = None
 
-# ============================================================================
-# Figure k: CDF of LMI
-# ============================================================================
+    weights_df['cell_type_group'] = weights_df['cell_type_xr'].copy()
+    weights_df.loc[weights_df['cell_type_xr'].isna() |
+                   (weights_df['cell_type_xr'] == 'na'), 'cell_type_group'] = 'non_projector'
 
-sns.set_theme(context='paper', style='ticks', font='sans-serif', font_scale=1,
-              rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'})
-
-fig_k = plt.figure(figsize=(6, 6))
-gs_k  = fig_k.add_gridspec(2, 2, hspace=0.4, wspace=0.4)
-
-for row_idx, rg in enumerate(['R+', 'R-']):
-    ax_pos = fig_k.add_subplot(gs_k[row_idx, 0])
-    ax_neg = fig_k.add_subplot(gs_k[row_idx, 1])
-    plot_cdf_panel(ax_pos, lmi_df, 'lmi', rg, positive_only=True,
-                   ks_df=stats_lmi, xlabel='LMI' if row_idx == 1 else '')
-    plot_cdf_panel(ax_neg, lmi_df, 'lmi', rg, positive_only=False,
-                   ks_df=stats_lmi, xlabel='|LMI|' if row_idx == 1 else '')
-
-sns.despine()
+    print(f"Weights: {len(weights_df)} cells, {weights_df['mouse_id'].nunique()} mice")
 
 
-# ============================================================================
-# Figure l: CDF of classifier weights
-# ============================================================================
+    # ============================================================================
+    # KS tests
+    # ============================================================================
 
-fig_l = plt.figure(figsize=(6, 6))
-gs_l  = fig_l.add_gridspec(2, 2, hspace=0.4, wspace=0.4)
+    ks_lmi_pos    = compute_ks_test(lmi_df,     'lmi',                ['R+', 'R-'], positive_only=True)
+    ks_lmi_neg    = compute_ks_test(lmi_df,     'lmi',                ['R+', 'R-'], negative_only=True)
+    ks_weight_pos = compute_ks_test(weights_df, 'classifier_weight',  ['R+', 'R-'], positive_only=True)
+    ks_weight_neg = compute_ks_test(weights_df, 'classifier_weight',  ['R+', 'R-'], negative_only=True)
 
-for row_idx, rg in enumerate(['R+', 'R-']):
-    ax_pos = fig_l.add_subplot(gs_l[row_idx, 0])
-    ax_neg = fig_l.add_subplot(gs_l[row_idx, 1])
-    plot_cdf_panel(ax_pos, weights_df, 'classifier_weight', rg, positive_only=True,
-                   ks_df=stats_weight, xlabel='Classifier weight' if row_idx == 1 else '')
-    plot_cdf_panel(ax_neg, weights_df, 'classifier_weight', rg, positive_only=False,
-                   ks_df=stats_weight, xlabel='|Classifier weight|' if row_idx == 1 else '')
-
-sns.despine()
+    stats_lmi    = pd.concat([ks_lmi_pos,    ks_lmi_neg],    ignore_index=True)
+    stats_weight = pd.concat([ks_weight_pos, ks_weight_neg], ignore_index=True)
+    print(stats_lmi)
+    print(stats_weight)
 
 
-# ============================================================================
-# Save
-# ============================================================================
+    # ============================================================================
+    # Figure k: CDF of LMI
+    # ============================================================================
 
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+    sns.set_theme(context='paper', style='ticks', font='sans-serif', font_scale=1,
+                  rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'})
 
-fig_k.savefig(os.path.join(OUTPUT_DIR, 'supp_3k.svg'), format='svg', dpi=300, bbox_inches='tight')
-print("Saved: supp_3k.svg")
+    fig_k = plt.figure(figsize=(6, 6))
+    gs_k  = fig_k.add_gridspec(2, 2, hspace=0.4, wspace=0.4)
 
-fig_l.savefig(os.path.join(OUTPUT_DIR, 'supp_3l.svg'), format='svg', dpi=300, bbox_inches='tight')
-print("Saved: supp_3l.svg")
+    for row_idx, rg in enumerate(['R+', 'R-']):
+        ax_pos = fig_k.add_subplot(gs_k[row_idx, 0])
+        ax_neg = fig_k.add_subplot(gs_k[row_idx, 1])
+        plot_cdf_panel(ax_pos, lmi_df, 'lmi', rg, positive_only=True,
+                       ks_df=stats_lmi, xlabel='LMI' if row_idx == 1 else '')
+        plot_cdf_panel(ax_neg, lmi_df, 'lmi', rg, positive_only=False,
+                       ks_df=stats_lmi, xlabel='|LMI|' if row_idx == 1 else '')
 
-# Data CSVs (projection-type cells only)
-lmi_df[lmi_df['cell_type_group'].isin(CELL_TYPES)][
-    ['mouse_id', 'roi', 'reward_group', 'cell_type_group', 'lmi', 'lmi_p']
-].to_csv(os.path.join(OUTPUT_DIR, 'supp_3k_data.csv'), index=False)
-print("Saved: supp_3k_data.csv")
+    sns.despine()
 
-weights_df[weights_df['cell_type_group'].isin(CELL_TYPES)][
-    ['mouse_id', 'roi', 'reward_group', 'cell_type_group', 'classifier_weight']
-].to_csv(os.path.join(OUTPUT_DIR, 'supp_3l_data.csv'), index=False)
-print("Saved: supp_3l_data.csv")
 
-stats_lmi.to_csv(os.path.join(OUTPUT_DIR, 'supp_3k_stats.csv'), index=False)
-print("Saved: supp_3k_stats.csv")
+    # ============================================================================
+    # Figure l: CDF of classifier weights
+    # ============================================================================
 
-stats_weight.to_csv(os.path.join(OUTPUT_DIR, 'supp_3l_stats.csv'), index=False)
-print("Saved: supp_3l_stats.csv")
+    fig_l = plt.figure(figsize=(6, 6))
+    gs_l  = fig_l.add_gridspec(2, 2, hspace=0.4, wspace=0.4)
 
-plt.show()
+    for row_idx, rg in enumerate(['R+', 'R-']):
+        ax_pos = fig_l.add_subplot(gs_l[row_idx, 0])
+        ax_neg = fig_l.add_subplot(gs_l[row_idx, 1])
+        plot_cdf_panel(ax_pos, weights_df, 'classifier_weight', rg, positive_only=True,
+                       ks_df=stats_weight, xlabel='Classifier weight' if row_idx == 1 else '')
+        plot_cdf_panel(ax_neg, weights_df, 'classifier_weight', rg, positive_only=False,
+                       ks_df=stats_weight, xlabel='|Classifier weight|' if row_idx == 1 else '')
+
+    sns.despine()
+
+
+    # ============================================================================
+    # Save
+    # ============================================================================
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    fig_k.savefig(os.path.join(OUTPUT_DIR, 'supp_3k.svg'), format='svg', dpi=300, bbox_inches='tight')
+    print("Saved: supp_3k.svg")
+
+    fig_l.savefig(os.path.join(OUTPUT_DIR, 'supp_3l.svg'), format='svg', dpi=300, bbox_inches='tight')
+    print("Saved: supp_3l.svg")
+
+    # Data CSVs (projection-type cells only)
+    lmi_df[lmi_df['cell_type_group'].isin(CELL_TYPES)][
+        ['mouse_id', 'roi', 'reward_group', 'cell_type_group', 'lmi', 'lmi_p']
+    ].to_csv(os.path.join(OUTPUT_DIR, 'supp_3k_data.csv'), index=False)
+    print("Saved: supp_3k_data.csv")
+
+    weights_df[weights_df['cell_type_group'].isin(CELL_TYPES)][
+        ['mouse_id', 'roi', 'reward_group', 'cell_type_group', 'classifier_weight']
+    ].to_csv(os.path.join(OUTPUT_DIR, 'supp_3l_data.csv'), index=False)
+    print("Saved: supp_3l_data.csv")
+
+    stats_lmi.to_csv(os.path.join(OUTPUT_DIR, 'supp_3k_stats.csv'), index=False)
+    print("Saved: supp_3k_stats.csv")
+
+    stats_weight.to_csv(os.path.join(OUTPUT_DIR, 'supp_3l_stats.csv'), index=False)
+    print("Saved: supp_3l_stats.csv")
+
+    plt.close()
