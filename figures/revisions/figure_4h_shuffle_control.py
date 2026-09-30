@@ -11,9 +11,9 @@ fast_learning/reactivations.py, so it is not feasible without new data
 collection.)
 
 For each mouse and day, this script reuses the already-computed real
-template, detection threshold, and selected no-stim trial data from
-reactivation_results_p99.pkl (RESULTS_DIR, original all-no-stim-trials
-variant) and detects "reactivation" events with N_SHUFFLES=1000
+template and detection threshold from reactivation_results_p99.pkl
+(RESULTS_DIR, original all-no-stim-trials variant) and the same no-stim
+trial data (reloaded from the tensors with load_selected_trials), and detects "reactivation" events with N_SHUFFLES=1000
 cell-identity-shuffled versions of that template instead — same real
 neural data, same fixed detection threshold as the real template (not
 recalibrated per shuffle, which would let every shuffled template earn its
@@ -58,6 +58,7 @@ from fast_learning import paths
 from fast_learning.plotting import reward_palette
 from fast_learning.reactivations import (
     detect_reactivation_events,
+    load_selected_trials,
     MIN_EVENT_DISTANCE_FRAMES,
     PROMINENCE,
 )
@@ -156,7 +157,7 @@ def _compute_template_correlation_batch(data, template_matrix):
 # Per-mouse-day shuffle computation
 # ============================================================================
 
-def _compute_shuffled_rates_for_mouse_day(day_results, n_shuffles=N_SHUFFLES, seed=None):
+def _compute_shuffled_rates_for_mouse_day(day_results, selected_trials, n_shuffles=N_SHUFFLES, seed=None):
     """Detect "reactivation" events with n_shuffles cell-identity-shuffled
     versions of the real template, on the same real neural data and the
     same fixed detection threshold used for the real template.
@@ -165,7 +166,6 @@ def _compute_shuffled_rates_for_mouse_day(day_results, n_shuffles=N_SHUFFLES, se
     """
     template = day_results['template']
     threshold = day_results['threshold_used']
-    selected_trials = day_results['selected_trials']
     session_duration_min = day_results['session_duration_min']
 
     n_cells = selected_trials.shape[0]
@@ -193,12 +193,14 @@ def _process_mouse(mouse, results, n_shuffles):
     """
     shuffle_rows, real_rows = [], []
     for day, day_results in results.get('days', {}).items():
-        if 'template' not in day_results or 'selected_trials' not in day_results:
+        if 'template' not in day_results:
             continue
         seed = _seed_for(mouse, day)
         try:
+            # All no-stim trials, full window: the selection of the p99 results file.
+            selected_trials = load_selected_trials(mouse, day)
             shuffled_rates = _compute_shuffled_rates_for_mouse_day(
-                day_results, n_shuffles=n_shuffles, seed=seed)
+                day_results, selected_trials, n_shuffles=n_shuffles, seed=seed)
         except Exception as e:
             print(f"  Warning: {mouse} day {day}: {e}")
             continue

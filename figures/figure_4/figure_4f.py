@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import AutoLocator
 
-from fast_learning import paths, participation
+from fast_learning import paths, participation, reactivations
 
 
 # ============================================================================
@@ -86,7 +86,8 @@ def panel_f_reactivation_heatmap(
     events = np.array(day_data['events'])
     threshold = day_data.get('threshold_used', 0.45)
 
-    selected_trials = day_data['selected_trials']
+    # All no-stim trials, full window: the selection of the p99 results file.
+    selected_trials = reactivations.load_selected_trials(mouse, day)
     n_cells, n_trials, n_tp = selected_trials.shape
     neural_data = selected_trials.values.reshape(n_cells, -1)
     neural_data = np.nan_to_num(neural_data, nan=0.0)

@@ -143,6 +143,19 @@ def select_trials_by_type(xarray_day, no_lick_only=False, time_window=None):
     return selected, len(selected.trial)
 
 
+def load_selected_trials(mouse, day, no_lick_only=False, time_window=None, folder=None):
+    """No-stim trials of one mouse-day (raw dF/F, cells x trials x time), as
+    used for reactivation detection. Event indices of a reactivation results
+    file refer to these trials' concatenated trial x time axis, so pass the
+    no_lick_only / time_window of that file (its 'parameters' entry)."""
+    xarray_learning = imaging.load_mouse_xarray(
+        mouse, folder or paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=False)
+    xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
+    selected, _ = select_trials_by_type(
+        xarray_day, no_lick_only=no_lick_only, time_window=time_window)
+    return selected
+
+
 def detect_reactivation_events(correlations, threshold, min_distance, prominence,
                                 smooth=True, window_length=5, polyorder=2):
     """Detect reactivation events as peaks in correlation timeseries."""
@@ -325,7 +338,9 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
     """
     Detect reactivation events for a single mouse across all days.
 
-    Returns a nested dict: {mouse, days: {day: {correlations, events, ...}}}
+    Returns a nested dict: {mouse, days: {day: {correlations, events, ...}}}.
+    The trial data the events refer to are not stored; load_selected_trials()
+    rebuilds them from the tensors.
     """
     results = {'mouse': mouse, 'days': {}}
     folder = paths.tensor_dir
@@ -335,12 +350,9 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
             template, cells_mask = create_whisker_template(
                 mouse, day, THRESHOLD_DFF, verbose=verbose)
 
-            xarray_learning = imaging.load_mouse_xarray(
-                mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=False)
-            xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
-
-            selected_trials, n_selected_trials = select_trials_by_type(
-                xarray_day, no_lick_only=no_lick_only, time_window=time_window)
+            selected_trials = load_selected_trials(
+                mouse, day, no_lick_only=no_lick_only, time_window=time_window, folder=folder)
+            n_selected_trials = len(selected_trials.trial)
             if n_selected_trials == 0:
                 continue
 
@@ -398,7 +410,6 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
                 'session_hr_mean': (np.mean(list(hr_per_block.values()))
                                     if hr_per_block else np.nan),
                 'threshold_used': current_threshold,
-                'selected_trials': selected_trials,
                 'temporal': {
                     'time_bins': time_bins,
                     'event_rate': event_rate,
