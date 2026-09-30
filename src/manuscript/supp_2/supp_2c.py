@@ -4,7 +4,7 @@ Learning Modulation Index (LMI).
 
 Scatter plot (one dot per cell, all mice pooled) with a global linear
 regression line and bootstrapped 95% CI. Classifier weights are loaded from
-the CSV produced by figure_3m_o.py.
+the CSV produced by pipeline/06_decoder.py.
 """
 
 import os

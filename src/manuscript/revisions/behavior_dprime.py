@@ -85,19 +85,17 @@ Panel-specific notes / scope decisions
   isn't a hit-rate-based quantity, so the reviewer's request doesn't apply
   to it. Rather than duplicating figure_4e.py's inline decoder retraining,
   this reuses the pre-trained decoder cached in decoder_weights.pkl (built
-  by figure_3l_n.py) that figure_4b.py/figure_4c.py already reuse, applied
+  by pipeline/06_decoder.py) that figure_4b.py/figure_4c.py already reuse, applied
   via the same sliding window -- keeping one decoder consistent across
   Figure 4 instead of two subtly different ones. Still needs
   NWB/network-drive access to load the Day-0 imaging tensors.
 
-- Execution panel c: reuses the trial-level table already built by
-  figure_2b_c_execution.py (behavior_muscimol_execution.csv). Run that
-  script once with MODE='compute' before this one.
+- Execution panel c: reuses the trial-level table of the execution sessions
+  (behavior_muscimol_execution.csv, built by make_behavior_tables.py).
 """
 
 import os
 import pickle
-import sys
 
 import numpy as np
 import pandas as pd
@@ -107,16 +105,14 @@ import seaborn as sns
 from scipy.stats import norm, mannwhitneyu, wilcoxon, ttest_1samp, pearsonr
 from statsmodels.stats.multitest import multipletests
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
-
 from fast_learning import paths, database
 from fast_learning import imaging
 from fast_learning.plotting import stim_palette, reward_palette, behavior_palette
-from src.manuscript.revisions.figure_2b_c_execution import (
-    TABLE_PATH as EXECUTION_TABLE_PATH,
-    DAYS_OF_INTEREST as EXECUTION_DAYS_OF_INTEREST,
-    DAY_LABELS as EXECUTION_DAY_LABELS,
-)
+
+# Muscimol execution sessions, as in figure_2b_c_execution.py (keep in sync).
+EXECUTION_TABLE_PATH = os.path.join(paths.processed_dir, 'behavior', 'behavior_muscimol_execution.csv')
+EXECUTION_DAYS_OF_INTEREST = ['muscimol_1', 'ringer_1', 'muscimol_2']
+EXECUTION_DAY_LABELS = ['M1', 'Ringer', 'M2']
 
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'behavior_dprime', 'output')
@@ -522,8 +518,8 @@ def panel_2c_execution_dprime(
     wS1 vs fpS1 (muscimol inactivation during execution). Mirrors
     figure_2b_c_execution.py:panel_c_muscimol_barplot_execution, with
     dprime_w substituted for outcome_w. Requires
-    behavior_muscimol_execution.csv to already exist -- run
-    figure_2b_c_execution.py once with MODE='compute' first."""
+    behavior_muscimol_execution.csv (make_behavior_tables.py
+    --tables muscimol_execution)."""
 
     table_path = paths.adjust_path_to_host(table_path)
     table = pd.read_csv(table_path)
@@ -629,7 +625,7 @@ def panel_4e_dprime_correlation(
     learning_curve_w).
 
     Uses the same pre-trained decoder cached in decoder_weights.pkl (built
-    by figure_3l_n.py) that figure_4b.py/figure_4c.py already reuse,
+    by pipeline/06_decoder.py) that figure_4b.py/figure_4c.py already reuse,
     applied via the identical 10-trial sliding window -- rather than
     figure_4e.py's original approach of retraining a fresh per-mouse
     decoder inline. This keeps the decoder consistent with the rest of

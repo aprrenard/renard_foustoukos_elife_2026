@@ -22,29 +22,23 @@ module's data pipeline unchanged.
 Mice: those in the participation mouse selection (>= 3 reactivation events
 on day 0; see fast_learning.reactivations).
 
-Execution modes:
-    MODE = 'compute' : run participation-rate pipeline, save CSVs, then plot
-    MODE = 'plot'    : load previously saved CSVs and plot only
-
-Processed data files are saved/loaded from data_processed/reactivation/.
-Figures and CSVs are saved to paths.manuscript_output_dir/figure_4/output/.
+Inputs:  participation rates from pipeline/08_participation.py, at each
+         participation threshold (10% main, 20% and 50% robustness checks).
+Outputs: <figures_dir>/figure_4/output/figure_4i_<sel>_thr<N>.svg, _stats.csv
+         and figure_4j_<sel>_thr<N>.svg, _data.csv, _stats.csv.
 """
 
 import os
-import sys
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import pearsonr, linregress, kruskal
-from joblib import Parallel, delayed
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-from fast_learning import paths, database
-from fast_learning import imaging, reactivations
+from fast_learning import paths, participation
 from fast_learning.plotting import reward_palette
-from src.manuscript.preprocessing.reactivation_preprocessing import select_trials_by_type
+from fast_learning.stats import significance_stars
 
 
 # ============================================================================
@@ -52,336 +46,14 @@ from src.manuscript.preprocessing.reactivation_preprocessing import select_trial
 # ============================================================================
 
 DAYS = [-2, -1, 0, 1, 2]
-SAMPLING_RATE = 30
-EVENT_WINDOW_MS = 150
-EVENT_WINDOW_FRAMES = int(EVENT_WINDOW_MS / 1000 * SAMPLING_RATE)
-PARTICIPATION_THRESHOLD = 0.1
-MIN_EVENTS_FOR_RELIABILITY = reactivations.MIN_EVENTS_PER_DAY
-LMI_POSITIVE_THRESHOLD = 0.975
-LMI_NEGATIVE_THRESHOLD = 0.025
-N_JOBS = 35
 
-# Trial-selection toggle.
-#   True  : no_stim & lick_flag==0 trials, ±2s window (2026 revision baseline)
-#   False : original all no_stim trials, full window (pre-revision baseline)
-# TIME_WINDOW and REACTIVATION_RESULTS_FILE are derived from this flag so the
-# two can never get out of sync — event indices in REACTIVATION_RESULTS_FILE
-# are only valid for the exact trial selection that produced them.
+# Trial selection of the reactivation events:
+#   False : all no-stim trials, full window (main analysis)
+#   True  : no-stim trials without licks, +/- 2 s around no-stim onset
 NO_LICK_ONLY = False
+SELECTION = 'nolick' if NO_LICK_ONLY else 'allnostim'
 
-RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
-NOLICK_RESULTS_DIR = os.path.join(RESULTS_DIR, 'nolick')
-
-if NO_LICK_ONLY:
-    TIME_WINDOW = (-2, 2)
-    REACTIVATION_RESULTS_FILE = os.path.join(NOLICK_RESULTS_DIR, 'reactivation_results_p99.pkl')
-else:
-    TIME_WINDOW = None
-    REACTIVATION_RESULTS_FILE = os.path.join(RESULTS_DIR, 'reactivation_results_p99.pkl')
-
-LMI_RESULTS_CSV = os.path.join(paths.processed_dir, 'lmi_results.csv')
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
-FOLDER = paths.tensor_dir
-
-# Participation-threshold robustness check: main value (10%) plus the two
-# additional values requested for the revision (20%, 50%).
-PARTICIPATION_THRESHOLDS_TO_CHECK = [0.10, 0.20, 0.50]
-
-
-def _selection_tag():
-    return 'nolick' if NO_LICK_ONLY else 'allnostim'
-
-
-def _thr_tag(threshold):
-    return f'thr{int(round(threshold * 100))}'
-
-
-def _participation_csv(threshold):
-    return os.path.join(
-        RESULTS_DIR,
-        f'cell_participation_rates_per_day_{_selection_tag()}_{_thr_tag(threshold)}.csv')
-
-
-def _merged_csv(threshold):
-    return os.path.join(
-        RESULTS_DIR,
-        f'participation_lmi_merged_{_selection_tag()}_{_thr_tag(threshold)}.csv')
-
-
-# Execution mode
-#   'compute' : run participation-rate pipeline, save CSVs, then plot
-#   'plot'    : load previously saved CSVs and plot only
-#   FAST_LEARNING_MODE overrides the default.
-MODE = os.environ.get('FAST_LEARNING_MODE', 'compute')
-
-
-# ============================================================================
-# Mouse loading
-# ============================================================================
-
-_, _, _all_mice, _db = database.select_sessions_from_db(
-    paths.db_path, paths.nwb_dir, two_p_imaging='yes'
-)
-
-r_plus_mice, r_minus_mice = [], []
-for _mouse in _all_mice:
-    try:
-        _rg = database.get_mouse_reward_group_from_db(paths.db_path, _mouse, db=_db)
-        if _rg == 'R+':
-            r_plus_mice.append(_mouse)
-        elif _rg == 'R-':
-            r_minus_mice.append(_mouse)
-    except Exception:
-        continue
-
-print(f"Found {len(r_plus_mice)} R+ mice and {len(r_minus_mice)} R- mice")
-
-
-# ============================================================================
-# Participation pipeline (self-contained, no external reactivation imports)
-# ============================================================================
-
-def _load_reactivation_results(results_file):
-    """Load pre-computed reactivation results from pickle."""
-    import pickle
-    if not os.path.exists(results_file):
-        raise FileNotFoundError(
-            f"Reactivation results file not found: {results_file}\n"
-            "Please run reactivation.py with mode='compute' first.")
-    print(f"\nLoading reactivation events from: {results_file}")
-    with open(results_file, 'rb') as f:
-        data = pickle.load(f)
-    r_plus = data['r_plus_results']
-    r_minus = data['r_minus_results']
-    print(f"Loaded {len(r_plus)} R+ mice and {len(r_minus)} R- mice")
-    return r_plus, r_minus
-
-
-def _extract_event_responses(mouse, day, preloaded_events,
-                              participation_threshold=PARTICIPATION_THRESHOLD):
-    """Extract per-cell dF/F responses around pre-computed reactivation events.
-
-    Trial selection must exactly match the one used to detect
-    preloaded_events (reactivation_preprocessing_nolick.py), since event_idx
-    is an index into that selection's concatenated trial/time axes.
-    """
-    xarr = imaging.load_mouse_xarray(
-        mouse, FOLDER, 'tensor_xarray_learning_data.nc', subtracted=True)
-    xarr_day = xarr.sel(trial=xarr['day'] == day)
-    nostim, _ = select_trials_by_type(
-        xarr_day, no_lick_only=NO_LICK_ONLY, time_window=TIME_WINDOW)
-
-    if len(nostim.trial) < 10:
-        return None
-
-    n_cells, n_trials, n_timepoints = nostim.shape
-    data_3d = nostim.values
-    roi_list = nostim['roi'].values
-    win = EVENT_WINDOW_FRAMES
-
-    rows = []
-    for event_idx in preloaded_events:
-        trial_idx = event_idx // n_timepoints
-        time_idx  = event_idx % n_timepoints
-        if time_idx < win or time_idx >= n_timepoints - win or trial_idx >= n_trials:
-            continue
-        window_data  = data_3d[:, trial_idx, time_idx - win:time_idx + win + 1]
-        avg_response = np.mean(window_data, axis=1)
-        participates = avg_response >= participation_threshold
-        for icell in range(n_cells):
-            rows.append({
-                'mouse_id': mouse, 'day': day, 'roi': roi_list[icell],
-                'event_idx': event_idx, 'avg_response': float(avg_response[icell]),
-                'participates': bool(participates[icell]),
-            })
-
-    return pd.DataFrame(rows) if rows else None
-
-
-def _compute_participation_rate(responses_df):
-    """Aggregate cell-event responses to per-cell participation rates."""
-    grouped = responses_df.groupby(['mouse_id', 'day', 'roi']).agg(
-        n_participations=('participates', 'sum'),
-        n_events=('participates', 'count'),
-    ).reset_index()
-    grouped['participation_rate'] = grouped['n_participations'] / grouped['n_events']
-    grouped['reliable'] = grouped['n_events'] >= MIN_EVENTS_FOR_RELIABILITY
-    return grouped
-
-
-def _process_mouse_participation(mouse, preloaded_results,
-                                  participation_threshold=PARTICIPATION_THRESHOLD):
-    """Compute participation rates across all days for one mouse."""
-    all_responses = []
-    for day in DAYS:
-        events = preloaded_results.get('days', {}).get(day, {}).get('events', None)
-        if events is None or len(events) == 0:
-            continue
-        try:
-            resp_df = _extract_event_responses(
-                mouse, day, events, participation_threshold=participation_threshold)
-            if resp_df is not None and len(resp_df) > 0:
-                all_responses.append(resp_df)
-        except Exception as e:
-            print(f"  Warning: {mouse} day {day}: {e}")
-    if not all_responses:
-        return mouse, None
-    all_resp_df = pd.concat(all_responses, ignore_index=True)
-    return mouse, _compute_participation_rate(all_resp_df)
-
-
-def _aggregate_across_days(participation_df_all):
-    """Aggregate per-day participation rates to baseline/learning/post periods."""
-    if participation_df_all is None or len(participation_df_all) == 0:
-        return None
-
-    baseline_days = [-2, -1]
-    post_days = [1, 2]
-    results = []
-
-    for (mouse_id, roi), group in participation_df_all.groupby(['mouse_id', 'roi']):
-        baseline_data = group[group['day'].isin(baseline_days)]
-        baseline_rate = baseline_data['participation_rate'].mean() if len(baseline_data) > 0 else np.nan
-        reliable_baseline = baseline_data['reliable'].all() if len(baseline_data) > 0 else False
-
-        learning_data = group[group['day'] == 0]
-        learning_rate = learning_data['participation_rate'].iloc[0] if len(learning_data) > 0 else np.nan
-        reliable_learning = learning_data['reliable'].iloc[0] if len(learning_data) > 0 else False
-
-        post_data = group[group['day'].isin(post_days)]
-        post_rate = post_data['participation_rate'].mean() if len(post_data) > 0 else np.nan
-        reliable_post = post_data['reliable'].all() if len(post_data) > 0 else False
-
-        results.append({
-            'mouse_id': mouse_id, 'roi': roi,
-            'baseline_rate': baseline_rate,
-            'learning_rate': learning_rate,
-            'post_rate': post_rate,
-            'delta_learning': learning_rate - baseline_rate if not np.isnan(baseline_rate) else np.nan,
-            'delta_post': post_rate - baseline_rate if not np.isnan(baseline_rate) else np.nan,
-            'reliable_baseline': reliable_baseline,
-            'reliable_learning': reliable_learning,
-            'reliable_post': reliable_post,
-        })
-
-    return pd.DataFrame(results)
-
-
-def _load_and_match_lmi_data(participation_df):
-    """Load LMI data and merge with participation data."""
-    lmi_df = pd.read_csv(LMI_RESULTS_CSV)
-
-    if 'reward_group' not in lmi_df.columns:
-        group_map = {m: 'R+' for m in r_plus_mice}
-        group_map.update({m: 'R-' for m in r_minus_mice})
-        lmi_df['reward_group'] = lmi_df['mouse_id'].map(group_map)
-
-    lmi_df['lmi_category'] = 'neutral'
-    lmi_df.loc[lmi_df['lmi_p'] >= LMI_POSITIVE_THRESHOLD, 'lmi_category'] = 'positive'
-    lmi_df.loc[lmi_df['lmi_p'] <= LMI_NEGATIVE_THRESHOLD, 'lmi_category'] = 'negative'
-
-    cols = ['mouse_id', 'roi', 'lmi', 'lmi_p', 'lmi_category', 'reward_group']
-    if 'cell_type' in lmi_df.columns:
-        cols.append('cell_type')
-
-    merged_df = pd.merge(participation_df, lmi_df[cols], on=['mouse_id', 'roi'], how='inner')
-
-    print(f"\n  Merged: {len(merged_df)} cells total "
-          f"({(merged_df['lmi_category']=='positive').sum()} LMI+, "
-          f"{(merged_df['lmi_category']=='negative').sum()} LMI-, "
-          f"{(merged_df['lmi_category']=='neutral').sum()} neutral)")
-    return merged_df
-
-
-# ============================================================================
-# Helpers
-# ============================================================================
-
-def _significance_stars(p):
-    if p < 0.001:
-        return '***'
-    elif p < 0.01:
-        return '**'
-    elif p < 0.05:
-        return '*'
-    return 'n.s.'
-
-
-# ============================================================================
-# Data loading / computation
-# ============================================================================
-
-def _compute_participation_data(participation_threshold=PARTICIPATION_THRESHOLD):
-    """Run the full participation-rate computation pipeline.
-
-    1. Load pre-computed reactivation events.
-    2. Compute per-cell participation rates per day (parallel across mice).
-    3. Aggregate across days and merge with LMI data.
-
-    Saves the per-day and merged CSVs (tagged with participation_threshold)
-    to RESULTS_DIR.
-
-    Returns
-    -------
-    merged_df  : pd.DataFrame  – per-cell aggregated data with LMI info
-    per_day_df : pd.DataFrame  – per-cell, per-day participation rates
-    """
-    r_plus, r_minus = _load_reactivation_results(REACTIVATION_RESULTS_FILE)
-    included = reactivations.load_participation_mice()
-    all_results = {m: res for m, res in {**r_plus, **r_minus}.items() if m in included}
-    all_mice = list(all_results.keys())
-    print(f"Excluded by the mouse selection: "
-          f"{sorted((set(r_plus) | set(r_minus)) - included) or 'none'}")
-
-    print(f"\nComputing participation rates for {len(all_mice)} mice "
-          f"(participation_threshold={participation_threshold})...")
-    results_list = Parallel(n_jobs=N_JOBS, verbose=10)(
-        delayed(_process_mouse_participation)(
-            mouse, all_results.get(mouse),
-            participation_threshold=participation_threshold)
-        for mouse in all_mice
-    )
-
-    all_data = [df for _, df in results_list if df is not None]
-    if not all_data:
-        raise RuntimeError("No participation data computed.")
-    per_day_df = pd.concat(all_data, ignore_index=True)
-
-    os.makedirs(RESULTS_DIR, exist_ok=True)
-    per_day_df.to_csv(_participation_csv(participation_threshold), index=False)
-
-    aggregated_df = _aggregate_across_days(per_day_df)
-    merged_df = _load_and_match_lmi_data(aggregated_df)
-    merged_df.to_csv(_merged_csv(participation_threshold), index=False)
-
-    return merged_df, per_day_df
-
-
-def _load_participation_data(participation_threshold=PARTICIPATION_THRESHOLD):
-    """Load pre-computed participation data from CSVs."""
-    participation_csv = _participation_csv(participation_threshold)
-    merged_csv = _merged_csv(participation_threshold)
-    for path in [participation_csv, merged_csv]:
-        if not os.path.exists(path):
-            raise FileNotFoundError(
-                f"Pre-computed data not found: {path}\n"
-                "Run with MODE='compute' first.")
-    merged_df = pd.read_csv(merged_csv)
-    per_day_df = pd.read_csv(participation_csv)
-    print(f"Loaded {len(merged_df)} cells and {len(per_day_df)} cell-day records.")
-    return merged_df, per_day_df
-
-
-def _prepare_data(merged_df):
-    """Add lmi_category column to merged_df if not present."""
-    if 'lmi_category' not in merged_df.columns:
-        merged_df = merged_df.copy()
-        merged_df['lmi_category'] = 'neutral'
-        merged_df.loc[merged_df['lmi_p'] >= LMI_POSITIVE_THRESHOLD,
-                      'lmi_category'] = 'positive'
-        merged_df.loc[merged_df['lmi_p'] <= LMI_NEGATIVE_THRESHOLD,
-                      'lmi_category'] = 'negative'
-    return merged_df
 
 
 # ============================================================================
@@ -431,7 +103,7 @@ def panel_i_participation_vs_lmi(
             x_line = np.linspace(x.min(), x.max(), 200)
             ax.plot(x_line, slope * x_line + intercept,
                     color='black', linewidth=1.2, zorder=5)
-            stars = _significance_stars(pearson_p)
+            stars = significance_stars(pearson_p)
             ax.text(0.05, 0.95,
                     f'r = {pearson_r:.3f}\np = {pearson_p:.3g} {stars}',
                     transform=ax.transAxes, va='top', ha='left', fontsize=8)
@@ -515,6 +187,9 @@ def panel_j_participation_across_days(
         .mean()
         .reset_index()
     )
+    # Round away summation-order noise (~1e-16) so that equal means stay tied
+    # in the rank-based Kruskal-Wallis test.
+    mouse_day_avg['participation_rate'] = mouse_day_avg['participation_rate'].round(12)
 
     cell_counts = (
         lmi_cells.groupby(['reward_group', 'lmi_category'], observed=True)
@@ -551,7 +226,7 @@ def panel_j_participation_across_days(
                 'effect': 'day',
                 'H_statistic': H,
                 'p_value': p,
-                'significance': _significance_stars(p) if not np.isnan(p) else 'n.a.',
+                'significance': significance_stars(p) if not np.isnan(p) else 'n.a.',
                 'n_days': len(day_groups),
             })
             print(f"  KW {rg} {cat} LMI: H={H:.3f}, p={p:.4g}")
@@ -593,7 +268,7 @@ def panel_j_participation_across_days(
         # Annotate Kruskal-Wallis results for each LMI group
         for j, cat in enumerate(lmi_categories):
             H, p = kw_results.get((rg, cat), (np.nan, np.nan))
-            stars = _significance_stars(p) if not np.isnan(p) else 'n.a.'
+            stars = significance_stars(p) if not np.isnan(p) else 'n.a.'
             ax.text(0.02, 0.97 - j * 0.12,
                     f'{cat.capitalize()} LMI: KW p={p:.3g} {stars}',
                     transform=ax.transAxes, va='top', ha='left',
@@ -632,30 +307,17 @@ def panel_j_participation_across_days(
 # ============================================================================
 
 if __name__ == '__main__':
-    print(f"Mode:             {MODE}")
-    print(f"Trial selection:  {_selection_tag()} (NO_LICK_ONLY={NO_LICK_ONLY}, TIME_WINDOW={TIME_WINDOW})")
+    print(f"Trial selection:  {SELECTION}")
     print(f"Output directory: {OUTPUT_DIR}")
-    print(f"Reactivation results: {REACTIVATION_RESULTS_FILE}")
-    print(f"Participation thresholds to check: {PARTICIPATION_THRESHOLDS_TO_CHECK}")
 
-    for participation_threshold in PARTICIPATION_THRESHOLDS_TO_CHECK:
-        tag = _thr_tag(participation_threshold)
-        print(f"\n--- participation_threshold={participation_threshold} ({tag}) ---")
-
-        if MODE == 'compute':
-            merged_df, per_day_df = _compute_participation_data(
-                participation_threshold=participation_threshold)
-        elif MODE == 'plot':
-            merged_df, per_day_df = _load_participation_data(
-                participation_threshold=participation_threshold)
-        else:
-            raise ValueError(f"Unknown MODE '{MODE}'. Use 'compute' or 'plot'.")
-
-        merged_df = _prepare_data(merged_df)
+    for threshold in participation.PARTICIPATION_THRESHOLDS:
+        tag = participation.thr_tag(threshold)
+        print(f"\n--- participation_threshold={threshold} ({tag}) ---")
+        merged_df, per_day_df = participation.load_participation(threshold, SELECTION)
         print(f"Dataset: {len(merged_df)} cells, {len(per_day_df)} cell-day records, "
               f"{merged_df['mouse_id'].nunique()} mice")
 
         panel_i_participation_vs_lmi(
-            merged_df, filename=f'figure_4i_{_selection_tag()}_{tag}')
+            merged_df, filename=f'figure_4i_{SELECTION}_{tag}')
         panel_j_participation_across_days(
-            merged_df, per_day_df, filename=f'figure_4j_{_selection_tag()}_{tag}')
+            merged_df, per_day_df, filename=f'figure_4j_{SELECTION}_{tag}')

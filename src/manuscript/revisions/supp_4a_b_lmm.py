@@ -8,9 +8,9 @@ cells across mice within a reward group and run plain Pearson correlations
 observations. Both are refit here with mouse_id as a random intercept
 (statsmodels MixedLM).
 
-This script reuses the day-0 data pipeline from supp_4a_b.py unchanged
-(participation-rate computation, transient-frequency computation, LMI
-merge) and only replaces the statistics and figure-annotation logic.
+This script reads the same day-0 data as supp_4a_b.py (written by
+pipeline/08_participation.py) and only replaces the statistics and
+figure-annotation logic.
 
 Panel 4a: Scatter plot of cell participation rate vs spontaneous transient
           frequency (Day 0), colored by LMI. Stats: mixed-effects model
@@ -27,16 +27,11 @@ Panel 4b: LMI vs participation rate, raw and controlling for transient
           added-variable-plot visualization; the reported statistic comes
           from the mixed model, not from correlating those residuals.
 
-Execution modes and output layout mirror supp_4a_b.py:
-    MODE = 'compute' : run full pipeline, save intermediate data, then plot
-    MODE = 'plot'    : load previously saved data and plot only
-
 Figures and CSVs are saved to
     paths.manuscript_output_dir/revisions/supp_4a_b_lmm/output/.
 """
 
 import os
-import sys
 
 import numpy as np
 import pandas as pd
@@ -46,18 +41,11 @@ import seaborn as sns
 from scipy.stats import linregress
 from statsmodels.regression.mixed_linear_model import MixedLM
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-from fast_learning import paths
+from fast_learning import paths, participation
 from fast_learning.plotting import reward_palette
-from src.manuscript.supp_4.supp_4a_b import LMI_DATA_CSV, compute_lmi_data_csv
-from src.manuscript.supp_4.supp_4c import _significance_stars
+from fast_learning.stats import significance_stars as _significance_stars
 
-
-# This revision only changes how panels 4a/4b are statistically tested and
-# plotted, not the underlying data pipeline, so it defaults to loading the
-# CSV supp_4a_b.py already computed rather than recomputing it. Set to
-# 'compute' only if that pipeline itself needs to be rerun.
-MODE = 'plot'
+LMI_DATA_CSV = participation.DAY0_CSV
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'supp_4a_b_lmm', 'output')
 
@@ -352,19 +340,9 @@ def panel_supp4b_partial_corr_lmm(
 # ============================================================================
 
 if __name__ == '__main__':
-    print(f"Mode:             {MODE}")
+    print(f"Input:            {LMI_DATA_CSV}")
     print(f"Output directory: {OUTPUT_DIR}")
-
-    if MODE == 'compute':
-        compute_lmi_data_csv(LMI_DATA_CSV)
-    elif MODE == 'plot':
-        if not os.path.exists(LMI_DATA_CSV):
-            raise FileNotFoundError(
-                f"Data CSV not found: {LMI_DATA_CSV}\n"
-                "Run with MODE='compute' first."
-            )
-    else:
-        raise ValueError(f"Unknown MODE '{MODE}'. Use 'compute' or 'plot'.")
+    participation.load_day0()   # fails early if step 08 has not been run
 
     print("\nPlotting panel supp_4a (LMM)...")
     panel_supp4a_scatter_lmm(LMI_DATA_CSV, filename='supp_4a_lmm')

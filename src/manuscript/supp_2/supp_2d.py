@@ -9,7 +9,6 @@ decoding relies on LMI-modulated cells.
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,10 +19,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
-sys.path.append(r'/home/aprenard/repos/fast-learning')
 from fast_learning import paths
 from fast_learning.plotting import reward_palette
-from src.manuscript.figure_3.figure_3l_n import load_and_process_data
+from fast_learning.decoding import load_and_process_data
 
 
 # ============================================================================

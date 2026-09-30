@@ -22,9 +22,9 @@ instead: one day-slope fit per mouse, then a Wilcoxon signed-rank test of
 those slopes against zero (n = mice, correct small sample size by
 construction; nonparametric, matching the manuscript's style elsewhere).
 
-This script reuses the participation-rate/LMI data pipeline from
-figure_4i_j.py unchanged (data loading, computation, aggregation) and only
-replaces the statistics and figure-annotation logic for panels I and J.
+This script reads the same participation data as figure_4i_j.py (written by
+pipeline/08_participation.py) and only replaces the statistics and
+figure-annotation logic for panels I and J.
 
 Panel i: Scatter plot of day-0 participation rate vs LMI (one dot per cell),
          separately for R+ and R- mice, with a linear mixed-effects model
@@ -39,16 +39,11 @@ Panel j: Participation rate across days (-2 to +2) for LMI+ vs LMI- cells.
          question the manuscript actually claims, tested with mice as the
          unit.
 
-Execution modes and output layout mirror figure_4i_j.py:
-    MODE = 'compute' : run participation-rate pipeline, save CSVs, then plot
-    MODE = 'plot'    : load previously saved CSVs and plot only
-
 Figures and CSVs are saved to
     paths.manuscript_output_dir/revisions/figure_4i_j_lmm/output/.
 """
 
 import os
-import sys
 
 import numpy as np
 import pandas as pd
@@ -57,27 +52,12 @@ import seaborn as sns
 from scipy.stats import linregress, wilcoxon
 from statsmodels.regression.mixed_linear_model import MixedLM
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-from fast_learning import paths
+from fast_learning import paths, participation
 from fast_learning.plotting import reward_palette
-from src.manuscript.figure_4.figure_4i_j import (
-    DAYS,
-    PARTICIPATION_THRESHOLDS_TO_CHECK,
-    _selection_tag,
-    _thr_tag,
-    _compute_participation_data,
-    _load_participation_data,
-    _prepare_data,
-    _significance_stars,
-)
+from fast_learning.stats import significance_stars as _significance_stars
 
-
-# This revision only changes how panels i/j are statistically tested and
-# plotted, not the underlying participation-rate pipeline, so it defaults to
-# loading the CSVs figure_4i_j.py already computed rather than recomputing
-# them. Set to 'compute' only if that pipeline itself needs to be rerun
-# (e.g. after changing PARTICIPATION_THRESHOLDS_TO_CHECK upstream).
-MODE = 'plot'
+DAYS = [-2, -1, 0, 1, 2]
+SELECTION = 'allnostim'     # trial selection of the reactivation events (see figure_4i_j.py)
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_4i_j_lmm', 'output')
 
@@ -402,28 +382,17 @@ def panel_j_participation_across_days_lmm(
 # ============================================================================
 
 if __name__ == '__main__':
-    print(f"Mode:             {MODE}")
     print(f"Output directory: {OUTPUT_DIR}")
-    print(f"Participation thresholds to check: {PARTICIPATION_THRESHOLDS_TO_CHECK}")
+    print(f"Participation thresholds: {participation.PARTICIPATION_THRESHOLDS}")
 
-    for participation_threshold in PARTICIPATION_THRESHOLDS_TO_CHECK:
-        tag = _thr_tag(participation_threshold)
+    for participation_threshold in participation.PARTICIPATION_THRESHOLDS:
+        tag = participation.thr_tag(participation_threshold)
         print(f"\n--- participation_threshold={participation_threshold} ({tag}) ---")
-
-        if MODE == 'compute':
-            merged_df, per_day_df = _compute_participation_data(
-                participation_threshold=participation_threshold)
-        elif MODE == 'plot':
-            merged_df, per_day_df = _load_participation_data(
-                participation_threshold=participation_threshold)
-        else:
-            raise ValueError(f"Unknown MODE '{MODE}'. Use 'compute' or 'plot'.")
-
-        merged_df = _prepare_data(merged_df)
+        merged_df, per_day_df = participation.load_participation(participation_threshold, SELECTION)
         print(f"Dataset: {len(merged_df)} cells, {len(per_day_df)} cell-day records, "
               f"{merged_df['mouse_id'].nunique()} mice")
 
         panel_i_participation_vs_lmi_lmm(
-            merged_df, filename=f'figure_4i_lmm_{_selection_tag()}_{tag}')
+            merged_df, filename=f'figure_4i_lmm_{SELECTION}_{tag}')
         panel_j_participation_across_days_lmm(
-            merged_df, per_day_df, filename=f'figure_4j_lmm_{_selection_tag()}_{tag}')
+            merged_df, per_day_df, filename=f'figure_4j_lmm_{SELECTION}_{tag}')

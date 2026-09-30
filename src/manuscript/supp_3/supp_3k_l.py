@@ -8,7 +8,7 @@ Statistics: Kolmogorov-Smirnov test (two-sided, wS2 vs wM1) per reward group
 and sign.
 
 Classifier weights are loaded from paths.processed_dir/decoding (saved by
-figure_3m_o.py). Cell-type labels for the weight file are retrieved from the
+pipeline/06_decoder.py). Cell-type labels for the weight file are retrieved from the
 mapping xarrays.
 """
 

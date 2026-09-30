@@ -12,24 +12,15 @@ followed by an interleaved ringer (saline) control day and then a second
 muscimol day: pre_-2, pre_-1, muscimol_1, ringer_1, muscimol_2. Only
 muscimol (no optogenetic) inactivation exists for this cohort.
 
-Unlike figure_2b_c.py, which reads a pre-built trial-level CSV
-(behavior_muscimol.csv, built from learning sessions only), this script
-first extracts its own trial-level table from NWB files for the execution
-sessions via make_behavior_table (src/utils/utils_behavior.py) — the same
-function originally used to build the learning CSV — and caches it to a
-separate file so behavior_muscimol.csv is left untouched.
-
-Execution modes:
-    MODE = 'compute' : extract the trial table from NWB files, cache it,
-                        then plot (slow, needs NWB/network-drive access)
-    MODE = 'plot'     : load the previously cached CSV and plot only
+Inputs:  behavior_muscimol_execution.csv, the trial-level table of the
+         execution sessions (make_behavior_tables.py, same builder as the
+         learning table behavior_muscimol.csv used by figure_2b_c.py).
 
 Figures and CSVs are saved to
     paths.manuscript_output_dir/revisions/figure_2b_c_execution/output/.
 """
 
 import os
-import sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -37,12 +28,8 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths, database
-from fast_learning.behavior import make_behavior_table
 from fast_learning.plotting import stim_palette, reward_palette
 
-
-# FAST_LEARNING_MODE overrides the default.
-MODE = os.environ.get('FAST_LEARNING_MODE', 'compute')
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_2b_c_execution', 'output')
 TABLE_PATH = os.path.join(paths.processed_dir, 'behavior', 'behavior_muscimol_execution.csv')
@@ -53,36 +40,13 @@ DAY_LABELS = ['M1', 'Ringer', 'M2']
 
 
 # ============================================================================
-# Data extraction
+# Data
 # ============================================================================
 
-def _compute_behavior_table(table_path=TABLE_PATH):
-    """Extract trial-level behavior data for execution-inactivation sessions
-    from NWB files and cache it to `table_path`.
-    """
-    session_list, nwb_list, mice_list, db = database.select_sessions_from_db(
-        paths.db_path, paths.nwb_dir, experimenters=None,
-        exclude_cols=['exclude'],
-        pharma_inactivation_type=['execution'],
-        pharma_day=INACTIVATION_LABELS,
-    )
-    print(f"Building execution behavior table: {len(session_list)} sessions, "
-          f"{len(mice_list)} mice")
-
-    table = make_behavior_table(
-        nwb_list, session_list, paths.db_path, cut_session=True,
-        stop_flag_yaml=paths.stop_flags_yaml, trial_indices_yaml=paths.trial_indices_yaml,
-    )
-
-    os.makedirs(os.path.dirname(table_path), exist_ok=True)
-    table.to_csv(table_path, index=False)
-    print(f"Execution behavior table saved to: {table_path}")
-
-    return table
-
-
 def _load_behavior_table(table_path=TABLE_PATH):
-    table_path = paths.adjust_path_to_host(table_path)
+    if not os.path.exists(table_path):
+        raise FileNotFoundError(
+            f"{table_path} not found. Run make_behavior_tables.py --tables muscimol_execution first.")
     return pd.read_csv(table_path)
 
 
@@ -112,7 +76,7 @@ def panel_b_muscimol_timecourse_execution(
     """
 
     if table is None:
-        table = _compute_behavior_table() if MODE == 'compute' else _load_behavior_table()
+        table = _load_behavior_table()
 
     db_path = paths.db_path
     nwb_dir = paths.nwb_dir
@@ -414,7 +378,7 @@ def panel_c_muscimol_barplot_execution(
 # ============================================================================
 
 if __name__ == '__main__':
-    table = _compute_behavior_table() if MODE == 'compute' else _load_behavior_table()
+    table = _load_behavior_table()
 
     data = panel_b_muscimol_timecourse_execution(table=table)
 

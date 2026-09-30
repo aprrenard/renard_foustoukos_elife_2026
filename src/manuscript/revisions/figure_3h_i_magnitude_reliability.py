@@ -42,7 +42,6 @@ Figures and CSVs are saved to
 """
 
 import os
-import sys
 
 import numpy as np
 import pandas as pd
@@ -52,18 +51,17 @@ from scipy.stats import mannwhitneyu
 from statsmodels.formula.api import ols
 from statsmodels.stats.anova import anova_lm
 
-sys.path.append('/home/aprenard/repos/fast-learning')
 from fast_learning import imaging
 from fast_learning import paths, database
 from fast_learning.plotting import reward_palette
-from src.manuscript.figure_3.figure_3h_j import (
+from fast_learning.similarity import (
     DAYS,
     N_MAP_TRIALS,
     WIN,
-    _compute_similarity_matrix,
-    _compute_within_day_metrics,
-    _significance_stars,
+    compute_similarity_matrix as _compute_similarity_matrix,
+    compute_within_day_metrics as _compute_within_day_metrics,
 )
+from fast_learning.stats import significance_stars as _significance_stars
 
 
 # ============================================================================

@@ -7,7 +7,7 @@ reflect whisker-specific patterns rather than generic high-coactivity
 moments. (The auditory-template control the reviewer also suggested is not
 implemented — there are no auditory-stimulus mapping trials anywhere in
 the dataset, confirmed by inspecting create_whisker_template() in
-reactivation_preprocessing.py, so it is not feasible without new data
+fast_learning/reactivations.py, so it is not feasible without new data
 collection.)
 
 For each mouse and day, this script reuses the already-computed real
@@ -34,17 +34,16 @@ Statistics are deliberately two-layered:
 Mice: all imaging mice, as in Figure 4h (the participation mouse selection
 in fast_learning.reactivations does not apply to event rates).
 
-Execution modes:
-    MODE = 'compute' : run the (expensive, ~n_mice x n_days x 1000 shuffles)
-                        shuffle-detection pipeline, save CSVs, then plot
-    MODE = 'plot'    : load previously saved CSVs and plot only
+The shuffle detection (expensive, ~n_mice x n_days x 1000 shuffles) runs
+when its cached CSVs are missing or with --recompute; otherwise the cached
+CSVs are plotted:
+    python src/manuscript/revisions/figure_4h_shuffle_control.py [--recompute]
 
 Figures and CSVs are saved to
     paths.manuscript_output_dir/revisions/figure_4h_shuffle_control/output/.
 """
 
 import os
-import sys
 import pickle
 import zlib
 
@@ -55,15 +54,15 @@ import seaborn as sns
 from scipy.stats import wilcoxon
 from joblib import Parallel, delayed
 
-sys.path.append('/home/aprenard/repos/fast-learning')
 from fast_learning import paths
 from fast_learning.plotting import reward_palette
-from src.manuscript.preprocessing.reactivation_preprocessing import (
+from fast_learning.reactivations import (
     detect_reactivation_events,
     MIN_EVENT_DISTANCE_FRAMES,
     PROMINENCE,
-    OUTPUT_DIR as REACTIVATION_RESULTS_DIR,
 )
+
+REACTIVATION_RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 
 
 # ============================================================================
@@ -80,12 +79,6 @@ REACTIVATION_RESULTS_FILE = os.path.join(
     REACTIVATION_RESULTS_DIR, f'reactivation_results_{PERCENTILE_TAG}.pkl')
 OUTPUT_DIR = os.path.join(
     paths.manuscript_output_dir, 'revisions', 'figure_4h_shuffle_control', 'output')
-
-# Execution mode
-#   'compute' : run the shuffle-detection pipeline, save CSVs, then plot
-#   'plot'    : load previously saved CSVs and plot only
-#   FAST_LEARNING_MODE overrides the default.
-MODE = os.environ.get('FAST_LEARNING_MODE', 'plot')
 
 
 # ============================================================================
@@ -115,7 +108,7 @@ def _load_reactivation_results(results_file):
     if not os.path.exists(results_file):
         raise FileNotFoundError(
             f"Reactivation results file not found: {results_file}\n"
-            "Please run reactivation_preprocessing.py with mode='compute' first.")
+            "Run pipeline/07_reactivations.py first.")
     print(f"\nLoading reactivation events from: {results_file}")
     with open(results_file, 'rb') as f:
         data = pickle.load(f)
@@ -414,7 +407,11 @@ def panel_4h_shuffle_control(
 # ============================================================================
 
 if __name__ == '__main__':
-    print(f"Mode:             {MODE}")
+    import argparse
+    parser = argparse.ArgumentParser(description='Figure 4h shuffled-template control.')
+    parser.add_argument('--recompute', action='store_true',
+                        help='rerun the shuffle detection even if its CSVs are cached')
+    args = parser.parse_args()
     print(f"Output directory: {OUTPUT_DIR}")
     print(f"Reactivation results: {REACTIVATION_RESULTS_FILE}")
     print(f"N shuffles: {N_SHUFFLES}")
@@ -424,7 +421,7 @@ if __name__ == '__main__':
     per_mouse_csv = os.path.join(OUTPUT_DIR, 'shuffle_control_per_mouse.csv')
     group_csv = os.path.join(OUTPUT_DIR, 'shuffle_control_group_stats.csv')
 
-    if MODE == 'compute':
+    if args.recompute or not all(os.path.exists(p) for p in [long_csv, per_mouse_csv, group_csv]):
         r_plus_results, r_minus_results = _load_reactivation_results(
             REACTIVATION_RESULTS_FILE)
         long_df, real_df = compute_shuffle_control(r_plus_results, r_minus_results)
@@ -439,19 +436,11 @@ if __name__ == '__main__':
         group_stats_df.to_csv(group_csv, index=False)
         print(f"Saved: {group_csv} ({len(group_stats_df)} rows)")
 
-    elif MODE == 'plot':
-        for path in [long_csv, per_mouse_csv, group_csv]:
-            if not os.path.exists(path):
-                raise FileNotFoundError(
-                    f"Pre-computed data not found: {path}\n"
-                    "Run with MODE='compute' first.")
+    else:
         long_df = pd.read_csv(long_csv)
         per_mouse_df = pd.read_csv(per_mouse_csv)
         group_stats_df = pd.read_csv(group_csv)
         real_df = per_mouse_df[['mouse_id', 'reward_group', 'day', 'real_event_frequency']]
-
-    else:
-        raise ValueError(f"Unknown MODE '{MODE}'. Use 'compute' or 'plot'.")
 
     panel_4h_shuffle_control(long_df, real_df, group_stats_df)
     print("\nDone.")

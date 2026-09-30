@@ -17,20 +17,15 @@ one day-slope fit per mouse (on that mouse's own per-day proportions),
 then a Wilcoxon signed-rank test of those slopes against zero (n = mice;
 nonparametric, matching the manuscript's style elsewhere).
 
-This script reuses the circular-shift/binary-participation data pipeline
-from supp_4c.py unchanged and only replaces the statistics and
+This script reads the same binary-participation data as supp_4c.py (written
+by pipeline/08_participation.py) and only replaces the statistics and
 figure-annotation logic.
-
-Execution modes and output layout mirror supp_4c.py:
-    MODE = 'compute' : run circular-shift pipeline, save CSV, then plot
-    MODE = 'plot'    : load previously saved CSV and plot only
 
 Figures and CSVs are saved to
     paths.manuscript_output_dir/revisions/supp_4c_lmm/output/.
 """
 
 import os
-import sys
 
 import numpy as np
 import pandas as pd
@@ -38,21 +33,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import linregress, wilcoxon
 
-sys.path.append('/home/aprenard/repos/fast-learning')
-from fast_learning import paths
-from src.manuscript.supp_4.supp_4c import (
-    DAYS,
-    _compute_binary_participation,
-    _load_binary_participation,
-    _significance_stars,
-)
+from fast_learning import paths, participation
+from fast_learning.stats import significance_stars as _significance_stars
 
-
-# This revision only changes how the panel is statistically tested and
-# plotted, not the underlying circular-shift pipeline, so it defaults to
-# loading the CSV supp_4c.py already computed rather than rerunning the
-# (expensive, N_SHIFTS x mice x days) circular-shift control.
-MODE = 'plot'
+DAYS = participation.DAYS
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'supp_4c_lmm', 'output')
 
@@ -273,15 +257,8 @@ def panel_supp4c_proportion_across_days_lmm(
 # ============================================================================
 
 if __name__ == '__main__':
-    print(f"Mode:             {MODE}")
     print(f"Output directory: {OUTPUT_DIR}")
-
-    if MODE == 'compute':
-        df = _compute_binary_participation()
-    elif MODE == 'plot':
-        df = _load_binary_participation()
-    else:
-        raise ValueError(f"Unknown MODE '{MODE}'. Use 'compute' or 'plot'.")
+    df = participation.load_binary_participation()
 
     print(f"\nDataset: {len(df)} cell-day records, "
           f"{df['mouse_id'].nunique()} mice, "

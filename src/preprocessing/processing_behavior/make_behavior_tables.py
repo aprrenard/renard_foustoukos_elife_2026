@@ -12,6 +12,8 @@ paths.processed_dir/behavior/:
                                                (Fig 2e-f).
     behavior_muscimol.csv                      Muscimol inactivation during learning
                                                (Fig 2b-c).
+    behavior_muscimol_execution.csv            Muscimol inactivation in expert mice
+                                               (execution revision of Fig 2b-c).
 
 Learning curves are fitted separately by fit_learning_curves.py, which reads
 the first table and writes behavior_imagingmice_table_5days_cut_with_learning_curves.csv.
@@ -22,7 +24,6 @@ writes to them.
 
 import argparse
 import os
-import sys
 
 import numpy as np
 
@@ -111,11 +112,27 @@ def muscimol_learning_table():
           'behavior_muscimol.csv')
 
 
+EXECUTION_DAYS = ['pre_-2', 'pre_-1', 'muscimol_1', 'ringer_1', 'muscimol_2']
+
+
+def muscimol_execution_table():
+    # Moved from revisions/figure_2b_c_execution.py, same selection.
+    session_list, nwb_list, mice_list, _ = database.select_sessions_from_db(
+        paths.db_path, paths.nwb_dir, experimenters=None,
+        exclude_cols=['exclude'],
+        pharma_inactivation_type=['execution'],
+        pharma_day=EXECUTION_DAYS)
+    print(f"Execution sessions: {len(session_list)}, {len(mice_list)} mice")
+    _save(_build(session_list, nwb_list, cut_session=True),
+          'behavior_muscimol_execution.csv')
+
+
 TABLES = {
     'imaging': imaging_mice_table,
     'particle': particle_test_table,
     'opto': opto_learning_table,
     'muscimol': muscimol_learning_table,
+    'muscimol_execution': muscimol_execution_table,
 }
 
 

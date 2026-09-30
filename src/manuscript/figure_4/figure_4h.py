@@ -38,11 +38,11 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 # Trial-selection toggle (mirrors figure_4i_j.py's NO_LICK_ONLY).
 #   True  : no_stim & lick_flag==0 trials, ±2s window (2026 revision
 #           baseline) -- regenerates figure_4h_nolick_p99/p995/p999
-#           (see reactivation_preprocessing_nolick.py)
+#           (pipeline/07_reactivations.py --nolick)
 #   False : original all no_stim trials, full window (pre-revision
 #           baseline) -- regenerates figure_4h (p99, unsuffixed, original
 #           name) plus figure_4h_p995/p999
-#           (see reactivation_preprocessing.py, PERCENTILES)
+#           (pipeline/07_reactivations.py, PERCENTILES)
 # Both branches are checked at the same three detection percentiles.
 NO_LICK_ONLY = False
 
@@ -215,8 +215,8 @@ def _load_and_plot(results_file, filename):
     if not os.path.exists(results_file):
         raise FileNotFoundError(
             f"Results file not found: {results_file}\n"
-            "Please run reactivation_preprocessing.py / "
-            "reactivation_preprocessing_nolick.py with mode='compute' first."
+            "Run pipeline/07_reactivations.py (--nolick for the no-lick "
+            "variant) first."
         )
 
     with open(results_file, 'rb') as f:

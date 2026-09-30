@@ -8,7 +8,7 @@ Two-row × two-column layout:
          Day 0 whisker trials).
 
 Decoder weights (trained on Days -2/-1 vs +1/+2 mapping trials) are loaded
-from RESULTS_DIR/decoder_weights.pkl, produced by figure_3m_o.py.
+from RESULTS_DIR/decoder_weights.pkl, produced by pipeline/06_decoder.py.
 """
 
 import os

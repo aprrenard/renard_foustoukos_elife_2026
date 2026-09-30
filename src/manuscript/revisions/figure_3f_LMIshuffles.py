@@ -17,19 +17,17 @@ null values are pooled per reward group (not averaged per cell, which would
 artificially shrink the null's spread, and not one shuffle per cell, which
 would give too few null points for a stable histogram).
 
-Execution modes:
-    MODE = 'compute' : recompute the null LMI distribution, save CSV, then plot
-    MODE = 'plot'    : load a previously saved CSV and plot only
+The null distribution (slow) is computed when its cache is missing or with
+--recompute, and loaded from the cache otherwise:
+    python src/manuscript/revisions/figure_3f_LMIshuffles.py [--recompute]
 
 Real LMI values are loaded as-is from lmi_results.csv (already computed).
 """
 
 import os
-import sys
 
 import numpy as np
 import pandas as pd
-import xarray as xr
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import ks_2samp, levene
@@ -52,12 +50,6 @@ PROCESSED_DATA_DIR = paths.processed_dir
 NULL_LMI_CSV = os.path.join(PROCESSED_DATA_DIR, 'lmi_null_shuffles.csv')
 LMI_RESULTS_CSV = os.path.join(paths.processed_dir, 'lmi_results.csv')
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_3f_LMIshuffles')
-
-# Execution mode
-#   'compute' : rerun the shuffle procedure for all mice, save CSV, then plot
-#   'plot'    : load previously saved CSV and plot only
-#   FAST_LEARNING_MODE overrides the default.
-MODE = os.environ.get('FAST_LEARNING_MODE', 'compute')
 
 
 # ============================================================================
@@ -133,7 +125,7 @@ def load_null_lmi_distribution():
     if not os.path.exists(NULL_LMI_CSV):
         raise FileNotFoundError(
             f"Pre-computed null LMI data not found: {NULL_LMI_CSV}\n"
-            "Run with MODE='compute' first.")
+            "Run with --recompute first.")
     df = pd.read_csv(NULL_LMI_CSV)
     print(f"Loaded: {NULL_LMI_CSV}  ({len(df)} rows)")
     return df
@@ -231,15 +223,17 @@ def plot_lmi_vs_null(lmi_df, null_df, output_dir=OUTPUT_DIR,
 # ============================================================================
 
 if __name__ == '__main__':
-    print(f"Mode: {MODE}")
+    import argparse
+    parser = argparse.ArgumentParser(description='Real vs shuffled-null LMI distributions.')
+    parser.add_argument('--recompute', action='store_true',
+                        help='recompute the null LMI distribution even if it is cached')
+    args = parser.parse_args()
     print(f"Output directory: {OUTPUT_DIR}")
 
-    if MODE == 'compute':
+    if args.recompute or not os.path.exists(NULL_LMI_CSV):
         null_df = compute_null_lmi_distribution()
-    elif MODE == 'plot':
-        null_df = load_null_lmi_distribution()
     else:
-        raise ValueError(f"Unknown MODE '{MODE}'. Use 'compute' or 'plot'.")
+        null_df = load_null_lmi_distribution()
 
     lmi_df = load_real_lmi()
     stats_df = plot_lmi_vs_null(lmi_df, null_df)

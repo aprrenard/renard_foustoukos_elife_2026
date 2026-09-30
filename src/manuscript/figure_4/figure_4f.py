@@ -6,13 +6,12 @@ Layout:
   - Right: neural activity heatmap (cells × time)
   - Top of heatmap: tick marks at detected reactivation events
 
-Result files (reactivation_results.pkl, lmi_results.csv,
-cell_participation_rates_per_day.csv, circular_shift_significant_participation.csv)
-are loaded from data_processed/reactivation/. Figures are saved to output/.
+Inputs:  reactivation_results_p99.pkl (pipeline/07_reactivations.py),
+         lmi_results.csv, participation rates (pipeline/08_participation.py).
+Outputs: <figures_dir>/figure_4/output/figure_4f.svg.
 """
 
 import os
-import sys
 import pickle
 
 import numpy as np
@@ -21,7 +20,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import AutoLocator
 
-from fast_learning import paths
+from fast_learning import paths, participation
 
 
 # ============================================================================
@@ -109,7 +108,7 @@ def panel_f_reactivation_heatmap(
         for r in roi_ids_orig
     ])
 
-    part_df = pd.read_csv(os.path.join(results_dir, 'cell_participation_rates_per_day.csv'))
+    part_df = pd.read_csv(participation.rates_csv())
     mouse_part = (part_df[(part_df['mouse_id'] == mouse) & (part_df['day'] == day)]
                   .set_index('roi'))
     part_orig = np.array([

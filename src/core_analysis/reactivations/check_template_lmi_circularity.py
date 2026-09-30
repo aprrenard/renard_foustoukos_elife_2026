@@ -31,9 +31,13 @@ sys.path.append('/home/aprenard/repos/fast-learning')
 from fast_learning import paths
 from fast_learning import imaging
 from fast_learning.plotting import reward_palette
-from src.manuscript.preprocessing.reactivation_preprocessing import (
-    create_whisker_template, r_plus_mice, r_minus_mice,
-)
+from fast_learning import database
+from fast_learning.reactivations import create_whisker_template
+
+_, _, _mice, _db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir, two_p_imaging='yes')
+_groups = {m: database.get_mouse_reward_group_from_db(paths.db_path, m, db=_db) for m in _mice}
+r_plus_mice = [m for m in _mice if _groups[m] == 'R+']
+r_minus_mice = [m for m in _mice if _groups[m] == 'R-']
 
 
 # ============================================================================

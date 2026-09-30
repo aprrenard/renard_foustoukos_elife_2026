@@ -5,111 +5,29 @@ compared pre vs post learning. Mapping trials only.
 
 Stats at the cell-pair level (Mann-Whitney U, pre vs post).
 
-ANALYSIS_MODE:
-  'compute' — run the full computation and save intermediate CSVs
-  'analyze' — load previously saved CSVs and plot only
+Inputs:  pair-level correlations (pipeline/09_pairwise_correlations.py).
+Outputs: <figures_dir>/supp_3/output/supp_3m_<group>.svg, _data.csv, _stats.csv.
 """
 
 import os
-import sys
-from itertools import combinations
-from multiprocessing import Pool
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.stats import mannwhitneyu, pearsonr
+from scipy.stats import mannwhitneyu
 
 
-from fast_learning import imaging
-from fast_learning import paths, database
+from fast_learning import paths, correlations
 
 
 # ============================================================================
 # Parameters
 # ============================================================================
 
-# 'compute' or 'analyze'; FAST_LEARNING_MODE overrides the default.
-ANALYSIS_MODE = os.environ.get('FAST_LEARNING_MODE', 'analyze')
-WIN_SEC       = (-2, 0)     # quiet window before stimulus onset
-PRE_DAYS      = [-2, -1]
-POST_DAYS     = [1, 2]
-N_CORES       = 35
-PAIR_TYPES    = ['wS2-wS2', 'wM1-wM1']
+PAIR_TYPES = correlations.PAIR_TYPES
 
-# Intermediate results (heavy CSVs): kept in processed_dir
-RESULTS_DIR = os.path.join(paths.processed_dir, 'pairwise_correlations')
-
-# Final figures + stats CSVs
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
-
-
-# ============================================================================
-# Session / mouse setup
-# ============================================================================
-
-_, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir,
-                                             two_p_imaging='yes',
-                                             experimenters=['AR', 'GF', 'MI'])
-
-mice_by_group = {}
-for mouse_id in mice:
-    rg = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
-    mice_by_group.setdefault(rg, []).append(mouse_id)
-
-
-# ============================================================================
-# Per-mouse computation
-# ============================================================================
-
-def process_mouse(mouse_id):
-    reward_group = database.get_mouse_reward_group_from_db(paths.db_path, mouse_id)
-    folder = paths.tensor_dir
-    xarr = imaging.load_mouse_xarray(
-        mouse_id, folder, 'tensor_xarray_mapping_data.nc', subtracted=False)
-    xarr.name = 'dff'
-    xarr = xarr.sel(trial=xarr['day'].isin(PRE_DAYS + POST_DAYS))
-    xarr = xarr.sel(time=slice(WIN_SEC[0], WIN_SEC[1]))
-
-    mouse_results = []
-    for period, days in [('pre', PRE_DAYS), ('post', POST_DAYS)]:
-        xarr_period    = xarr.sel(trial=xarr['day'].isin(days))
-        all_cells_data = xarr_period.values        # (n_cells, n_trials, n_time)
-        cell_types     = xarr_period.coords['cell_type'].values
-        rois           = xarr_period.coords['roi'].values
-        n_cells, n_trials, _ = all_cells_data.shape
-
-        if n_trials == 0:
-            continue
-
-        for i, j in combinations(range(n_cells), 2):
-            if cell_types[i] != cell_types[j]:
-                continue
-            if cell_types[i] not in ['wS2', 'wM1']:
-                continue
-
-            trial_corrs = []
-            for t in range(n_trials):
-                ci, cj = all_cells_data[i, t, :], all_cells_data[j, t, :]
-                valid  = ~(np.isnan(ci) | np.isnan(cj))
-                if valid.sum() > 1 and np.std(ci[valid]) > 0 and np.std(cj[valid]) > 0:
-                    trial_corrs.append(pearsonr(ci[valid], cj[valid])[0])
-
-            if trial_corrs:
-                mouse_results.append({
-                    'mouse_id':     mouse_id,
-                    'reward_group': reward_group,
-                    'period':       period,
-                    'pair_type':    f'{cell_types[i]}-{cell_types[i]}',
-                    'roi_i':        rois[i],
-                    'roi_j':        rois[j],
-                    'correlation':  np.mean(trial_corrs),
-                    'n_trials':     len(trial_corrs),
-                })
-
-    print(f"  {mouse_id}: {len(mouse_results)} pairs")
-    return mouse_results
 
 
 # ============================================================================
@@ -143,27 +61,11 @@ if __name__ == '__main__':
                   rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'})
 
     for reward_group in ['R+', 'R-']:
-        if reward_group not in mice_by_group:
-            print(f"No mice for {reward_group}, skipping.")
-            continue
-
-        group_mice = mice_by_group[reward_group]
-        inter_dir  = os.path.join(RESULTS_DIR, reward_group, 'mapping')
-        os.makedirs(inter_dir, exist_ok=True)
-        corr_csv   = os.path.join(inter_dir, 'pairwise_correlations_prepost.csv')
-
-        # ── Compute or load ──────────────────────────────────────────────────
-        if ANALYSIS_MODE == 'compute' or not os.path.exists(corr_csv):
-            print(f"\n[COMPUTE] {reward_group} — {len(group_mice)} mice, {N_CORES} cores")
-            with Pool(processes=N_CORES) as pool:
-                results_list = pool.map(process_mouse, group_mice)
-            corr_df = pd.DataFrame(
-                [item for sublist in results_list for item in sublist])
-            corr_df.to_csv(corr_csv, index=False)
-            print(f"Saved: {corr_csv}")
-        else:
-            print(f"\n[ANALYZE] Loading {corr_csv}")
-            corr_df = pd.read_csv(corr_csv)
+        corr_csv = correlations.correlations_csv(reward_group)
+        if not os.path.exists(corr_csv):
+            raise FileNotFoundError(f"{corr_csv} not found. Run pipeline/09_pairwise_correlations.py first.")
+        print(f"\nLoading {corr_csv}")
+        corr_df = pd.read_csv(corr_csv)
 
         print(f"Pairs: {corr_df['pair_type'].value_counts().to_dict()}")
 

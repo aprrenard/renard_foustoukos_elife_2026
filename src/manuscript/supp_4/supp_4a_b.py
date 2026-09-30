@@ -15,325 +15,34 @@ LMI-participation relationship.
 Mice: those in the participation mouse selection (>= 3 reactivation events
 on day 0; see fast_learning.reactivations).
 
-Execution modes:
-    MODE = 'compute' : run full pipeline, save intermediate data, then plot
-    MODE = 'plot'    : load previously saved data from RESULTS_DIR and plot only
-
-Intermediate data (participation rates, merged day-0 dataset) are saved to
-data_processed/reactivation/.
-Figures and data/stats CSVs are saved to paths.manuscript_output_dir/supp_4/output/.
+Inputs:  day-0 participation, transient frequency and LMI per cell
+         (pipeline/08_participation.py).
+Outputs: <figures_dir>/supp_4/output/supp_4a.svg, supp_4b.svg and their
+         _data.csv / _stats.csv.
 
 NOTE (revision): per reviewer comment (3), both panels' Pearson correlations
 (raw and partial) pool cells across mice as independent observations. A
 mixed-effects version (mouse_id as random intercept; the partial correlation
 becomes the lmi coefficient of a participation_rate ~ lmi + transient_freq
-model) is implemented in src/manuscript/revisions/supp_4a_b_lmm.py, reusing
-this module's data pipeline unchanged.
+model) is implemented in src/manuscript/revisions/supp_4a_b_lmm.py, on the
+same data.
 """
 
 import os
-import sys
-import pickle
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import seaborn as sns
-from scipy.signal import find_peaks, savgol_filter
 from scipy.stats import pearsonr, linregress
-from joblib import Parallel, delayed
 
-from fast_learning import paths, database
-from fast_learning import imaging, reactivations
+from fast_learning import paths, participation
 from fast_learning.plotting import reward_palette
 
 
-# ============================================================================
-# Parameters
-# ============================================================================
-
-DAYS = [-2, -1, 0, 1, 2]
-SAMPLING_RATE = 30
-
-# Participation parameters (must match reactivation_lmi_prediction.py)
-EVENT_WINDOW_MS = 150
-EVENT_WINDOW_FRAMES = int(EVENT_WINDOW_MS / 1000 * SAMPLING_RATE)
-PARTICIPATION_THRESHOLD = 0.10
-MIN_EVENTS_FOR_RELIABILITY = reactivations.MIN_EVENTS_PER_DAY
-
-# Spontaneous transient detection parameters
-MIN_DISTANCE_MS = 200
-MIN_DISTANCE_FRAMES = int(MIN_DISTANCE_MS / 1000 * SAMPLING_RATE)
-PROMINENCE_TRANSIENT = 0.2
-N_STD_THRESHOLD = 3               # Per-cell threshold: N_STD_THRESHOLD * std(trace)
-SAVGOL_WINDOW = 10
-SAVGOL_ORDER = 2
-
-N_JOBS = 10
-
-RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
-REACTIVATION_RESULTS_FILE = os.path.join(RESULTS_DIR, 'reactivation_results_p99.pkl')
-PARTICIPATION_CSV = os.path.join(RESULTS_DIR, 'cell_participation_rates_per_day.csv')
-LMI_RESULTS_CSV = os.path.join(paths.processed_dir, 'lmi_results.csv')
-LMI_DATA_CSV = os.path.join(RESULTS_DIR, 'supp4ab_lmi_data_day0.csv')
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_4', 'output')
-FOLDER = paths.tensor_dir
-
-# Execution mode ('compute' or 'plot'); FAST_LEARNING_MODE overrides the default.
-MODE = os.environ.get('FAST_LEARNING_MODE', 'plot')
-
-
-# ============================================================================
-# Mouse loading
-# ============================================================================
-
-_, _, _all_mice, _db = database.select_sessions_from_db(
-    paths.db_path, paths.nwb_dir, two_p_imaging='yes'
-)
-
-r_plus_mice, r_minus_mice = [], []
-for _mouse in _all_mice:
-    try:
-        _rg = database.get_mouse_reward_group_from_db(paths.db_path, _mouse, db=_db)
-        if _rg == 'R+':
-            r_plus_mice.append(_mouse)
-        elif _rg == 'R-':
-            r_minus_mice.append(_mouse)
-    except Exception:
-        continue
-
-print(f"Found {len(r_plus_mice)} R+ mice and {len(r_minus_mice)} R- mice")
-
-
-# ============================================================================
-# Participation computation
-# ============================================================================
-
-def _extract_event_responses(mouse, day, preloaded_events):
-    """
-    Extract per-cell dF/F responses around pre-computed reactivation events.
-
-    Uses no-stim trials only. Responses are averaged over ±EVENT_WINDOW_FRAMES
-    around each event. Cells are flagged as participating if their mean response
-    exceeds PARTICIPATION_THRESHOLD.
-
-    Returns DataFrame (mouse_id, day, roi, event_idx, avg_response, participates)
-    or None if insufficient data (<10 no-stim trials or no valid events).
-    """
-    # Baseline-subtracted dF/F, as in figure_4i_j and supp_4c.
-    xarr = imaging.load_mouse_xarray(
-        mouse, FOLDER, 'tensor_xarray_learning_data.nc', subtracted=True
-    )
-    xarr_day = xarr.sel(trial=xarr['day'] == day)
-    nostim = xarr_day.sel(trial=xarr_day['no_stim'] == 1)
-
-    if len(nostim.trial) < 10:
-        return None
-
-    n_cells, n_trials, n_timepoints = nostim.shape
-    data_3d = nostim.values
-    roi_list = nostim['roi'].values
-    win = EVENT_WINDOW_FRAMES
-
-    rows = []
-    for event_idx in preloaded_events:
-        trial_idx = event_idx // n_timepoints
-        time_idx  = event_idx % n_timepoints
-        if time_idx < win or time_idx >= n_timepoints - win or trial_idx >= n_trials:
-            continue
-        window_data  = data_3d[:, trial_idx, time_idx - win:time_idx + win + 1]
-        avg_response = np.mean(window_data, axis=1)
-        participates = avg_response >= PARTICIPATION_THRESHOLD
-        for icell in range(n_cells):
-            rows.append({
-                'mouse_id': mouse, 'day': day, 'roi': roi_list[icell],
-                'event_idx': event_idx, 'avg_response': float(avg_response[icell]),
-                'participates': bool(participates[icell]),
-            })
-
-    return pd.DataFrame(rows) if rows else None
-
-
-def _compute_participation_rate(responses_df):
-    """Aggregate cell-event responses to per-cell participation rates."""
-    grouped = responses_df.groupby(['mouse_id', 'day', 'roi']).agg(
-        n_participations=('participates', 'sum'),
-        n_events=('participates', 'count'),
-    ).reset_index()
-    grouped['participation_rate'] = grouped['n_participations'] / grouped['n_events']
-    grouped['reliable'] = grouped['n_events'] >= MIN_EVENTS_FOR_RELIABILITY
-    return grouped
-
-
-def _process_mouse_participation(mouse, preloaded_results):
-    """Compute participation rates across all days for one mouse."""
-    all_responses = []
-    for day in DAYS:
-        events = preloaded_results.get('days', {}).get(day, {}).get('events', None)
-        if events is None or len(events) == 0:
-            continue
-        try:
-            resp_df = _extract_event_responses(mouse, day, events)
-            if resp_df is not None and len(resp_df) > 0:
-                all_responses.append(resp_df)
-        except Exception as e:
-            print(f"  Warning: {mouse} day {day}: {e}")
-    if not all_responses:
-        return mouse, None
-    all_resp_df = pd.concat(all_responses, ignore_index=True)
-    return mouse, _compute_participation_rate(all_resp_df)
-
-
-def compute_participation_csv(save_path):
-    """
-    Compute per-cell participation rates across days from pre-computed
-    reactivation events (reactivation_results_p99.pkl) and save to save_path.
-
-    Runs in parallel across mice.
-    """
-    if not os.path.exists(REACTIVATION_RESULTS_FILE):
-        raise FileNotFoundError(
-            f"Reactivation results not found: {REACTIVATION_RESULTS_FILE}\n"
-            "Run reactivation.py first."
-        )
-
-    with open(REACTIVATION_RESULTS_FILE, 'rb') as f:
-        data = pickle.load(f)
-    included = reactivations.load_participation_mice()
-    all_results = {m: res for m, res in
-                   {**data['r_plus_results'], **data['r_minus_results']}.items()
-                   if m in included}
-
-    all_mice = list(all_results)
-    print(f"\nComputing participation rates for {len(all_mice)} mice...")
-    results_list = Parallel(n_jobs=N_JOBS, verbose=5)(
-        delayed(_process_mouse_participation)(mouse, all_results[mouse])
-        for mouse in all_mice
-    )
-
-    all_data = [df for _, df in results_list if df is not None]
-    if not all_data:
-        raise RuntimeError("No participation data computed.")
-
-    participation_df_all = pd.concat(all_data, ignore_index=True)
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    participation_df_all.to_csv(save_path, index=False)
-    print(f"Saved: {save_path}  ({len(participation_df_all)} cell-day records)")
-    return participation_df_all
-
-
-# ============================================================================
-# Transient detection
-# ============================================================================
-
-def _detect_transients(cell_trace):
-    """Detect calcium transients in a single cell trace. Returns peak indices.
-
-    The height threshold is set per cell as N_STD_THRESHOLD * std(cell_trace),
-    preventing noisy cells from generating spuriously high transient counts.
-    """
-    smoothed = savgol_filter(cell_trace, SAVGOL_WINDOW, SAVGOL_ORDER)
-    cell_threshold = N_STD_THRESHOLD * np.std(cell_trace)
-    peaks, _ = find_peaks(
-        smoothed,
-        height=cell_threshold,
-        distance=MIN_DISTANCE_FRAMES,
-        prominence=PROMINENCE_TRANSIENT,
-    )
-    return peaks
-
-
-def _compute_transient_freq_per_cell(mouse_id, day=0):
-    """
-    Compute spontaneous transient frequency (events/min) per cell for a given
-    mouse and day, using no-stim trials only.
-
-    Returns DataFrame: mouse_id, roi, transient_freq.
-    """
-    try:
-        xarr = imaging.load_mouse_xarray(
-            mouse_id, FOLDER, 'tensor_xarray_learning_data.nc', subtracted=False
-        )
-    except Exception as e:
-        print(f"  Warning: Could not load data for {mouse_id}: {e}")
-        return pd.DataFrame()
-
-    xarr_day = xarr.sel(trial=(xarr['day'] == day) & (xarr['no_stim'] == 1))
-    if len(xarr_day.trial) == 0:
-        return pd.DataFrame()
-
-    n_cells = len(xarr_day.cell)
-    roi_ids = xarr_day['roi'].values
-    data = xarr_day.values.reshape(n_cells, -1)
-    data = np.nan_to_num(data, nan=0.0)
-    session_duration_min = data.shape[1] / SAMPLING_RATE / 60
-
-    rows = []
-    for c in range(n_cells):
-        n_peaks = len(_detect_transients(data[c]))
-        rows.append({
-            'mouse_id': mouse_id,
-            'roi': roi_ids[c],
-            'transient_freq': n_peaks / session_duration_min,
-        })
-    return pd.DataFrame(rows)
-
-
-# ============================================================================
-# Build merged day-0 dataset
-# ============================================================================
-
-def compute_lmi_data_csv(save_path):
-    """
-    Build the per-cell day-0 dataset used by both panels by merging:
-      - PARTICIPATION_CSV  (mouse_id, roi, participation_rate — day 0 only)
-      - transient freq     (computed from raw imaging, no-stim trials, day 0)
-      - LMI_RESULTS_CSV    (mouse_id, roi, lmi, lmi_p)
-
-    Computes PARTICIPATION_CSV first if it does not exist.
-    Saves the merged DataFrame to save_path.
-    """
-    # Participation rates
-    if not os.path.exists(PARTICIPATION_CSV):
-        print("Participation CSV not found, computing it...")
-        compute_participation_csv(PARTICIPATION_CSV)
-
-    part_df = pd.read_csv(PARTICIPATION_CSV)
-    part_df = part_df[part_df['day'] == 0][['mouse_id', 'roi', 'participation_rate']].copy()
-    if len(part_df) == 0:
-        raise RuntimeError("No day-0 participation data found.")
-
-    # Transient frequencies
-    mice = part_df['mouse_id'].unique()
-    transient_parts = []
-    for mouse_id in mice:
-        print(f"  Computing transient freq for {mouse_id}...")
-        transient_parts.append(_compute_transient_freq_per_cell(mouse_id, day=0))
-    transient_df = pd.concat(
-        [d for d in transient_parts if len(d) > 0], ignore_index=True
-    )
-    if len(transient_df) == 0:
-        raise RuntimeError("No transient data computed.")
-
-    # LMI
-    lmi_df = pd.read_csv(LMI_RESULTS_CSV)[['mouse_id', 'roi', 'lmi', 'lmi_p']]
-
-    # Merge
-    merged = part_df.merge(transient_df, on=['mouse_id', 'roi'], how='inner')
-    merged = merged.merge(lmi_df, on=['mouse_id', 'roi'], how='inner')
-
-    group_map = {m: 'R+' for m in r_plus_mice}
-    group_map.update({m: 'R-' for m in r_minus_mice})
-    merged['reward_group'] = merged['mouse_id'].map(group_map)
-    merged = merged.dropna(
-        subset=['reward_group', 'transient_freq', 'participation_rate', 'lmi']
-    )
-
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    merged.to_csv(save_path, index=False)
-    print(f"Saved: {save_path}  ({len(merged)} cells, {merged['mouse_id'].nunique()} mice)")
-    return merged
+LMI_DATA_CSV = participation.DAY0_CSV
 
 
 # ============================================================================
@@ -607,21 +316,9 @@ def panel_supp4b_partial_corr(
 # ============================================================================
 
 if __name__ == '__main__':
-    print(f"Mode:             {MODE}")
-    print(f"Results dir:      {RESULTS_DIR}")
+    print(f"Input:            {LMI_DATA_CSV}")
     print(f"Output directory: {OUTPUT_DIR}")
-
-    if MODE == 'compute':
-        compute_participation_csv(PARTICIPATION_CSV)
-        compute_lmi_data_csv(LMI_DATA_CSV)
-    elif MODE == 'plot':
-        if not os.path.exists(LMI_DATA_CSV):
-            raise FileNotFoundError(
-                f"Data CSV not found: {LMI_DATA_CSV}\n"
-                "Run with MODE='compute' first."
-            )
-    else:
-        raise ValueError(f"Unknown MODE '{MODE}'. Use 'compute' or 'plot'.")
+    participation.load_day0()   # fails early if step 08 has not been run
 
     print("\nPlotting panel supp_4a...")
     panel_supp4a_scatter(LMI_DATA_CSV, filename='supp_4a')

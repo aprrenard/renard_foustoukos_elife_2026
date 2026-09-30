@@ -12,30 +12,28 @@ For each panel, two CSV files are saved alongside this script:
 """
 
 import os
-import sys
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import spearmanr, mannwhitneyu, wilcoxon, kruskal
+from scipy.stats import mannwhitneyu
 from statsmodels.formula.api import ols
 from statsmodels.stats.anova import anova_lm
 
 from fast_learning import imaging
 from fast_learning import paths, database
 from fast_learning.plotting import reward_palette
+from fast_learning.similarity import (
+    WIN, DAYS, N_MAP_TRIALS,
+    compute_similarity_matrix, compute_within_day_metrics,
+    compute_reorganization_metrics,
+)
 
 
 # ============================================================================
 # Parameters
 # ============================================================================
-
-SAMPLING_RATE = 30
-WIN = (0, 0.300)       # stimulus onset to 300 ms after
-BASELINE_WIN = (-1, 0)
-DAYS = [-2, -1, 0, 1, 2]
-N_MAP_TRIALS = 40
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
 
@@ -136,27 +134,10 @@ def load_and_process_data(
 
     print(f"Loaded {len(vectors_rew)} R+ mice and {len(vectors_nonrew)} R- mice")
 
-    corr_matrices_rew = [_compute_similarity_matrix(v, similarity_metric) for v in vectors_rew]
-    corr_matrices_nonrew = [_compute_similarity_matrix(v, similarity_metric) for v in vectors_nonrew]
+    corr_matrices_rew = [compute_similarity_matrix(v, similarity_metric) for v in vectors_rew]
+    corr_matrices_nonrew = [compute_similarity_matrix(v, similarity_metric) for v in vectors_nonrew]
 
     return corr_matrices_rew, corr_matrices_nonrew, mice_rew, mice_nonrew
-
-
-def _compute_similarity_matrix(vector, similarity_metric):
-    """Compute a trial-by-trial similarity matrix for one mouse."""
-    if similarity_metric == 'pearson':
-        cm = np.corrcoef(vector.values.T)
-    elif similarity_metric == 'spearman':
-        cm, _ = spearmanr(vector.values.T, axis=1)
-    elif similarity_metric == 'cosine':
-        data = vector.values.T  # (trials, cells)
-        data = np.nan_to_num(data, nan=0.0)
-        norms = np.linalg.norm(data, axis=1, keepdims=True)
-        norms = np.where(norms == 0, 1, norms)
-        normalized = data / norms
-        cm = normalized @ normalized.T
-    np.fill_diagonal(cm, np.nan)
-    return cm
 
 
 def _significance_stars(p):
@@ -167,62 +148,6 @@ def _significance_stars(p):
     elif p < 0.05:
         return '*'
     return 'n.s.'
-
-
-# ============================================================================
-# Metric computation
-# ============================================================================
-
-def _compute_within_day_metrics(corr_matrices, mice_ids, reward_group):
-    """Compute average within-day correlation per mouse for each day."""
-    results = []
-    for cm in corr_matrices:
-        row = {}
-        for i, day in enumerate(DAYS):
-            day_idx = np.arange(i * N_MAP_TRIALS, (i + 1) * N_MAP_TRIALS)
-            row[f'within_day{day:+d}'] = np.nanmean(cm[np.ix_(day_idx, day_idx)])
-        results.append(row)
-    df = pd.DataFrame(results)
-    df['reward_group'] = reward_group
-    df['mouse_id'] = mice_ids
-    return df
-
-
-def _compute_day0_metrics(corr_matrices, mice_ids, reward_group):
-    """Compute average correlation between day 0 and each other day, per mouse."""
-    day0_idx = np.arange(2 * N_MAP_TRIALS, 3 * N_MAP_TRIALS)
-    results = []
-    for cm in corr_matrices:
-        row = {}
-        for i, day in enumerate(DAYS):
-            day_idx = np.arange(i * N_MAP_TRIALS, (i + 1) * N_MAP_TRIALS)
-            row[f'corr_day0_vs_day{day:+d}'] = np.nanmean(cm[np.ix_(day0_idx, day_idx)])
-        results.append(row)
-    df = pd.DataFrame(results)
-    df['reward_group'] = reward_group
-    df['mouse_id'] = mice_ids
-    return df
-
-
-def _compute_reorganization_metrics(corr_matrices, mice_ids, reward_group):
-    """Compute network reorganization index per mouse."""
-    pre_idx = np.arange(0, 2 * N_MAP_TRIALS)
-    post_idx = np.arange(3 * N_MAP_TRIALS, 5 * N_MAP_TRIALS)
-    results = []
-    for cm in corr_matrices:
-        within_pre = np.nanmean(cm[np.ix_(pre_idx, pre_idx)])
-        within_post = np.nanmean(cm[np.ix_(post_idx, post_idx)])
-        between = np.nanmean(cm[np.ix_(pre_idx, post_idx)])
-        results.append({
-            'within_pre': within_pre,
-            'within_post': within_post,
-            'between_pre_post': between,
-            'reorganization_index': (within_pre + within_post) / 2 - between,
-        })
-    df = pd.DataFrame(results)
-    df['reward_group'] = reward_group
-    df['mouse_id'] = mice_ids
-    return df
 
 
 # ============================================================================
@@ -375,8 +300,8 @@ def panel_i_within_day_correlations(
 
     sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
-    metrics_rew = _compute_within_day_metrics(corr_matrices_rew, mice_rew, 'R+')
-    metrics_nonrew = _compute_within_day_metrics(corr_matrices_nonrew, mice_nonrew, 'R-')
+    metrics_rew = compute_within_day_metrics(corr_matrices_rew, mice_rew, 'R+')
+    metrics_nonrew = compute_within_day_metrics(corr_matrices_nonrew, mice_nonrew, 'R-')
     metrics_combined = pd.concat([metrics_rew, metrics_nonrew], ignore_index=True)
 
     # Reshape to long format for ANOVA
@@ -495,8 +420,8 @@ def panel_j_reorganization_index(
 
     sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
 
-    metrics_rew = _compute_reorganization_metrics(corr_matrices_rew, mice_rew, 'R+')
-    metrics_nonrew = _compute_reorganization_metrics(corr_matrices_nonrew, mice_nonrew, 'R-')
+    metrics_rew = compute_reorganization_metrics(corr_matrices_rew, mice_rew, 'R+')
+    metrics_nonrew = compute_reorganization_metrics(corr_matrices_nonrew, mice_nonrew, 'R-')
     metrics_combined = pd.concat([metrics_rew, metrics_nonrew], ignore_index=True)
 
     # Statistics: Mann-Whitney U between groups
