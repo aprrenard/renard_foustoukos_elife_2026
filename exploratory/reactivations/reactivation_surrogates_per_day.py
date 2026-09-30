@@ -43,7 +43,7 @@ sys.path.append(r'/home/aprenard/repos/fast-learning')
 from fast_learning import imaging
 from fast_learning import paths, database
 from fast_learning.plotting import *
-from src.core_analysis.reactivations.reactivation import (
+from exploratory.reactivations.reactivation import (
     create_whisker_template,
     compute_template_correlation
 )
@@ -55,7 +55,7 @@ from src.core_analysis.reactivations.reactivation import (
 sampling_rate = 30  # Hz
 days = [-2, -1, 0, 1, 2]
 days_str = ['-2', '-1', '0', '+1', '+2']
-n_map_trials = 40  # Number of mapping t/home/aprenard/repos/fast-learning/src/core_analysis/reactivations/reactivation_surrogates_per_day.pyrials for template
+n_map_trials = 40  # Number of mapping t/home/aprenard/repos/fast-learning/exploratory/reactivations/reactivation_surrogates_per_day.pyrials for template
 
 # Template parameters
 threshold_dff = None  # 5% dF/F threshold for template cells (use None for all cells)

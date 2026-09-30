@@ -1,17 +1,15 @@
 """
-Per-mouse surrogate threshold control: circular shift event frequency comparison.
+Fixed-threshold reactivation control: circular shift event frequency comparison.
 
-Validates that per-mouse surrogate thresholds (from reactivation_surrogate_by_mouse.py)
-are not generating spurious events, by comparing event frequencies detected in real
-data against circular-shift surrogates, across all 5 days.
-
-Each mouse uses its own threshold loaded from surrogate_thresholds_per_mouse_p{X}.csv.
+When using a fixed correlation threshold (use_surrogate_thresholds = False), this
+script validates that the threshold is not generating spurious events by comparing
+the frequency of detected events in real data against the frequency detected in
+circular-shift surrogates, across all 5 days.
 
 For each mouse and each day (no-stim trials):
-  1. Look up this mouse's surrogate threshold
-  2. Compute template correlation on real data, detect events → real event frequency
-  3. Run N circular shift iterations with the same threshold → surrogate frequencies
-  4. Average surrogate frequencies per mouse
+  1. Compute template correlation on real data, detect events → real event frequency
+  2. Run N circular shift iterations, detect events in each → surrogate frequencies
+  3. Average surrogate frequencies per mouse
 
 Figure: two panels (R+, R-), x-axis = days, grouped bars (Real vs Surrogate) per
 day, with per-mouse lines connecting the two bars within each day.
@@ -30,14 +28,12 @@ sys.path.append(r'/home/aprenard/repos/fast-learning')
 from fast_learning import imaging
 from fast_learning import paths, database
 from fast_learning.plotting import *
-from src.core_analysis.reactivations.reactivation import (
+from exploratory.reactivations.reactivation import (
     create_whisker_template,
     compute_template_correlation,
     detect_reactivation_events,
-    load_surrogate_thresholds,
-    get_threshold_for_mouse_day,
 )
-from src.core_analysis.reactivations.reactivation_surrogates_per_day import (
+from exploratory.reactivations.reactivation_surrogates_per_day import (
     create_surrogate_by_circular_shift,
 )
 
@@ -50,8 +46,7 @@ sampling_rate = 30          # Hz
 days = [-2, -1, 0, 1, 2]
 days_str = ['-2', '-1', '0', '+1', '+2']
 threshold_dff = None        # Template cell threshold (None = all cells)
-percentile_to_use = 99      # Which percentile threshold to load: 95, 99, or 99.9
-default_threshold = 0.45    # Fallback if mouse not found in threshold CSV
+threshold_corr = 0.45       # Fixed correlation threshold for event detection
 min_event_distance_ms = 150
 min_event_distance_frames = int(min_event_distance_ms / 1000 * sampling_rate)
 prominence = 0.15
@@ -65,12 +60,6 @@ sns.set_theme(context='paper', style='ticks', palette='deep',
 # Output
 save_dir = os.path.join(paths.results_dir, 'reactivation')
 os.makedirs(save_dir, exist_ok=True)
-
-# Surrogate threshold CSV (per-mouse)
-surrogate_csv_path = os.path.join(
-    paths.results_dir, 'reactivation_surrogates_per_mouse',
-    'surrogate_thresholds_per_mouse.csv'
-)
 
 # Load database and split mice by reward group
 _, _, all_mice, db = database.select_sessions_from_db(
@@ -96,30 +85,27 @@ print(f"R- mice: {r_minus_mice}")
 # CORE COMPUTATION
 # =============================================================================
 
-def process_single_mouse(mouse, days, threshold_dict, n_surrogates):
+def process_single_mouse(mouse, days, threshold_corr, n_surrogates):
     """
     Compute real and surrogate event frequencies for one mouse across all days.
 
-    Uses the per-mouse surrogate threshold loaded from the CSV. Loads the xarray
-    once, then loops over days.
+    Loads the xarray once, then loops over days. For each day: computes template
+    correlation on real data and on N circular-shift surrogates, detects events
+    with the fixed threshold, and returns events/min for each condition.
 
     Parameters
     ----------
     mouse : str
     days : list of int
-    threshold_dict : dict
-        {mouse_id: {day: threshold}} from load_surrogate_thresholds()
+    threshold_corr : float
     n_surrogates : int
 
     Returns
     -------
     records : list of dict
-        Keys: mouse_id, day, condition ('Real' | 'Surrogate'), event_freq, threshold
+        Keys: mouse_id, day, condition ('Real' | 'Surrogate'), event_freq
     """
     records = []
-
-    # Retrieve this mouse's threshold (same for all days in per-mouse mode)
-    threshold = get_threshold_for_mouse_day(threshold_dict, mouse, 0, default_threshold)
 
     # Load xarray once for all days
     folder = paths.tensor_dir
@@ -146,7 +132,7 @@ def process_single_mouse(mouse, days, threshold_dict, n_surrogates):
             # Real data
             real_corr = compute_template_correlation(data, template)
             real_events = detect_reactivation_events(
-                real_corr, threshold=threshold,
+                real_corr, threshold=threshold_corr,
                 min_distance=min_event_distance_frames, prominence=prominence
             )
             real_freq = len(real_events) / duration_min
@@ -157,14 +143,14 @@ def process_single_mouse(mouse, days, threshold_dict, n_surrogates):
                 surrogate_data = create_surrogate_by_circular_shift(data, min_shift_frames=0)
                 surrogate_corr = compute_template_correlation(surrogate_data, template)
                 surrogate_events = detect_reactivation_events(
-                    surrogate_corr, threshold=threshold,
+                    surrogate_corr, threshold=threshold_corr,
                     min_distance=min_event_distance_frames, prominence=prominence
                 )
                 surrogate_freqs[i] = len(surrogate_events) / duration_min
 
-            records.append({'mouse_id': mouse, 'day': day, 'threshold': threshold,
+            records.append({'mouse_id': mouse, 'day': day,
                             'condition': 'Real', 'event_freq': real_freq})
-            records.append({'mouse_id': mouse, 'day': day, 'threshold': threshold,
+            records.append({'mouse_id': mouse, 'day': day,
                             'condition': 'Surrogate', 'event_freq': surrogate_freqs.mean()})
 
         except Exception as e:
@@ -243,7 +229,7 @@ def plot_real_vs_surrogate(df, save_path):
     fig.legend(handles=handles, loc='upper right', frameon=False, fontsize=8)
 
     fig.suptitle(
-        f'Per-mouse surrogate threshold (p{percentile_to_use}) — Real vs circular-shift event frequency',
+        f'Fixed threshold (corr={threshold_corr}) — Real vs circular-shift event frequency',
         fontsize=10
     )
     plt.tight_layout()
@@ -257,22 +243,15 @@ def plot_real_vs_surrogate(df, save_path):
 # =============================================================================
 
 if __name__ == '__main__':
-    print(f"\nPer-mouse threshold control: real vs circular-shift event frequency")
-    print(f"  Days: {days}, percentile: {percentile_to_use}, n_surrogates: {n_surrogates}")
-    print(f"  Surrogate CSV: {surrogate_csv_path}")
+    print(f"\nFixed-threshold control: real vs circular-shift event frequency")
+    print(f"  Days: {days}, threshold_corr: {threshold_corr}, n_surrogates: {n_surrogates}")
     print(f"  Parallel jobs: {n_jobs}\n")
-
-    # Load per-mouse thresholds
-    if not os.path.exists(surrogate_csv_path.replace('.csv', f'_p{percentile_to_use}.csv')):
-        print(f"WARNING: Threshold CSV not found. Run reactivation_surrogate_by_mouse.py first.")
-    threshold_dict = load_surrogate_thresholds(surrogate_csv_path, percentile=percentile_to_use)
-    print(f"Loaded thresholds for {len(threshold_dict)} mice.")
 
     all_mice_to_process = r_plus_mice + r_minus_mice
     print(f"Processing {len(all_mice_to_process)} mice in parallel...")
 
     results = Parallel(n_jobs=n_jobs, verbose=5)(
-        delayed(process_single_mouse)(mouse, days, threshold_dict, n_surrogates)
+        delayed(process_single_mouse)(mouse, days, threshold_corr, n_surrogates)
         for mouse in all_mice_to_process
     )
 
@@ -281,7 +260,7 @@ if __name__ == '__main__':
 
     if not all_records:
         print("ERROR: No valid results collected.")
-        sys.exit(1)
+        import sys; sys.exit(1)
 
     df = pd.DataFrame(all_records)
     df['reward_group'] = df['mouse_id'].apply(
@@ -289,10 +268,10 @@ if __name__ == '__main__':
     )
 
     # Save data
-    csv_path = os.path.join(save_dir, 'mouse_threshold_control_event_freq.csv')
+    csv_path = os.path.join(save_dir, 'fixed_threshold_control_event_freq.csv')
     df.to_csv(csv_path, index=False)
     print(f"Saved data: {csv_path}")
 
     # Plot
-    svg_path = os.path.join(save_dir, f'mouse_threshold_control_event_freq_p{percentile_to_use}.svg')
+    svg_path = os.path.join(save_dir, 'fixed_threshold_control_event_freq.svg')
     plot_real_vs_surrogate(df, svg_path)

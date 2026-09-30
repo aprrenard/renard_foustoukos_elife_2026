@@ -13,7 +13,6 @@ from RESULTS_DIR/decoder_weights.pkl, produced by pipeline/06_decoder.py.
 
 import os
 import pickle
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np

@@ -7,7 +7,6 @@ This script generates Panels b and c for Figure 2:
 """
 
 import os
-import sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt

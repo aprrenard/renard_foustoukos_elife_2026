@@ -2,20 +2,15 @@
 """
 
 import os
-import sys
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 import scipy.stats as stats
-from sklearn.metrics import auc, roc_curve
-from sklearn.utils import shuffle
 
 from fast_learning import paths, database
-from fast_learning import imaging
 from fast_learning.behavior import *
 from fast_learning.imaging import compute_roc
-from joblib import Parallel, delayed
 
 
 def test_response(data, trial_selection, response_win, baseline_win, method='mannwhitney'):

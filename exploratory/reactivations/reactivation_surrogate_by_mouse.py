@@ -39,11 +39,11 @@ sys.path.append(r'/home/aprenard/repos/fast-learning')
 from fast_learning import imaging
 from fast_learning import paths, database
 from fast_learning.plotting import *
-from src.core_analysis.reactivations.reactivation import (
+from exploratory.reactivations.reactivation import (
     create_whisker_template,
     compute_template_correlation
 )
-from src.core_analysis.reactivations.reactivation_surrogates_per_day import (
+from exploratory.reactivations.reactivation_surrogates_per_day import (
     create_surrogate_by_circular_shift,
     compute_surrogate_thresholds,
 )

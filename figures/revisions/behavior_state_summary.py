@@ -14,11 +14,10 @@ Reward logic (5 uL per rewarded trial):
 
 Trial table is recomputed fresh via make_behavior_table() (not loaded from
 a precomputed CSV) for the imaging cohort, same selection pattern as
-src/core_analysis/behavior/behavior.py.
+exploratory/behavior/behavior.py.
 """
 
 import os
-import sys
 
 import numpy as np
 import pandas as pd

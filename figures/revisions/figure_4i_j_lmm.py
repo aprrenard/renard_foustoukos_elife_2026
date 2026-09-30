@@ -357,7 +357,7 @@ def panel_j_participation_across_days_lmm(
         ax.set_ylim(0, .4)
         ax.tick_params(labelsize=8)
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, [cat_labels[l] for l in labels], fontsize=8)
+        ax.legend(handles, [cat_labels[lab] for lab in labels], fontsize=8)
         sns.despine(ax=ax)
 
         plot_data_rows.append(grp)

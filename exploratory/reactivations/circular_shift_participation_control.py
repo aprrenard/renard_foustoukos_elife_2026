@@ -29,7 +29,7 @@ sys.path.append(r'/home/aprenard/repos/fast-learning')
 from fast_learning import imaging
 from fast_learning import paths, database
 from fast_learning.plotting import *
-from src.core_analysis.reactivations.reactivation import create_whisker_template
+from exploratory.reactivations.reactivation import create_whisker_template
 
 
 # ============================================================================

@@ -7,10 +7,8 @@ CI across mice (variance = mice; minimum 3 cells per mouse to include).
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 

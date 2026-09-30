@@ -1,6 +1,6 @@
 #%%
 # Jupyter / VS Code Interactive demo using ipympl (%matplotlib widget)
-# Save this file as `src/core_analysis/illustrations/lick_raster_widget_demo.py`.
+# Save this file as `exploratory/illustrations/lick_raster_widget_demo.py`.
 # Open it in Jupyter, JupyterLab, or VS Code Interactive Window and run the cells.
 
 # IPython magic: select the interactive widget backend provided by ipympl

@@ -9,7 +9,6 @@ Only hit trials (lick_flag == 1 and outcome == 1) are included.
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np

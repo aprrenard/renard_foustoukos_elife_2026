@@ -6,8 +6,6 @@ across 5 days (days -2, -1, 0, +1, +2) for two example mice (GF305 and AR180).
 """
 
 import os
-import sys
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns

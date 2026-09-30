@@ -6,7 +6,6 @@ Significance stars from per-day Mann-Whitney U tests (two-sided).
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -101,12 +100,12 @@ if __name__ == '__main__':
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_1b.svg'))
-    print(f"Saved: supp_1b.svg")
+    print("Saved: supp_1b.svg")
 
     avg_performance.to_csv(os.path.join(OUTPUT_DIR, 'supp_1b_data.csv'), index=False)
-    print(f"Saved: supp_1b_data.csv")
+    print("Saved: supp_1b_data.csv")
 
     stats_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1b_stats.csv'), index=False)
-    print(f"Saved: supp_1b_stats.csv")
+    print("Saved: supp_1b_stats.csv")
 
     plt.close()

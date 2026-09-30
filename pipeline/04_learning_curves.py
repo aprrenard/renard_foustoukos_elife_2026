@@ -17,7 +17,6 @@ reference table by MCMC sampling noise.
 """
 
 import os
-import sys
 
 import pandas as pd
 

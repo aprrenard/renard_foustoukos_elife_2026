@@ -12,10 +12,8 @@ as a vertical orange line.
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -124,7 +122,7 @@ if __name__ == '__main__':
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_2b.svg'))
-    print(f"\nSaved: supp_2b.svg")
+    print("\nSaved: supp_2b.svg")
 
     # Data: LMI values for the selected example cells
     pd.DataFrame([

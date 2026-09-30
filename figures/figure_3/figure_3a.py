@@ -218,7 +218,7 @@ if __name__ == '__main__':
     # #############################################################################
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    out_path = os.path.join(OUTPUT_DIR, f'figure_3a.svg')
+    out_path = os.path.join(OUTPUT_DIR, 'figure_3a.svg')
     save_figure(fig, out_path)
     print(f"\nSaved: {out_path}")
 

@@ -7,7 +7,6 @@ Statistics: Mann-Whitney U test (two-sided).
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -81,10 +80,10 @@ if __name__ == '__main__':
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_1a.svg'))
-    print(f"Saved: supp_1a.svg")
+    print("Saved: supp_1a.svg")
 
     fh.to_csv(os.path.join(OUTPUT_DIR, 'supp_1a_data.csv'), index=False)
-    print(f"Saved: supp_1a_data.csv")
+    print("Saved: supp_1a_data.csv")
 
     stats_df = pd.DataFrame([{
         'test': 'Mann-Whitney U',
@@ -95,6 +94,6 @@ if __name__ == '__main__':
         'alternative': 'two-sided',
     }])
     stats_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1a_stats.csv'), index=False)
-    print(f"Saved: supp_1a_stats.csv")
+    print("Saved: supp_1a_stats.csv")
 
     plt.close()

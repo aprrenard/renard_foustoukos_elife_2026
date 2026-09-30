@@ -5,7 +5,6 @@ Displays all cells ordered by LMI (significant only) across learning days.
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -158,7 +157,7 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     sig_suffix = '_significant' if use_significant_only else '_all'
-    out_path = os.path.join(OUTPUT_DIR, f'figure_3b.svg')
+    out_path = os.path.join(OUTPUT_DIR, 'figure_3b.svg')
     save_figure(fig, out_path)
     print(f"\nSaved: {out_path}")
 

@@ -7,7 +7,6 @@ mice (minimum 3 cells per mouse to include).
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd

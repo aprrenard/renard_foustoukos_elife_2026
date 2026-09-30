@@ -14,7 +14,6 @@ Use figure_4c.pdf to browse all mice and pick representative examples.
 
 import os
 import pickle
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np

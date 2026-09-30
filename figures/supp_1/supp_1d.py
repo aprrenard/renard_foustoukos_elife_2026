@@ -7,7 +7,6 @@ as a colour bar at the top of the panel.
 """
 
 import os
-import sys
 
 import matplotlib
 import matplotlib.pyplot as plt

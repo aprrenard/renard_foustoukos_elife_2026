@@ -14,7 +14,6 @@ mapping xarrays.
 
 from functools import partial
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np

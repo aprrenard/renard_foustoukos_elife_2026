@@ -11,7 +11,6 @@ Statistics: paired Wilcoxon signed-rank tests (two-sided).
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -177,12 +176,12 @@ if __name__ == '__main__':
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_1c.svg'))
-    print(f"Saved: supp_1c.svg")
+    print("Saved: supp_1c.svg")
 
     df_w.to_csv(os.path.join(OUTPUT_DIR, 'supp_1c_data_whisker.csv'), index=False)
     df_ns.to_csv(os.path.join(OUTPUT_DIR, 'supp_1c_data_nostim.csv'), index=False)
     df_off.to_csv(os.path.join(OUTPUT_DIR, 'supp_1c_data_off.csv'), index=False)
-    print(f"Saved: data CSVs")
+    print("Saved: data CSVs")
 
     pd.DataFrame([
         {'comparison': 'whisker ON1 vs OFF',     'test': 'Wilcoxon', 'statistic': stat1, 'p_value': p1},
@@ -191,6 +190,6 @@ if __name__ == '__main__':
         {'comparison': 'no-stim OFF vs ON2',     'test': 'Wilcoxon', 'statistic': stat4, 'p_value': p4},
         {'comparison': 'OFF: whisker hit vs FA', 'test': 'Wilcoxon', 'statistic': stat5, 'p_value': p5},
     ]).to_csv(os.path.join(OUTPUT_DIR, 'supp_1c_stats.csv'), index=False)
-    print(f"Saved: supp_1c_stats.csv")
+    print("Saved: supp_1c_stats.csv")
 
     plt.close()

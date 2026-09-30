@@ -17,16 +17,11 @@ Usage:
 """
 
 import os
-import sys
-import pickle
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import yaml
 import xarray as xr
-import scipy.stats as stats
 
 from fast_learning import paths, database
 from cicada_nwb import NWBSession

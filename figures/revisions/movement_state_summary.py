@@ -56,7 +56,6 @@ any of the 5 days are dropped from that panel's test (complete-case).
 """
 
 import os
-import sys
 
 import h5py
 import numpy as np

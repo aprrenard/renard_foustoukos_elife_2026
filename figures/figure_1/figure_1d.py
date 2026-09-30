@@ -7,8 +7,6 @@ Includes raw trial outcomes and fitted learning curves with statistical testing.
 """
 
 import os
-import sys
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors

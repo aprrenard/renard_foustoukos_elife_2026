@@ -8,7 +8,6 @@ Variance is across mice: cells are averaged per mouse before group statistics.
 """
 
 import os
-import sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt

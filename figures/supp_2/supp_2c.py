@@ -8,7 +8,6 @@ the CSV produced by pipeline/06_decoder.py.
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -94,7 +93,7 @@ if __name__ == '__main__':
     ax.plot(x_vals, y_pred, color='#2d2d2d', linewidth=2)
     ax.fill_between(x_vals, ci_low, ci_high, color='black', alpha=0.2, label='95% CI')
 
-    p_str = f'p = {p_pearson:.2e}' if p_pearson >= 1e-4 else f'p < 0.0001'
+    p_str = f'p = {p_pearson:.2e}' if p_pearson >= 1e-4 else 'p < 0.0001'
     ax.text(0.05, 0.95, f'r = {r_pearson:.3f}\n{p_str}',
             transform=ax.transAxes, va='top', ha='left', fontsize=9)
 

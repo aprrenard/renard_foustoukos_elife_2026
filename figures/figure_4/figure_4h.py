@@ -14,7 +14,6 @@ Figures and CSVs are saved to output/.
 """
 
 import os
-import sys
 import pickle
 
 import numpy as np

@@ -12,7 +12,6 @@ Statistics: Mann-Whitney U test (R+ vs R-) per cell type × LMI sign.
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np

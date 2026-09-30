@@ -8,13 +8,12 @@ reward groups (swarm + point plot, Wilcoxon one-sample test against zero).
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.stats import wilcoxon, ttest_1samp, pearsonr, linregress
+from scipy.stats import wilcoxon, ttest_1samp, pearsonr
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
@@ -252,12 +251,12 @@ if __name__ == '__main__':
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     save_figure(fig, os.path.join(OUTPUT_DIR, 'figure_4e.svg'))
-    print(f"Saved: figure_4e.svg")
+    print("Saved: figure_4e.svg")
 
     df_corr.to_csv(os.path.join(OUTPUT_DIR, 'figure_4e_correlations.csv'), index=False)
-    print(f"Saved: figure_4e_correlations.csv")
+    print("Saved: figure_4e_correlations.csv")
 
     df_pop_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure_4e_stats.csv'), index=False)
-    print(f"Saved: figure_4e_stats.csv")
+    print("Saved: figure_4e_stats.csv")
 
     plt.close()

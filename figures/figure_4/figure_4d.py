@@ -7,7 +7,6 @@ Wilcoxon one-sample test against zero).
 """
 
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -256,12 +255,12 @@ if __name__ == '__main__':
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     save_figure(fig, os.path.join(OUTPUT_DIR, 'figure_4d.svg'))
-    print(f"Saved: figure_4d.svg")
+    print("Saved: figure_4d.svg")
 
     df_slopes.to_csv(os.path.join(OUTPUT_DIR, 'figure_4d_slopes.csv'), index=False)
-    print(f"Saved: figure_4d_slopes.csv")
+    print("Saved: figure_4d_slopes.csv")
 
     df_pop_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure_4d_stats.csv'), index=False)
-    print(f"Saved: figure_4d_stats.csv")
+    print("Saved: figure_4d_stats.csv")
 
     plt.close()

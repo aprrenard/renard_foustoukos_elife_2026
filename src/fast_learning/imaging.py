@@ -2,7 +2,6 @@ import os
 import pickle
 
 import numpy as np
-import warnings
 from sklearn.metrics import auc, roc_curve
 from sklearn.utils import shuffle
 from scipy.stats import percentileofscore
@@ -231,34 +230,6 @@ def compute_roc(data_pre, data_post, nshuffles=1000, n_jobs=-1, return_shuffles=
     if return_shuffles:
         return lmi, lmi_p, lmi_shuffles
     return lmi, lmi_p
-
-
-def filter_data_by_cell_count(data, min_cells):
-    """
-    Filters the data to exclude entries where the number of distinct ROIs of a specific type
-    for a mouse is below a given threshold.
-
-    Parameters:
-    - data (pd.DataFrame): The data to filter, containing columns 'mouse_id', 'cell_type', 'roi', etc.
-    - min_cells (int): Minimum number of distinct ROIs required to keep the data.
-
-    Returns:
-    - pd.DataFrame: Filtered data.
-    """
-    # Count distinct ROIs per mouse and cell type
-    roi_counts = data.groupby(['mouse_id', 'cell_type'])['roi'].nunique().reset_index()
-    roi_counts = roi_counts.rename(columns={'roi': 'roi_count'})
-
-    # Merge ROI counts back into the data
-    data = data.merge(roi_counts, on=['mouse_id', 'cell_type'])
-
-    # Filter out entries where the ROI count is below the threshold
-    data = data[data['roi_count'] >= min_cells]
-
-    # Drop the auxiliary 'roi_count' column
-    data = data.drop(columns=['roi_count'])
-
-    return data
 
 
 def filter_data_by_cell_count(data, min_cells):
