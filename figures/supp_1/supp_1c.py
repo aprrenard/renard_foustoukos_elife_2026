@@ -19,7 +19,8 @@ import seaborn as sns
 from scipy.stats import wilcoxon
 
 from fast_learning import paths
-from fast_learning.plotting import trial_type_rew_palette
+from fast_learning.plotting import trial_type_rew_palette, save_figure
+from fast_learning.stats import significance_stars as pval_to_stars
 
 
 # ============================================================================
@@ -69,11 +70,6 @@ if __name__ == '__main__':
     # Helper functions
     # ============================================================================
 
-    def pval_to_stars(p):
-        if p < 0.001: return '***'
-        if p < 0.01:  return '**'
-        if p < 0.05:  return '*'
-        return 'n.s.'
 
 
     def draw_stat_bracket(ax, x1, x2, y, p_value, h=3):
@@ -180,7 +176,7 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig.savefig(os.path.join(OUTPUT_DIR, 'supp_1c.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_1c.svg'))
     print(f"Saved: supp_1c.svg")
 
     df_w.to_csv(os.path.join(OUTPUT_DIR, 'supp_1c_data_whisker.csv'), index=False)

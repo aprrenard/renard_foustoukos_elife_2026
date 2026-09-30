@@ -18,7 +18,8 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths
-from fast_learning.plotting import trial_type_rew_palette, trial_type_nonrew_palette
+from fast_learning.plotting import trial_type_rew_palette, trial_type_nonrew_palette, save_figure
+from fast_learning.stats import significance_stars as _stars
 
 
 # ============================================================================
@@ -27,7 +28,7 @@ from fast_learning.plotting import trial_type_rew_palette, trial_type_nonrew_pal
 
 DAYS = [-2, -1, 0, 1, 2]
 MAX_TRIALS_RT = 100
-MIN_MICE_PER_TRIAL = 5   # minimum mice required to plot a trial bin in panel j
+MIN_MICE_PER_TRIAL = 5   # minimum mice required to plot a trial bin in panel h
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
 
 # (filter_col, outcome_col, trial_col, label, rp_palette_idx, rm_palette_idx)
@@ -63,7 +64,7 @@ if __name__ == '__main__':
 
 
     # ============================================================================
-    # Panel i: per-mouse mean RT per stim type × day
+    # Panel g: per-mouse mean RT per stim type × day
     # ============================================================================
 
     rt_rows = []
@@ -86,11 +87,6 @@ if __name__ == '__main__':
     # Stats panel g: Mann-Whitney R+ vs R- per stim type × day
     # ============================================================================
 
-    def _stars(p):
-        if p < 0.001: return '***'
-        if p < 0.01:  return '**'
-        if p < 0.05:  return '*'
-        return 'n.s.'
 
 
     stats_g_rows = []
@@ -117,9 +113,9 @@ if __name__ == '__main__':
     sns.set_theme(context='paper', style='ticks', font='sans-serif', font_scale=1,
                   rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'})
 
-    fig_i, axes_i = plt.subplots(1, 3, figsize=(14, 4), sharey=True)
+    fig_g, axes_g = plt.subplots(1, 3, figsize=(14, 4), sharey=True)
 
-    for ax, (stim_col, outcome_col, trial_col, stim_label, rpi, rmi) in zip(axes_i, STIM_DEFS):
+    for ax, (stim_col, outcome_col, trial_col, stim_label, rpi, rmi) in zip(axes_g, STIM_DEFS):
         color_rp = trial_type_rew_palette[rpi]
         color_rm = trial_type_nonrew_palette[rmi]
 
@@ -154,7 +150,7 @@ if __name__ == '__main__':
 
         ax.set_title(stim_label)
         ax.set_xlabel('Day')
-        ax.set_ylabel('Reaction time (s)' if ax is axes_i[0] else '')
+        ax.set_ylabel('Reaction time (s)' if ax is axes_g[0] else '')
         ax.legend(frameon=False)
 
     sns.despine()
@@ -162,13 +158,13 @@ if __name__ == '__main__':
 
 
     # ============================================================================
-    # Panel j: mean RT across trials within Day 0
+    # Panel h: mean RT across trials within Day 0
     # ============================================================================
 
-    fig_j, axes_j = plt.subplots(1, 3, figsize=(14, 4), sharey=True)
+    fig_h, axes_h = plt.subplots(1, 3, figsize=(14, 4), sharey=True)
 
     rt_day0_rows = []
-    for ax, (stim_col, outcome_col, trial_col, stim_label, rpi, rmi) in zip(axes_j, STIM_DEFS):
+    for ax, (stim_col, outcome_col, trial_col, stim_label, rpi, rmi) in zip(axes_h, STIM_DEFS):
         color_rp = trial_type_rew_palette[rpi]
         color_rm = trial_type_nonrew_palette[rmi]
 
@@ -198,7 +194,7 @@ if __name__ == '__main__':
 
         ax.set_title(stim_label)
         ax.set_xlabel('Hit trials')
-        ax.set_ylabel('Reaction time (s)' if ax is axes_j[0] else '')
+        ax.set_ylabel('Reaction time (s)' if ax is axes_h[0] else '')
         ax.set_ylim(bottom=0, top=1)
         ax.legend(frameon=False)
 
@@ -244,10 +240,10 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig_i.savefig(os.path.join(OUTPUT_DIR, 'supp_1g.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig_g, os.path.join(OUTPUT_DIR, 'supp_1g.svg'))
     print("Saved: supp_1g.svg")
 
-    fig_j.savefig(os.path.join(OUTPUT_DIR, 'supp_1h.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig_h, os.path.join(OUTPUT_DIR, 'supp_1h.svg'))
     print("Saved: supp_1h.svg")
 
     rt_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1g_data.csv'), index=False)

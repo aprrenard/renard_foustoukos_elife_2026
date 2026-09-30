@@ -18,7 +18,8 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu, ks_2samp
 
 from fast_learning import paths, database
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.stats import significance_stars as get_star
 
 
 # ============================================================================
@@ -64,11 +65,6 @@ if __name__ == '__main__':
     # Statistics
     # ============================================================================
 
-    def get_star(p):
-        if p < 0.001: return '***'
-        if p < 0.01:  return '**'
-        if p < 0.05:  return '*'
-        return 'n.s.'
 
 
     # KS test: R+ vs R- on LMI distribution
@@ -150,10 +146,10 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig_f.savefig(os.path.join(OUTPUT_DIR, 'figure_3f.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig_f, os.path.join(OUTPUT_DIR, 'figure_3f.svg'))
     print("Saved: figure_3f.svg")
 
-    fig_g.savefig(os.path.join(OUTPUT_DIR, 'figure_3g.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig_g, os.path.join(OUTPUT_DIR, 'figure_3g.svg'))
     print("Saved: figure_3g.svg")
 
     stats_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_3f_g_stats.csv'), index=False)

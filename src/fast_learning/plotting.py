@@ -1,3 +1,6 @@
+import os
+
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -84,3 +87,38 @@ mice_groups = {
                  'MI040','MI044','MI045','MI053','AR115','AR116','AR117','AR119','AR120','AR122','AR144',
                  'AR163',],
 }
+
+# Diverging LMI colormap: bright blue (negative) - grey (0) - bright red (positive).
+lmi_cmap = mcolors.LinearSegmentedColormap.from_list(
+    'blue_grey_red',
+    [
+        (0.0, (0.0, 0.0, 1.0)),
+        (0.5, (0.7, 0.7, 0.7)),
+        (1.0, (1.0, 0.0, 0.0)),
+    ]
+)
+
+
+# Editable text when figures are opened in Illustrator (PDF, TrueType fonts)
+# or Inkscape (SVG, text kept as text).
+EDITABLE_TEXT = {'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'}
+
+
+def save_figure(fig, path, formats=None, dpi=300):
+    """Save `fig` as `path` in each figure format, with editable text.
+
+    Any extension in `path` is replaced; the formats are `formats`, or
+    `figure_formats` from config.yaml (default: pdf). Returns the saved paths.
+    """
+    from fast_learning import paths
+    formats = formats or paths.figure_formats
+    stem = os.path.splitext(path)[0]
+    os.makedirs(os.path.dirname(stem) or '.', exist_ok=True)
+    saved = []
+    with plt.rc_context(EDITABLE_TEXT):
+        for fmt in formats:
+            out = f'{stem}.{fmt}'
+            fig.savefig(out, format=fmt, dpi=dpi, bbox_inches='tight')
+            saved.append(out)
+    print(f"Saved: {', '.join(saved)}")
+    return saved

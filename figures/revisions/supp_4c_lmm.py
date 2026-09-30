@@ -35,6 +35,7 @@ from scipy.stats import linregress, wilcoxon
 
 from fast_learning import paths, participation
 from fast_learning.stats import significance_stars as _significance_stars
+from fast_learning.plotting import save_figure
 
 DAYS = participation.DAYS
 
@@ -240,8 +241,7 @@ def panel_supp4c_proportion_across_days_lmm(
 
     plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Panel saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 

@@ -20,6 +20,7 @@ from cicada_nwb import NWBSession
 
 from fast_learning import paths
 from fast_learning import imaging
+from fast_learning.plotting import save_figure, lmi_cmap
 
 
 # #############################################################################
@@ -49,14 +50,6 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
 # Custom diverging colormap: bright blue → dark → bright red.
 # #############################################################################
 
-lmi_cmap = mcolors.LinearSegmentedColormap.from_list(
-    'blue_grey_red',
-    [
-        (0.0,  (0.0,  0.0, 1.0)),   # bright blue
-        (0.5,  (0.7, 0.7, 0.7)),  # mid-grey centre
-        (1.0,  (1.0,  0.0,  0.0)),   # bright red
-    ]
-)
 
 if __name__ == '__main__':
     # lmi_cmap = plt.cm.bwr
@@ -226,7 +219,7 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     out_path = os.path.join(OUTPUT_DIR, f'figure_3a.svg')
-    fig.savefig(out_path, format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig, out_path)
     print(f"\nSaved: {out_path}")
 
     plt.close()

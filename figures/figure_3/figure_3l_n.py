@@ -29,7 +29,8 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 from fast_learning import paths
 from fast_learning.decoding import load_and_process_data, DAYS
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.stats import significance_stars as _significance_stars
 
 
 # ============================================================================
@@ -99,14 +100,6 @@ def _per_mouse_cv_accuracy(vectors, label_encoder, seed=42, n_shuffles=100, n_jo
     return np.array(accuracies), np.array(chance_accuracies)
 
 
-def _significance_stars(p):
-    if p < 0.001:
-        return '***'
-    elif p < 0.01:
-        return '**'
-    elif p < 0.05:
-        return '*'
-    return 'n.s.'
 
 
 # ============================================================================
@@ -190,7 +183,7 @@ def panel_l_decoding_accuracy(
 
     # Save figure
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'figure_3l.{save_format}'), format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_3l.{save_format}'))
     plt.close()
     print(f"Figure 3l saved to: {os.path.join(output_dir, 'figure_3l.' + save_format)}")
 
@@ -320,7 +313,7 @@ def panel_m_pairwise_decoding(
     dpi=300,
 ):
     """
-    Generate Figure 3 Panel l: Pairwise day decoding with fixed pre/post decoder.
+    Generate Figure 3 Panel m: Pairwise day decoding with fixed pre/post decoder.
 
     Trains a classifier to distinguish pre (-2, -1) from post (+1, +2) activity,
     then applies it to decode all pairs of days (including day 0) to show when
@@ -411,7 +404,7 @@ def panel_m_pairwise_decoding(
 
     # Save figure
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'figure_3m.{save_format}'), format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_3m.{save_format}'))
     plt.close()
     print(f"Figure 3m saved to: {os.path.join(output_dir, 'figure_3m.' + save_format)}")
 
@@ -539,7 +532,7 @@ def panel_n_day0_classification(
 
     # Save figure
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'figure_3n.{save_format}'), format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_3n.{save_format}'))
     plt.close()
     print(f"Figure 3n saved to: {os.path.join(output_dir, 'figure_3n.' + save_format)}")
 

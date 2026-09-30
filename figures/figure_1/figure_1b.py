@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from fast_learning import paths
-from fast_learning.plotting import behavior_palette
+from fast_learning.plotting import behavior_palette, save_figure
 from fast_learning.behavior import plot_single_session
 
 
@@ -92,7 +92,7 @@ def generate_panel(
 
         # Save figure
         output_file = os.path.join(save_path, f'figure_1b_{mouse_id}.{save_format}')
-        plt.savefig(output_file, format=save_format, dpi=dpi, bbox_inches='tight')
+        save_figure(plt.gcf(), output_file)
         # plt.close()
 
         print(f"Figure 1b ({mouse_id}) saved to: {output_file}")

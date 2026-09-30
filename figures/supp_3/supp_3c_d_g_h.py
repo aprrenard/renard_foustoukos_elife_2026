@@ -23,6 +23,7 @@ from scipy.stats import wilcoxon
 
 from fast_learning import imaging
 from fast_learning import paths, database
+from fast_learning.plotting import save_figure
 
 
 # ============================================================================
@@ -189,12 +190,10 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig_wS2.savefig(os.path.join(OUTPUT_DIR, 'supp_3c_d.svg'), format='svg',
-                    dpi=300, bbox_inches='tight')
+    save_figure(fig_wS2, os.path.join(OUTPUT_DIR, 'supp_3c_d.svg'))
     print("Saved: supp_3c_d.svg")
 
-    fig_wM1.savefig(os.path.join(OUTPUT_DIR, 'supp_3g_h.svg'), format='svg',
-                    dpi=300, bbox_inches='tight')
+    save_figure(fig_wM1, os.path.join(OUTPUT_DIR, 'supp_3g_h.svg'))
     print("Saved: supp_3g_h.svg")
 
     data_avg_proj.to_csv(os.path.join(OUTPUT_DIR, 'supp_3c_d_g_h_data.csv'), index=False)

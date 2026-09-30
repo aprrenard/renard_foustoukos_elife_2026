@@ -34,7 +34,8 @@ from scipy.stats import ks_2samp, levene
 
 from fast_learning import paths, database
 from fast_learning import imaging
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.stats import significance_stars as _significance_stars
 
 
 # ============================================================================
@@ -56,14 +57,6 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_3f_L
 # Helpers
 # ============================================================================
 
-def _significance_stars(p):
-    if p < 0.001:
-        return '***'
-    elif p < 0.01:
-        return '**'
-    elif p < 0.05:
-        return '*'
-    return 'n.s.'
 
 
 # ============================================================================
@@ -207,8 +200,7 @@ def plot_lmi_vs_null(lmi_df, null_df, output_dir=OUTPUT_DIR,
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
-    fig.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(fig, os.path.join(output_dir, f'{filename}.{save_format}'))
     print(f"Saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 
     stats_df = pd.DataFrame(stats_rows)

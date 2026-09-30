@@ -53,7 +53,7 @@ from scipy.stats import linregress, wilcoxon
 from statsmodels.regression.mixed_linear_model import MixedLM
 
 from fast_learning import paths, participation
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.stats import significance_stars as _significance_stars
 
 DAYS = [-2, -1, 0, 1, 2]
@@ -218,8 +218,7 @@ def panel_i_participation_vs_lmi_lmm(
 
     plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Panel i (LMM) saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 
@@ -365,8 +364,7 @@ def panel_j_participation_across_days_lmm(
 
     plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Panel j saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 

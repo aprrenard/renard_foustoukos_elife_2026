@@ -67,7 +67,8 @@ from scipy.stats import t as t_dist
 from scipy.stats import friedmanchisquare
 
 from fast_learning import paths, database
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.stats import significance_stars as _significance_stars
 
 DLC_DIR = '/mnt/lsens-analysis/Anthony_Renard/DLCTrialMatrices'
 
@@ -376,14 +377,6 @@ def _ordered_parts(labels):
     return order
 
 
-def _significance_stars(p):
-    if p < 0.001:
-        return '***'
-    elif p < 0.01:
-        return '**'
-    elif p < 0.05:
-        return '*'
-    return 'n.s.'
 
 
 def _friedman_p(fdata, value_col, days_sorted):
@@ -479,8 +472,7 @@ def plot_movement_summary(mouse_day_df, value_col, stat_label, days=DAYS,
     fig.suptitle(stat_label.capitalize(), fontsize=11, fontweight='bold')
     plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Figure saved to: {os.path.join(output_dir, filename + '.' + save_format)}")
 
@@ -561,8 +553,7 @@ def plot_body_part_traces(trace_df, part, days=DAYS,
     os.makedirs(output_dir, exist_ok=True)
     if filename is None:
         filename = f'movement_trace_{part}'
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Figure saved to: {os.path.join(output_dir, filename + '.' + save_format)}")
 

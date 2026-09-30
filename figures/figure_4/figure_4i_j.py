@@ -37,7 +37,7 @@ import seaborn as sns
 from scipy.stats import pearsonr, linregress, kruskal
 
 from fast_learning import paths, participation
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.stats import significance_stars
 
 
@@ -133,14 +133,13 @@ def panel_i_participation_vs_lmi(
 
     plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
-    print(f"Panel k saved: {os.path.join(output_dir, filename + '.' + save_format)}")
+    print(f"Panel i saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 
     pd.DataFrame(stats_rows).to_csv(
         os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
-    print(f"Panel k stats saved: {output_dir}")
+    print(f"Panel i stats saved: {output_dir}")
 
 
 # ============================================================================
@@ -290,16 +289,15 @@ def panel_j_participation_across_days(
 
     plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
-    print(f"Panel l saved: {os.path.join(output_dir, filename + '.' + save_format)}")
+    print(f"Panel j saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 
     pd.concat(plot_data_rows, ignore_index=True).to_csv(
         os.path.join(output_dir, f'{filename}_data.csv'), index=False)
     pd.DataFrame(all_stats_rows).to_csv(
         os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
-    print(f"Panel l data/stats saved: {output_dir}")
+    print(f"Panel j data/stats saved: {output_dir}")
 
 
 # ============================================================================

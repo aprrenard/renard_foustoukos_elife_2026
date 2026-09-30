@@ -23,12 +23,13 @@ from statsmodels.stats.anova import anova_lm
 
 from fast_learning import imaging
 from fast_learning import paths, database
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.similarity import (
     WIN, DAYS, N_MAP_TRIALS,
     compute_similarity_matrix, compute_within_day_metrics,
     compute_reorganization_metrics,
 )
+from fast_learning.stats import significance_stars as _significance_stars
 
 
 # ============================================================================
@@ -140,14 +141,6 @@ def load_and_process_data(
     return corr_matrices_rew, corr_matrices_nonrew, mice_rew, mice_nonrew
 
 
-def _significance_stars(p):
-    if p < 0.001:
-        return '***'
-    elif p < 0.01:
-        return '**'
-    elif p < 0.05:
-        return '*'
-    return 'n.s.'
 
 
 # ============================================================================
@@ -236,7 +229,7 @@ def panel_h_correlation_matrices(
 
     # Save figure
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'figure_3h.{save_format}'), format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_3h.{save_format}'))
     plt.close()
     print(f"Figure 3h saved to: {os.path.join(output_dir, 'figure_3h.' + save_format)}")
 
@@ -373,7 +366,7 @@ def panel_i_within_day_correlations(
 
     # Save figure
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'figure_3i.{save_format}'), format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_3i.{save_format}'))
     plt.close()
     print(f"Figure 3i saved to: {os.path.join(output_dir, 'figure_3i.' + save_format)}")
 
@@ -461,7 +454,7 @@ def panel_j_reorganization_index(
 
     # Save figure
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'figure_3j.{save_format}'), format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_3j.{save_format}'))
     plt.close()
     print(f"Figure 3j saved to: {os.path.join(output_dir, 'figure_3j.' + save_format)}")
 

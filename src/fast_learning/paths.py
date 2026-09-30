@@ -78,6 +78,9 @@ processed_dir = _get('processed_dir', _output_root / 'processed')
 figures_dir = _get('figures_dir', _output_root / 'figures')
 results_dir = _get('results_dir', _output_root / 'results')
 
+# Figure file formats written by plotting.save_figure (e.g. [pdf, svg]).
+figure_formats = list(_cfg.get('figure_formats', ['pdf']))
+
 # Name used by the figure scripts.
 manuscript_output_dir = figures_dir
 

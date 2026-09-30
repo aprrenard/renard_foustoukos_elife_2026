@@ -20,7 +20,7 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 from fast_learning import paths
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.decoding import load_and_process_data
 
 
@@ -169,7 +169,7 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig.savefig(os.path.join(OUTPUT_DIR, 'supp_2d.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_2d.svg'))
     print("Saved: supp_2d.svg")
 
     df_plot.to_csv(os.path.join(OUTPUT_DIR, 'supp_2d_data.csv'), index=False)

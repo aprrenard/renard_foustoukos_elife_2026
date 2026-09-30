@@ -53,7 +53,7 @@ from statsmodels.stats.anova import anova_lm
 
 from fast_learning import imaging
 from fast_learning import paths, database
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.similarity import (
     DAYS,
     N_MAP_TRIALS,
@@ -331,8 +331,7 @@ def _panel_metric_across_days(
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"{filename} saved to: {os.path.join(output_dir, filename + '.' + save_format)}")
 

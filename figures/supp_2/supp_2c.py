@@ -19,6 +19,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.utils import resample
 
 from fast_learning import paths
+from fast_learning.plotting import save_figure
 
 
 # ============================================================================
@@ -110,7 +111,7 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig.savefig(os.path.join(OUTPUT_DIR, 'supp_2c.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_2c.svg'))
     print("Saved: supp_2c.svg")
 
     merged[['mouse_id', 'roi', 'reward_group', 'lmi', 'classifier_weight']].to_csv(

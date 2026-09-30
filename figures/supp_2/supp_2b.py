@@ -22,6 +22,7 @@ import seaborn as sns
 
 from fast_learning import paths
 from fast_learning import imaging
+from fast_learning.plotting import save_figure
 
 
 # ============================================================================
@@ -122,7 +123,7 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig.savefig(os.path.join(OUTPUT_DIR, 'supp_2b.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_2b.svg'))
     print(f"\nSaved: supp_2b.svg")
 
     # Data: LMI values for the selected example cells

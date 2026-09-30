@@ -28,7 +28,7 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths, database
-from fast_learning.plotting import stim_palette, reward_palette
+from fast_learning.plotting import stim_palette, reward_palette, save_figure
 
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_2b_c_execution', 'output')
@@ -244,7 +244,7 @@ def panel_b_muscimol_timecourse_execution(
     os.makedirs(save_path, exist_ok=True)
 
     output_file = os.path.join(save_path, f'figure_2b_execution.{save_format}')
-    plt.savefig(output_file, format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), output_file)
     plt.close()
 
     data_file = os.path.join(save_path, 'figure_2b_execution_data.csv')
@@ -360,7 +360,7 @@ def panel_c_muscimol_barplot_execution(
     os.makedirs(save_path, exist_ok=True)
 
     output_file = os.path.join(save_path, f'figure_2c_execution.{save_format}')
-    plt.savefig(output_file, format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), output_file)
     plt.close()
 
     data_file = os.path.join(save_path, 'figure_2c_execution_data.csv')

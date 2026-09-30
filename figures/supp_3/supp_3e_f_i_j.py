@@ -21,7 +21,8 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu, ks_2samp
 
 from fast_learning import paths, database
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.stats import significance_stars as get_star
 
 
 # ============================================================================
@@ -101,11 +102,6 @@ if __name__ == '__main__':
     # Helper
     # ============================================================================
 
-    def get_star(p):
-        if p < 0.001: return '***'
-        if p < 0.01:  return '**'
-        if p < 0.05:  return '*'
-        return 'n.s.'
 
 
     def plot_distribution(cell_type, ax):
@@ -189,20 +185,16 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig_wS2_dist.savefig(os.path.join(OUTPUT_DIR, 'supp_3e.svg'), format='svg',
-                         dpi=300, bbox_inches='tight')
+    save_figure(fig_wS2_dist, os.path.join(OUTPUT_DIR, 'supp_3e.svg'))
     print("Saved: supp_3e.svg")
 
-    fig_wS2.savefig(os.path.join(OUTPUT_DIR, 'supp_3f.svg'), format='svg',
-                    dpi=300, bbox_inches='tight')
+    save_figure(fig_wS2, os.path.join(OUTPUT_DIR, 'supp_3f.svg'))
     print("Saved: supp_3f.svg")
 
-    fig_wM1_dist.savefig(os.path.join(OUTPUT_DIR, 'supp_3i.svg'), format='svg',
-                         dpi=300, bbox_inches='tight')
+    save_figure(fig_wM1_dist, os.path.join(OUTPUT_DIR, 'supp_3i.svg'))
     print("Saved: supp_3i.svg")
 
-    fig_wM1.savefig(os.path.join(OUTPUT_DIR, 'supp_3j.svg'), format='svg',
-                    dpi=300, bbox_inches='tight')
+    save_figure(fig_wM1, os.path.join(OUTPUT_DIR, 'supp_3j.svg'))
     print("Saved: supp_3j.svg")
 
     lmi_prop_ct[lmi_prop_ct['cell_type'].isin(['wS2', 'wM1'])].to_csv(

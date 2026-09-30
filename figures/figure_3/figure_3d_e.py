@@ -17,6 +17,7 @@ from scipy.stats import wilcoxon
 
 from fast_learning import imaging
 from fast_learning import paths, database
+from fast_learning.plotting import save_figure
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
 
@@ -188,7 +189,7 @@ def generate_panel(
 
     os.makedirs(save_path, exist_ok=True)
     fig_path = os.path.join(save_path, f'{panel_name}.{save_format}')
-    plt.savefig(fig_path, format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), fig_path)
     plt.close()
     print(f"Panel saved: {fig_path}")
 

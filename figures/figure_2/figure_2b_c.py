@@ -15,7 +15,7 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths, database
-from fast_learning.plotting import stim_palette, reward_palette
+from fast_learning.plotting import stim_palette, reward_palette, save_figure
 
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_2', 'output')
@@ -235,7 +235,7 @@ def panel_b_muscimol_timecourse(
     os.makedirs(save_path, exist_ok=True)
 
     output_file = os.path.join(save_path, f'figure_2b.{save_format}')
-    plt.savefig(output_file, format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), output_file)
     plt.close()
 
     # Save data
@@ -426,7 +426,7 @@ def panel_c_muscimol_barplot(
     os.makedirs(save_path, exist_ok=True)
 
     output_file = os.path.join(save_path, f'figure_2c.{save_format}')
-    plt.savefig(output_file, format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), output_file)
     plt.close()
 
     # Save data and statistics

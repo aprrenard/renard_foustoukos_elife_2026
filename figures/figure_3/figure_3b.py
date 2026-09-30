@@ -14,6 +14,7 @@ from matplotlib.gridspec import GridSpec
 
 from fast_learning import paths
 from fast_learning import imaging
+from fast_learning.plotting import save_figure
 
 
 # #############################################################################
@@ -158,7 +159,7 @@ if __name__ == '__main__':
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     sig_suffix = '_significant' if use_significant_only else '_all'
     out_path = os.path.join(OUTPUT_DIR, f'figure_3b.svg')
-    fig.savefig(out_path, format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig, out_path)
     print(f"\nSaved: {out_path}")
 
     plt.close()

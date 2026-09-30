@@ -42,7 +42,7 @@ from scipy.stats import linregress
 from statsmodels.regression.mixed_linear_model import MixedLM
 
 from fast_learning import paths, participation
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure, lmi_cmap
 from fast_learning.stats import significance_stars as _significance_stars
 
 LMI_DATA_CSV = participation.DAY0_CSV
@@ -79,14 +79,6 @@ def panel_supp4a_scatter_lmm(
         <filename>_data.csv  -- data used for the plot
         <filename>_stats.csv -- LMM slope, CI, p per reward group
     """
-    lmi_cmap = mcolors.LinearSegmentedColormap.from_list(
-        'blue_grey_red',
-        [
-            (0.0, (0.0, 0.0, 1.0)),
-            (0.5, (0.7, 0.7, 0.7)),
-            (1.0, (1.0, 0.0, 0.0)),
-        ]
-    )
 
     sns.set_theme(context='paper', style='ticks', palette='deep',
                   font='sans-serif', font_scale=1)
@@ -168,8 +160,7 @@ def panel_supp4a_scatter_lmm(
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Panel saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 
@@ -321,8 +312,7 @@ def panel_supp4b_partial_corr_lmm(
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Panel saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 

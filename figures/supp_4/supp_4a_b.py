@@ -38,7 +38,7 @@ import seaborn as sns
 from scipy.stats import pearsonr, linregress
 
 from fast_learning import paths, participation
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure, lmi_cmap
 
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_4', 'output')
@@ -67,14 +67,6 @@ def panel_supp4a_scatter(
         <filename>_stats.csv -- Pearson r and p per reward group
     """
 
-    lmi_cmap = mcolors.LinearSegmentedColormap.from_list(
-    'blue_grey_red',
-    [
-        (0.0,  (0.0,  0.0, 1.0)),   # bright blue
-        (0.5,  (0.7, 0.7, 0.7)),  # mid-grey centre
-        (1.0,  (1.0,  0.0,  0.0)),   # bright red
-    ]
-    )
 
     sns.set_theme(context='paper', style='ticks', palette='deep',
                   font='sans-serif', font_scale=1)
@@ -151,8 +143,7 @@ def panel_supp4a_scatter(
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Panel saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 
@@ -297,8 +288,7 @@ def panel_supp4b_partial_corr(
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Panel saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 

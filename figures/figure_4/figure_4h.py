@@ -24,7 +24,8 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.stats import significance_stars as _significance_stars
 
 
 # ============================================================================
@@ -55,14 +56,6 @@ PERCENTILES = ['p99', 'p995', 'p999']
 # Helpers
 # ============================================================================
 
-def _significance_stars(p):
-    if p < 0.001:
-        return '***'
-    elif p < 0.01:
-        return '**'
-    elif p < 0.05:
-        return '*'
-    return 'n.s.'
 
 
 # ============================================================================
@@ -193,8 +186,7 @@ def panel_h_reactivation_rate(
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Figure saved to: {os.path.join(output_dir, filename + '.' + save_format)}")
 

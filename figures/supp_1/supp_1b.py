@@ -14,7 +14,7 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths
-from fast_learning.plotting import behavior_palette
+from fast_learning.plotting import behavior_palette, save_figure
 
 
 # ============================================================================
@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig.savefig(os.path.join(OUTPUT_DIR, 'supp_1b.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_1b.svg'))
     print(f"Saved: supp_1b.svg")
 
     avg_performance.to_csv(os.path.join(OUTPUT_DIR, 'supp_1b_data.csv'), index=False)

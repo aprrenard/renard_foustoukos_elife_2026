@@ -19,6 +19,7 @@ from scipy.stats import mannwhitneyu
 
 
 from fast_learning import paths, correlations
+from fast_learning.plotting import save_figure
 
 
 # ============================================================================
@@ -120,8 +121,7 @@ if __name__ == '__main__':
         plt.suptitle(f'Pre vs Post — Pair Level ({reward_group})', fontsize=14, y=1.02)
         plt.tight_layout()
         sns.despine()
-        fig.savefig(os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}.svg'),
-                    format='svg', dpi=300, bbox_inches='tight')
+        save_figure(fig, os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}.svg'))
         print(f"Saved: supp_3m_{reward_group}.svg")
         plt.close()
 

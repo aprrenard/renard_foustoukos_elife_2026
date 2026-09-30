@@ -107,7 +107,7 @@ from statsmodels.stats.multitest import multipletests
 
 from fast_learning import paths, database
 from fast_learning import imaging
-from fast_learning.plotting import stim_palette, reward_palette, behavior_palette
+from fast_learning.plotting import stim_palette, reward_palette, behavior_palette, save_figure
 
 # Muscimol execution sessions, as in figure_2b_c_execution.py (keep in sync).
 EXECUTION_TABLE_PATH = os.path.join(paths.processed_dir, 'behavior', 'behavior_muscimol_execution.csv')
@@ -251,7 +251,7 @@ def _dprime_barplot_by_group(
 
     os.makedirs(output_dir, exist_ok=True)
     output_file = os.path.join(output_dir, f'{filename}.{save_format}')
-    plt.savefig(output_file, format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), output_file)
     plt.close()
 
     data_file = os.path.join(output_dir, f'{filename}_data.csv')
@@ -386,7 +386,7 @@ def panel_1d_dprime(
 
     os.makedirs(save_path, exist_ok=True)
     output_file = os.path.join(save_path, f'figure_1d_dprime.{save_format}')
-    plt.savefig(output_file, format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), output_file)
     plt.close()
 
     data_file = os.path.join(save_path, 'figure_1d_dprime_data.csv')
@@ -597,7 +597,7 @@ def panel_4c_dprime(
 
     os.makedirs(save_path, exist_ok=True)
     out_path = os.path.join(save_path, f'figure_4c_dprime.{save_format}')
-    fig.savefig(out_path, format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(fig, out_path)
     plt.close()
 
     df.to_csv(os.path.join(save_path, 'figure_4c_dprime_data.csv'), index=False)
@@ -730,8 +730,7 @@ def panel_4e_dprime_correlation(
     plt.tight_layout()
 
     os.makedirs(save_path, exist_ok=True)
-    fig.savefig(os.path.join(save_path, f'figure_4e_dprime.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(fig, os.path.join(save_path, f'figure_4e_dprime.{save_format}'))
     plt.close()
 
     df_corr.to_csv(os.path.join(save_path, 'figure_4e_dprime_correlations.csv'), index=False)

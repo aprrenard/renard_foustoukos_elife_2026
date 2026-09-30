@@ -12,6 +12,7 @@ pipeline/06_decoder.py). Cell-type labels for the weight file are retrieved from
 mapping xarrays.
 """
 
+from functools import partial
 import os
 import sys
 
@@ -23,7 +24,8 @@ from scipy.stats import ks_2samp
 
 from fast_learning import imaging
 from fast_learning import paths, database
-from fast_learning.plotting import s2_m1_palette
+from fast_learning.plotting import s2_m1_palette, save_figure
+from fast_learning.stats import significance_stars
 
 
 # ============================================================================
@@ -40,11 +42,7 @@ OUTPUT_DIR  = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
 # Helper
 # ============================================================================
 
-def pvalue_to_stars(p):
-    if p < 0.001: return '***'
-    if p < 0.01:  return '**'
-    if p < 0.05:  return '*'
-    return 'ns'
+pvalue_to_stars = partial(significance_stars, ns='ns')
 
 
 def compute_ks_test(df, value_col, reward_groups, positive_only=False, negative_only=False):
@@ -209,10 +207,10 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig_k.savefig(os.path.join(OUTPUT_DIR, 'supp_3k.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig_k, os.path.join(OUTPUT_DIR, 'supp_3k.svg'))
     print("Saved: supp_3k.svg")
 
-    fig_l.savefig(os.path.join(OUTPUT_DIR, 'supp_3l.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig_l, os.path.join(OUTPUT_DIR, 'supp_3l.svg'))
     print("Saved: supp_3l.svg")
 
     # Data CSVs (projection-type cells only)

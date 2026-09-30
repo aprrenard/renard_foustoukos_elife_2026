@@ -17,7 +17,7 @@ from scipy.stats import mannwhitneyu
 from statsmodels.stats.multitest import multipletests
 
 from fast_learning import paths
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
 
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_1', 'output')
@@ -224,7 +224,7 @@ def generate_panel(
     os.makedirs(save_path, exist_ok=True)
 
     output_file = os.path.join(save_path, f'figure_1d.{save_format}')
-    plt.savefig(output_file, format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), output_file)
     # plt.close()
 
     # Save data and statistics

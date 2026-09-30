@@ -14,6 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from fast_learning import paths
+from fast_learning.plotting import save_figure
 
 
 # ============================================================================
@@ -47,7 +48,7 @@ def panel_g_correlation_traces(
     dpi=300,
 ):
     """
-    Generate Figure 4 Panel i: correlation traces across days for an example mouse.
+    Generate Figure 4 Panel g: correlation traces across days for an example mouse.
 
     Args:
         nan_gap: Number of frames inserted as NaN between trials (0 = seamless).
@@ -170,8 +171,7 @@ def panel_g_correlation_traces(
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Figure saved to: {os.path.join(output_dir, filename + '.' + save_format)}")
 

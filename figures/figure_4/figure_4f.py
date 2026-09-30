@@ -21,6 +21,7 @@ import matplotlib.gridspec as gridspec
 from matplotlib.ticker import AutoLocator
 
 from fast_learning import paths, participation, reactivations
+from fast_learning.plotting import save_figure
 
 
 # ============================================================================
@@ -252,8 +253,7 @@ def panel_f_reactivation_heatmap(
         cb.ax.tick_params(labelsize=6)
 
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Figure saved to: {os.path.join(output_dir, filename + '.' + save_format)}")
 

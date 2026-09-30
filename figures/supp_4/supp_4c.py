@@ -40,6 +40,7 @@ from scipy.stats import kruskal
 
 from fast_learning import paths, participation
 from fast_learning.stats import significance_stars
+from fast_learning.plotting import save_figure
 
 
 DAYS = participation.DAYS
@@ -57,7 +58,7 @@ def panel_supp4c_proportion_across_days(
     save_format='svg',
     dpi=300,
 ):
-    """Supp Figure 4d: proportion of cells participating across days for
+    """Supp Figure 4c: proportion of cells participating across days for
     LMI+ vs LMI- cells (binary participation).
 
     Per-mouse averages with individual trajectories. Stats: Kruskal-Wallis
@@ -192,8 +193,7 @@ def panel_supp4c_proportion_across_days(
 
     plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Panel saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 

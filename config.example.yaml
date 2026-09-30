@@ -25,3 +25,7 @@ output_root: /path/to/fast-learning-outputs
 # processed_dir: /path/to/processed
 # figures_dir: /path/to/figures
 # results_dir: /path/to/results
+
+# Figure file formats (default: pdf). PDF opens with editable text in
+# Illustrator; add svg for Inkscape.
+# figure_formats: [pdf, svg]

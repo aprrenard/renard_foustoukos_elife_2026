@@ -17,7 +17,7 @@ from scipy.stats import mannwhitneyu
 from statsmodels.stats.multitest import multipletests
 
 from fast_learning import paths
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
 
 
 # ============================================================================
@@ -113,7 +113,7 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    fig.savefig(os.path.join(OUTPUT_DIR, 'supp_1e.svg'), format='svg', dpi=300, bbox_inches='tight')
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_1e.svg'))
     print("Saved: supp_1e.svg")
 
     df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1e_data.csv'), index=False)

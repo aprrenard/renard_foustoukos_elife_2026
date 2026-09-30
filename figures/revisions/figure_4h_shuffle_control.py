@@ -43,6 +43,7 @@ Figures and CSVs are saved to
     paths.manuscript_output_dir/revisions/figure_4h_shuffle_control/output/.
 """
 
+from functools import partial
 import os
 import pickle
 import zlib
@@ -55,13 +56,14 @@ from scipy.stats import wilcoxon
 from joblib import Parallel, delayed
 
 from fast_learning import paths
-from fast_learning.plotting import reward_palette
+from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.reactivations import (
     detect_reactivation_events,
     load_selected_trials,
     MIN_EVENT_DISTANCE_FRAMES,
     PROMINENCE,
 )
+from fast_learning.stats import significance_stars
 
 REACTIVATION_RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 
@@ -86,16 +88,7 @@ OUTPUT_DIR = os.path.join(
 # Helpers
 # ============================================================================
 
-def _significance_stars(p):
-    if np.isnan(p):
-        return 'n.a.'
-    if p < 0.001:
-        return '***'
-    elif p < 0.01:
-        return '**'
-    elif p < 0.05:
-        return '*'
-    return 'n.s.'
+_significance_stars = partial(significance_stars, na='n.a.')
 
 
 def _seed_for(mouse, day):
@@ -398,8 +391,7 @@ def panel_4h_shuffle_control(
 
     plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(os.path.join(output_dir, f'{filename}.{save_format}'),
-                format=save_format, dpi=dpi, bbox_inches='tight')
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
     plt.close()
     print(f"Panel saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 
