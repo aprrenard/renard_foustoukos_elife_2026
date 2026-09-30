@@ -40,6 +40,7 @@ from scipy.stats import kruskal
 
 from fast_learning import paths, participation
 from fast_learning.stats import significance_stars
+from fast_learning.stats import format_p
 from fast_learning.plotting import save_figure
 
 
@@ -177,11 +178,10 @@ def panel_supp4c_proportion_across_days(
         # Annotate Kruskal-Wallis results for each LMI group
         for j, cat in enumerate(lmi_categories):
             H, p = kw_results.get((rg, cat), (np.nan, np.nan))
-            stars = significance_stars(p) if not np.isnan(p) else 'n.a.'
             ax.text(
                 0.02,
                 0.97 - j * 0.12,
-                f'{cat.capitalize()} LMI: KW p={p:.3g} {stars}',
+                f'{cat.capitalize()} LMI: KW {format_p(p)}',
                 transform=ax.transAxes,
                 va='top',
                 ha='left',

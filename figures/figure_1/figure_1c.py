@@ -15,6 +15,7 @@ from scipy.stats import mannwhitneyu
 
 from fast_learning import paths
 from fast_learning.plotting import behavior_palette, save_figure
+from fast_learning.stats import format_p
 
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_1', 'output')
@@ -301,17 +302,12 @@ def panel_c_right_performance_barplot(
         stat, p_value = mannwhitneyu(group_R_plus, group_R_minus, alternative='two-sided')
         stats.append({'day': day, 'statistic': stat, 'p_value': p_value})
 
-        # Add significance stars to the plot
+        # p-value above each day
         ax = plt.gca()
         xpos = days_of_interest.index(day)
         ypos = 95
 
-        if p_value < 0.001:
-            plt.text(xpos, ypos, '***', ha='center', va='bottom', color='black', fontsize=14)
-        elif p_value < 0.01:
-            plt.text(xpos, ypos, '**', ha='center', va='bottom', color='black', fontsize=14)
-        elif p_value < 0.05:
-            plt.text(xpos, ypos, '*', ha='center', va='bottom', color='black', fontsize=14)
+        plt.text(xpos, ypos, format_p(p_value), ha='center', va='bottom', color='black', fontsize=8)
 
     # Save figure and data
     os.makedirs(save_path, exist_ok=True)

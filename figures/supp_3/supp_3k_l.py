@@ -25,6 +25,7 @@ from fast_learning import imaging
 from fast_learning import paths, database
 from fast_learning.plotting import s2_m1_palette, save_figure
 from fast_learning.stats import significance_stars
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -97,12 +98,11 @@ def plot_cdf_panel(ax, data, value_col, reward_group, positive_only, ks_df, xlab
     vtype = 'positive' if positive_only else 'negative'
     ks_row = ks_df[(ks_df['reward_group'] == reward_group) & (ks_df['value_type'] == vtype)]
     if not ks_row.empty:
-        stars = ks_row.iloc[0]['ks_stars']
         pval = ks_row.iloc[0]['ks_pvalue']
         ax.text(
             0.98,
             0.02,
-            f'KS: {stars} (p={pval:.4f})',
+            f'KS {format_p(pval)}',
             ha='right',
             va='bottom',
             fontsize=9,

@@ -19,6 +19,7 @@ from scipy.stats import mannwhitneyu
 from fast_learning import paths
 from fast_learning.plotting import trial_type_rew_palette, trial_type_nonrew_palette, save_figure
 from fast_learning.stats import significance_stars as _stars
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -153,12 +154,14 @@ if __name__ == '__main__':
                 xs, mouse_data['reaction_time'].values, color='grey', s=8, alpha=0.5, zorder=5, linewidths=0
             )
 
-        # Significance stars
+        # p-value above each day
         y_max = df_plot['reaction_time'].max()
         for i, day in enumerate(DAYS):
             row = stats_g_df[(stats_g_df['stim_type'] == stim_label) & (stats_g_df['day'] == day)]
-            if not row.empty and row.iloc[0]['p_value'] < 0.05:
-                ax.text(i, y_max * 1.05, row.iloc[0]['significance'], ha='center', va='bottom', fontsize=8)
+            if not row.empty:
+                ax.text(
+                    i, y_max * 1.05, format_p(row.iloc[0]['p_value']), ha='center', va='bottom', fontsize=8
+                )
 
         ax.set_title(stim_label)
         ax.set_xlabel('Day')

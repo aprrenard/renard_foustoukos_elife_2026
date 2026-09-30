@@ -108,6 +108,7 @@ from statsmodels.stats.multitest import multipletests
 from fast_learning import paths, database
 from fast_learning import imaging
 from fast_learning.plotting import stim_palette, reward_palette, behavior_palette, save_figure
+from fast_learning.stats import format_p
 
 # Muscimol execution sessions, as in figure_2b_c_execution.py (keep in sync).
 EXECUTION_TABLE_PATH = os.path.join(paths.processed_dir, 'behavior', 'behavior_muscimol_execution.csv')
@@ -269,13 +270,7 @@ def _dprime_barplot_by_group(
         stats.append({'day': label, 'statistic': stat, 'p_value': p_value})
 
         xpos = day_labels.index(label)
-        if p_value < 0.001:
-            plt.text(xpos, ypos_star, '***', ha='center', va='bottom', color='black', fontsize=14)
-        elif p_value < 0.01:
-            plt.text(xpos, ypos_star, '**', ha='center', va='bottom', color='black', fontsize=14)
-        elif p_value < 0.05:
-            plt.text(xpos, ypos_star, '*', ha='center', va='bottom', color='black', fontsize=14)
-        plt.text(xpos, ypos_p, f'p={p_value:.3g}', ha='center', va='bottom', color='black', fontsize=10)
+        plt.text(xpos, ypos_star, format_p(p_value), ha='center', va='bottom', color='black', fontsize=8)
 
     os.makedirs(output_dir, exist_ok=True)
     output_file = os.path.join(output_dir, f'{filename}.{save_format}')
@@ -871,10 +866,8 @@ def panel_4e_dprime_correlation(
     for i, group in enumerate(['R+', 'R-']):
         if group in pop_stats:
             p = pop_stats[group]
-            p_text = f'p={p:.4f}' if p >= 0.001 else 'p<0.001'
-            sig = '***' if p < 0.001 else ('**' if p < 0.01 else ('*' if p < 0.05 else 'n.s.'))
             y_pos = ax.get_ylim()[1] - 0.1 * (ax.get_ylim()[1] - ax.get_ylim()[0])
-            ax.text(i, y_pos, f'{p_text}\n{sig}', ha='center', va='top', fontsize=9, fontweight='bold')
+            ax.text(i, y_pos, format_p(p), ha='center', va='top', fontsize=9, fontweight='bold')
 
     ax.set_ylim(-1, 1)
     ax.set_xlabel('Reward group')

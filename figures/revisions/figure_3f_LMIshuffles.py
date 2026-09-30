@@ -35,7 +35,7 @@ from scipy.stats import ks_2samp, levene
 from fast_learning import paths, database
 from fast_learning import imaging
 from fast_learning.plotting import reward_palette, save_figure
-from fast_learning.stats import significance_stars as _significance_stars
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -233,8 +233,7 @@ def plot_lmi_vs_null(
         ax.text(
             0.02,
             0.98,
-            f'std real = {std_real:.3f}\nstd null = {std_null:.3f}\n'
-            f"Levene p = {lev_p:.3g} {_significance_stars(lev_p)}",
+            f'std real = {std_real:.3f}\nstd null = {std_null:.3f}\nLevene {format_p(lev_p)}',
             transform=ax.transAxes,
             va='top',
             ha='left',

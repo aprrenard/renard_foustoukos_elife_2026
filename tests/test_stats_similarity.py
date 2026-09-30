@@ -40,3 +40,16 @@ def test_within_day_metrics():
     assert list(df['mouse_id']) == ['M']
     for day in similarity.DAYS:
         assert np.isclose(df[f'within_day{day:+d}'].iloc[0], 1)
+
+
+def test_format_p():
+    from fast_learning.stats import format_p
+
+    assert format_p(0.0512) == 'p=0.051'
+    assert format_p(0.00653) == 'p=0.007'
+    assert format_p(0.0005) == 'p=5×10$^{-4}$'
+    assert format_p(0.000564) == 'p=6×10$^{-4}$'
+    assert format_p(3.2e-12) == 'p=3×10$^{-12}$'
+    assert format_p(0.00096) == 'p=1×10$^{-3}$'
+    assert format_p(float('nan')) == 'n.a.'
+    assert format_p(0.2, prefix='KW p=') == 'KW p=0.200'

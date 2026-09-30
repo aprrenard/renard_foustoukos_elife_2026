@@ -25,6 +25,7 @@ from scipy.stats import mannwhitneyu
 from fast_learning import paths
 from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.stats import significance_stars as _significance_stars
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -181,14 +182,13 @@ def panel_h_reactivation_rate(
     #     color = reward_palette[1] if group == 'R+' else reward_palette[0]
     #     ax.plot(mouse_x, mouse_y, '-', color=color, linewidth=0.8, alpha=0.5, zorder=5)
 
-    # Significance stars
+    # p-value above each day
     y_max = df['Frequency'].max()
     y_range = y_max * 0.05
     width = 0.35
 
     for day_idx, (day, p) in enumerate(zip(days_sorted, p_values)):
-        stars = _significance_stars(p)
-        if stars != 'n.s.':
+        if not np.isnan(p):
             r_plus_vals = df[(df['Day'] == day) & (df['reward_group'] == 'R+') & (df['mouse_id'] != '')][
                 'Frequency'
             ]
@@ -210,7 +210,7 @@ def panel_h_reactivation_rate(
             x1 = day_idx - width / 2
             x2 = day_idx + width / 2
             ax.plot([x1, x1, x2, x2], [y1, y2, y2, y1], 'k-', linewidth=1)
-            ax.text((x1 + x2) / 2, y2, stars, ha='center', va='bottom', fontsize=10)
+            ax.text((x1 + x2) / 2, y2, format_p(p), ha='center', va='bottom', fontsize=8)
 
     ax.set_xlabel('Day', fontsize=10)
     ax.set_ylabel('Reactivation rate (events/min)', fontsize=10)

@@ -20,6 +20,7 @@ from scipy.stats import mannwhitneyu
 
 from fast_learning import paths, correlations
 from fast_learning.plotting import save_figure
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -36,19 +37,10 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
 # ============================================================================
 
 
-def add_significance_stars(ax, x1, x2, y, p_value):
-    if p_value < 0.001:
-        stars = '***'
-    elif p_value < 0.01:
-        stars = '**'
-    elif p_value < 0.05:
-        stars = '*'
-    else:
-        return
+def add_p_value_bracket(ax, x1, x2, y, p_value):
     h = (ax.get_ylim()[1] - ax.get_ylim()[0]) * 0.02
     ax.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c='black')
-    pval_text = f'{stars}\np<0.001' if p_value < 0.001 else f'{stars}\np={p_value:.3f}'
-    ax.text((x1 + x2) / 2, y + h, pval_text, ha='center', va='bottom', fontsize=10, fontweight='bold')
+    ax.text((x1 + x2) / 2, y + h, format_p(p_value), ha='center', va='bottom', fontsize=10)
 
 
 # ============================================================================
@@ -125,23 +117,11 @@ if __name__ == '__main__':
             row = stats_pair_df[stats_pair_df['pair_type'] == pt]
             if not row.empty:
                 p_val = row.iloc[0]['p_value']
-                if p_val < 0.05:
-                    pre_top = sub[sub['period'] == 'pre']['correlation'].agg(['mean', 'sem']).sum()
-                    post_top = sub[sub['period'] == 'post']['correlation'].agg(['mean', 'sem']).sum()
-                    add_significance_stars(
-                        ax, 0, 1, max(pre_top, post_top) + (ax.get_ylim()[1] - ax.get_ylim()[0]) * 0.06, p_val
-                    )
-                else:
-                    ax.text(
-                        0.95,
-                        0.95,
-                        f'p={p_val:.3f}',
-                        transform=ax.transAxes,
-                        fontsize=10,
-                        va='top',
-                        ha='right',
-                        bbox=dict(boxstyle='round', facecolor='white', alpha=0.8),
-                    )
+                pre_top = sub[sub['period'] == 'pre']['correlation'].agg(['mean', 'sem']).sum()
+                post_top = sub[sub['period'] == 'post']['correlation'].agg(['mean', 'sem']).sum()
+                add_p_value_bracket(
+                    ax, 0, 1, max(pre_top, post_top) + (ax.get_ylim()[1] - ax.get_ylim()[0]) * 0.06, p_val
+                )
 
         plt.suptitle(f'Pre vs Post — Pair Level ({reward_group})', fontsize=14, y=1.02)
         plt.tight_layout()

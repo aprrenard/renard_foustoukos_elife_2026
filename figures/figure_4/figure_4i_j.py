@@ -39,6 +39,7 @@ from scipy.stats import pearsonr, linregress, kruskal
 from fast_learning import paths, participation
 from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.stats import significance_stars
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -105,7 +106,7 @@ def panel_i_participation_vs_lmi(
             ax.text(
                 0.05,
                 0.95,
-                f'r = {pearson_r:.3f}\np = {pearson_p:.3g} {stars}',
+                f'r = {pearson_r:.3f}\n{format_p(pearson_p)}',
                 transform=ax.transAxes,
                 va='top',
                 ha='left',
@@ -276,11 +277,10 @@ def panel_j_participation_across_days(
         # Annotate Kruskal-Wallis results for each LMI group
         for j, cat in enumerate(lmi_categories):
             H, p = kw_results.get((rg, cat), (np.nan, np.nan))
-            stars = significance_stars(p) if not np.isnan(p) else 'n.a.'
             ax.text(
                 0.02,
                 0.97 - j * 0.12,
-                f'{cat.capitalize()} LMI: KW p={p:.3g} {stars}',
+                f'{cat.capitalize()} LMI: KW {format_p(p)}',
                 transform=ax.transAxes,
                 va='top',
                 ha='left',

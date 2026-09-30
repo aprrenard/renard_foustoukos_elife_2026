@@ -19,7 +19,7 @@ from scipy.stats import wilcoxon
 
 from fast_learning import paths
 from fast_learning.plotting import trial_type_rew_palette, save_figure
-from fast_learning.stats import significance_stars as pval_to_stars
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     def draw_stat_bracket(ax, x1, x2, y, p_value, h=3):
         ax.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=0.8, color='black')
-        ax.text((x1 + x2) / 2, y + h, pval_to_stars(p_value), ha='center', va='bottom', fontsize=8)
+        ax.text((x1 + x2) / 2, y + h, format_p(p_value), ha='center', va='bottom', fontsize=8)
 
     def paired_wilcoxon(df, group_col, value_col, group1, group2):
         g1 = df[df[group_col] == group1].sort_values('mouse_id')[value_col].values

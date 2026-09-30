@@ -68,6 +68,7 @@ from scipy.stats import friedmanchisquare
 from fast_learning import paths, database
 from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.stats import significance_stars as _significance_stars
+from fast_learning.stats import format_p
 
 DLC_DIR = '/mnt/lsens-analysis/Anthony_Renard/DLCTrialMatrices'
 
@@ -473,7 +474,7 @@ def plot_movement_summary(
 
             stat, p, n_mice = _friedman_p(fdata, value_col, days_sorted)
             stars = _significance_stars(p) if not np.isnan(p) else 'n.a.'
-            p_text = f'p={p:.3g} {stars}' if not np.isnan(p) else 'n.a.'
+            p_text = format_p(p)
             stats_rows.append(
                 {
                     'feature': feature,

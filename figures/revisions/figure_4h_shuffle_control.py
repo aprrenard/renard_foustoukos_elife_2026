@@ -64,6 +64,7 @@ from fast_learning.reactivations import (
     PROMINENCE,
 )
 from fast_learning.stats import significance_stars
+from fast_learning.stats import format_p
 
 REACTIVATION_RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 
@@ -394,8 +395,7 @@ def panel_4h_shuffle_control(
             if not stat_row.empty:
                 p = stat_row.iloc[0]['p_value']
                 n_mice = int(stat_row.iloc[0]['n_mice'])
-                stars = _significance_stars(p)
-                ax.set_title(f'{rg}, day {day}\np={p:.3g} {stars} (n={n_mice} mice)', fontsize=8)
+                ax.set_title(f'{rg}, day {day}\n{format_p(p)} (n={n_mice} mice)', fontsize=8)
             else:
                 ax.set_title(f'{rg}, day {day}\nn.a.', fontsize=8)
 

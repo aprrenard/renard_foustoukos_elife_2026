@@ -43,7 +43,7 @@ from statsmodels.regression.mixed_linear_model import MixedLM
 
 from fast_learning import paths, participation
 from fast_learning.plotting import reward_palette, save_figure, lmi_cmap
-from fast_learning.stats import significance_stars as _significance_stars
+from fast_learning.stats import format_p
 
 LMI_DATA_CSV = participation.DAY0_CSV
 
@@ -123,12 +123,11 @@ def panel_supp4a_scatter_lmm(
         x_range = np.linspace(gdata['transient_freq'].min(), gdata['transient_freq'].max(), 100)
         ax.plot(x_range, slope * x_range + intercept, 'k-', linewidth=1.5)
 
-        stars = _significance_stars(p_value)
         ax.text(
             0.05,
             0.95,
             f'LMM slope = {slope:.3f} [{ci_low:.3f}, {ci_high:.3f}]\n'
-            f'p = {p_value:.3g} {stars}\nn = {len(gdata)} cells, {n_mice} mice',
+            f'{format_p(p_value)}\nn = {len(gdata)} cells, {n_mice} mice',
             transform=ax.transAxes,
             fontsize=10,
             va='top',
@@ -215,11 +214,10 @@ def panel_supp4b_partial_corr_lmm(
         return a - (slope * b + intercept)
 
     def annotate(ax, label, slope, p_value, ci_low, ci_high):
-        stars = _significance_stars(p_value)
         ax.text(
             0.05,
             0.95,
-            f'{label}\nslope = {slope:.3f} [{ci_low:.3f}, {ci_high:.3f}]\np = {p_value:.3g} {stars}',
+            f'{label}\nslope = {slope:.3f} [{ci_low:.3f}, {ci_high:.3f}]\n{format_p(p_value)}',
             transform=ax.transAxes,
             fontsize=9,
             va='top',

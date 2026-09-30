@@ -2,7 +2,7 @@
 Supplementary Figure 1b: Whisker lick probability on Days 0, +1, +2 for R+ vs R-.
 
 Bar plot (mean) with individual mouse dots per day, comparing reward groups.
-Significance stars from per-day Mann-Whitney U tests (two-sided).
+P-values from per-day Mann-Whitney U tests (two-sided).
 """
 
 import os
@@ -14,6 +14,7 @@ from scipy.stats import mannwhitneyu
 
 from fast_learning import paths
 from fast_learning.plotting import behavior_palette, save_figure
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -103,13 +104,10 @@ if __name__ == '__main__':
         ax=ax,
     )
 
-    # Significance stars
+    # p-value above each day
     for row in stats_rows:
         xpos = DAYS.index(row['day'])
-        p = row['p_value']
-        stars = '***' if p < 0.001 else '**' if p < 0.01 else '*' if p < 0.05 else ''
-        if stars:
-            ax.text(xpos, 95, stars, ha='center', va='bottom', color='black', fontsize=14)
+        ax.text(xpos, 95, format_p(row['p_value']), ha='center', va='bottom', color='black', fontsize=8)
 
     ax.set_xlabel('Day')
     ax.set_ylabel('Lick probability (%)')

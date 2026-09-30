@@ -20,6 +20,7 @@ from sklearn.preprocessing import StandardScaler
 from fast_learning import imaging
 from fast_learning import paths, database
 from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -254,11 +255,9 @@ if __name__ == '__main__':
     for i, group in enumerate(['R+', 'R-']):
         if group in pop_stats:
             p = pop_stats[group]
-            p_text = f'p={p:.4f}' if p >= 0.001 else 'p<0.001'
-            sig = '***' if p < 0.001 else ('**' if p < 0.01 else ('*' if p < 0.05 else 'n.s.'))
             y_max = df_plot[df_plot['group'] == group]['value'].max()
             y_pos = y_max + 0.1 * (ax.get_ylim()[1] - ax.get_ylim()[0])
-            ax.text(i, y_pos, f'{p_text}\n{sig}', ha='center', va='bottom', fontsize=9, fontweight='bold')
+            ax.text(i, y_pos, format_p(p), ha='center', va='bottom', fontsize=9, fontweight='bold')
 
     y_range = ax.get_ylim()[1] - ax.get_ylim()[0]
     ax.set_ylim(ax.get_ylim()[0], ax.get_ylim()[1] + 0.15 * y_range)

@@ -62,6 +62,7 @@ from fast_learning.similarity import (
     compute_within_day_metrics as _compute_within_day_metrics,
 )
 from fast_learning.stats import significance_stars as _significance_stars
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -343,7 +344,7 @@ def _panel_metric_across_days(
         ax.text(
             DAYS.index(day),
             ylim_top * 0.95,
-            _significance_stars(stats_dict[day]),
+            format_p(stats_dict[day]),
             ha='center',
             va='bottom',
             fontsize=9,

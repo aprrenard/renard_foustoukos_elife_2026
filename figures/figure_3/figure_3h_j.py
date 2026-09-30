@@ -33,6 +33,7 @@ from fast_learning.similarity import (
     compute_reorganization_metrics,
 )
 from fast_learning.stats import significance_stars as _significance_stars
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -384,7 +385,7 @@ def panel_i_within_day_correlations(
         ax.text(
             DAYS.index(day),
             ylim_top * 0.95,
-            _significance_stars(stats_dict[day]),
+            format_p(stats_dict[day]),
             ha='center',
             va='bottom',
             fontsize=9,

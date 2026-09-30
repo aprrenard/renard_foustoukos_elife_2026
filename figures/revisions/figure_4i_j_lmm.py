@@ -55,6 +55,7 @@ from statsmodels.regression.mixed_linear_model import MixedLM
 from fast_learning import paths, participation
 from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.stats import significance_stars as _significance_stars
+from fast_learning.stats import format_p
 
 DAYS = [-2, -1, 0, 1, 2]
 SELECTION = 'allnostim'  # trial selection of the reactivation events (see figure_4i_j.py)
@@ -188,7 +189,7 @@ def panel_i_participation_vs_lmi_lmm(
                 0.05,
                 0.95,
                 f'LMM slope = {slope:.3f} [{ci_low:.3f}, {ci_high:.3f}]\n'
-                f'p = {p_value:.3g} {stars}  (ICC={icc:.2f})',
+                f'{format_p(p_value)}  (ICC={icc:.2f})',
                 transform=ax.transAxes,
                 va='top',
                 ha='left',
@@ -355,8 +356,7 @@ def panel_j_participation_across_days_lmm(
             if s is None:
                 text = f'{cat_labels[cat]}: n.a.'
             else:
-                stars = _significance_stars(s['p_value'])
-                text = f"{cat_labels[cat]} day slope: p={s['p_value']:.3g} {stars} (n={s['n_mice']} mice)"
+                text = f"{cat_labels[cat]} day slope: {format_p(s['p_value'])} (n={s['n_mice']} mice)"
             ax.text(
                 0.02,
                 0.97 - j * 0.09,

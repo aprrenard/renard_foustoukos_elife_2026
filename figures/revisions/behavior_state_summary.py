@@ -29,6 +29,7 @@ from fast_learning import paths, database
 from fast_learning.behavior import make_behavior_table
 from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.stats import significance_stars as _significance_stars
+from fast_learning.stats import format_p
 
 
 # ============================================================================
@@ -181,8 +182,7 @@ def plot_session_summary(
         y_range = y_max * 0.05
         width = 0.35
         for day_idx, (day, p) in enumerate(zip(days_sorted, p_values)):
-            stars = _significance_stars(p)
-            if stars != 'n.s.':
+            if not np.isnan(p):
                 r_plus_vals = df[(df['day'] == day) & (df['reward_group'] == 'R+')][metric].dropna()
                 r_minus_vals = df[(df['day'] == day) & (df['reward_group'] == 'R-')][metric].dropna()
                 ci_plus = (
@@ -199,7 +199,7 @@ def plot_session_summary(
                 y2 = y1 + y_range
                 x1, x2 = day_idx - width / 2, day_idx + width / 2
                 ax.plot([x1, x1, x2, x2], [y1, y2, y2, y1], 'k-', linewidth=1)
-                ax.text((x1 + x2) / 2, y2, stars, ha='center', va='bottom', fontsize=10)
+                ax.text((x1 + x2) / 2, y2, format_p(p), ha='center', va='bottom', fontsize=8)
 
         ax.set_xlabel('Day', fontsize=10)
         ax.set_ylabel(ylabel, fontsize=10)

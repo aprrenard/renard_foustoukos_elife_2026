@@ -15,6 +15,7 @@ from scipy.stats import mannwhitneyu
 
 from fast_learning import paths, database
 from fast_learning.plotting import stim_palette, reward_palette, save_figure
+from fast_learning.stats import format_p
 
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_2', 'output')
@@ -481,20 +482,12 @@ def panel_f_opto_barplot(
         stat, p_value = mannwhitneyu(group_wS1, group_fpS1, alternative='two-sided')
         stats.append({'day': label, 'statistic': stat, 'p_value': p_value})
 
-        # Add significance stars to the plot
+        # p-value above each day
         ax = plt.gca()
         xpos = day_labels.index(label)
         ypos = 95
 
-        if p_value < 0.001:
-            plt.text(xpos, ypos, '***', ha='center', va='bottom', color='black', fontsize=14)
-        elif p_value < 0.01:
-            plt.text(xpos, ypos, '**', ha='center', va='bottom', color='black', fontsize=14)
-        elif p_value < 0.05:
-            plt.text(xpos, ypos, '*', ha='center', va='bottom', color='black', fontsize=14)
-
-        # Add p-value text
-        plt.text(xpos, 90, f'p={p_value:.3g}', ha='center', va='bottom', color='black', fontsize=10)
+        plt.text(xpos, ypos, format_p(p_value), ha='center', va='bottom', color='black', fontsize=8)
 
     # Save figure and data
     os.makedirs(save_path, exist_ok=True)
