@@ -19,6 +19,9 @@ intercept, non-modulated cells reinstated as a third category in panel j)
 is implemented in src/manuscript/revisions/figure_4i_j_lmm.py, reusing this
 module's data pipeline unchanged.
 
+Mice: those in the participation mouse selection (>= 3 reactivation events
+on day 0; see fast_learning.reactivations).
+
 Execution modes:
     MODE = 'compute' : run participation-rate pipeline, save CSVs, then plot
     MODE = 'plot'    : load previously saved CSVs and plot only
@@ -39,7 +42,7 @@ from joblib import Parallel, delayed
 
 sys.path.append('/home/aprenard/repos/fast-learning')
 from fast_learning import paths, database
-from fast_learning import imaging
+from fast_learning import imaging, reactivations
 from fast_learning.plotting import reward_palette
 from src.manuscript.preprocessing.reactivation_preprocessing import select_trials_by_type
 
@@ -53,7 +56,7 @@ SAMPLING_RATE = 30
 EVENT_WINDOW_MS = 150
 EVENT_WINDOW_FRAMES = int(EVENT_WINDOW_MS / 1000 * SAMPLING_RATE)
 PARTICIPATION_THRESHOLD = 0.1
-MIN_EVENTS_FOR_RELIABILITY = 5
+MIN_EVENTS_FOR_RELIABILITY = reactivations.MIN_EVENTS_PER_DAY
 LMI_POSITIVE_THRESHOLD = 0.975
 LMI_NEGATIVE_THRESHOLD = 0.025
 N_JOBS = 35
@@ -324,8 +327,11 @@ def _compute_participation_data(participation_threshold=PARTICIPATION_THRESHOLD)
     per_day_df : pd.DataFrame  – per-cell, per-day participation rates
     """
     r_plus, r_minus = _load_reactivation_results(REACTIVATION_RESULTS_FILE)
-    all_results = {**r_plus, **r_minus}
+    included = reactivations.load_participation_mice()
+    all_results = {m: res for m, res in {**r_plus, **r_minus}.items() if m in included}
     all_mice = list(all_results.keys())
+    print(f"Excluded by the mouse selection: "
+          f"{sorted((set(r_plus) | set(r_minus)) - included) or 'none'}")
 
     print(f"\nComputing participation rates for {len(all_mice)} mice "
           f"(participation_threshold={participation_threshold})...")

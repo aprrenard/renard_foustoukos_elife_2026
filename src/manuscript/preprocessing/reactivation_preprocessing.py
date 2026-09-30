@@ -11,6 +11,11 @@ Part 2 – Reactivation event detection:
     threshold if surrogates were skipped / not found), then runs
     template-correlation reactivation detection for all R+ and R- mice.
 
+Part 3 – Mouse selection for the participation analyses:
+    From the detection at PERCENTILE_TO_USE, writes mouse_selection.csv
+    (see fast_learning.reactivations). `--selection-only` rebuilds it from
+    the existing results file without rerunning Parts 1-2.
+
 All results are saved to data_processed/reactivation/.
 
 This script is standalone: all computation functions are defined inline and
@@ -29,7 +34,7 @@ from scipy.stats import percentileofscore
 from joblib import Parallel, delayed
 
 from fast_learning import imaging
-from fast_learning import paths, database
+from fast_learning import paths, database, reactivations
 
 
 # ============================================================================
@@ -871,10 +876,40 @@ def run_reactivation_detection(
 
 
 # ============================================================================
+# Part 3: Mouse selection for the participation analyses
+# ============================================================================
+
+def save_mouse_selection(results_data, path=reactivations.MOUSE_SELECTION_CSV):
+    """Write the participation mouse selection computed from results_data."""
+    selection = reactivations.compute_mouse_selection(results_data)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    selection.to_csv(path, index=False)
+    excluded = selection.loc[~selection['included']]
+    print(f"\n  Mouse selection (>= {reactivations.MIN_DAY0_EVENTS} day-0 events): "
+          f"{selection['included'].sum()} of {len(selection)} mice included")
+    print(excluded.to_string(index=False) if len(excluded) else "  No mouse excluded.")
+    print(f"  Saved: {path}")
+    return selection
+
+
+# ============================================================================
 # Main
 # ============================================================================
 
 if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__.split('\n')[1])
+    parser.add_argument('--selection-only', action='store_true',
+                        help='only rebuild mouse_selection.csv from the existing results file')
+    args = parser.parse_args()
+
+    if args.selection_only:
+        results_file = os.path.join(OUTPUT_DIR, f'reactivation_results_{_p_str(PERCENTILE_TO_USE)}.pkl')
+        print(f"Loading {results_file}")
+        with open(results_file, 'rb') as f:
+            save_mouse_selection(pickle.load(f))
+        sys.exit(0)
+
     print("\n" + "=" * 60)
     print("REACTIVATION PREPROCESSING PIPELINE")
     print("=" * 60)
@@ -899,4 +934,10 @@ if __name__ == '__main__':
     # Part 2: Reactivation event detection, one run per percentile
     # ------------------------------------------------------------------
     for percentile in PERCENTILES:
-        run_reactivation_detection(r_plus_mice, r_minus_mice, percentile=percentile)
+        results_data = run_reactivation_detection(r_plus_mice, r_minus_mice, percentile=percentile)
+
+        # --------------------------------------------------------------
+        # Part 3: Mouse selection, from the main detection threshold
+        # --------------------------------------------------------------
+        if percentile == PERCENTILE_TO_USE:
+            save_mouse_selection(results_data)

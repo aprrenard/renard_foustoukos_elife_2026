@@ -12,6 +12,9 @@ controlling for spontaneous transient frequency. Layout: 2 rows (R+, R-) x
 2 columns (raw, partial). Tests whether spontaneous activity explains the
 LMI-participation relationship.
 
+Mice: those in the participation mouse selection (>= 3 reactivation events
+on day 0; see fast_learning.reactivations).
+
 Execution modes:
     MODE = 'compute' : run full pipeline, save intermediate data, then plot
     MODE = 'plot'    : load previously saved data from RESULTS_DIR and plot only
@@ -42,7 +45,7 @@ from scipy.stats import pearsonr, linregress
 from joblib import Parallel, delayed
 
 from fast_learning import paths, database
-from fast_learning import imaging
+from fast_learning import imaging, reactivations
 from fast_learning.plotting import reward_palette
 
 
@@ -57,7 +60,7 @@ SAMPLING_RATE = 30
 EVENT_WINDOW_MS = 150
 EVENT_WINDOW_FRAMES = int(EVENT_WINDOW_MS / 1000 * SAMPLING_RATE)
 PARTICIPATION_THRESHOLD = 0.10
-MIN_EVENTS_FOR_RELIABILITY = 5
+MIN_EVENTS_FOR_RELIABILITY = reactivations.MIN_EVENTS_PER_DAY
 
 # Spontaneous transient detection parameters
 MIN_DISTANCE_MS = 200
@@ -197,12 +200,15 @@ def compute_participation_csv(save_path):
 
     with open(REACTIVATION_RESULTS_FILE, 'rb') as f:
         data = pickle.load(f)
-    all_results = {**data['r_plus_results'], **data['r_minus_results']}
+    included = reactivations.load_participation_mice()
+    all_results = {m: res for m, res in
+                   {**data['r_plus_results'], **data['r_minus_results']}.items()
+                   if m in included}
 
-    all_mice = r_plus_mice + r_minus_mice
+    all_mice = list(all_results)
     print(f"\nComputing participation rates for {len(all_mice)} mice...")
     results_list = Parallel(n_jobs=N_JOBS, verbose=5)(
-        delayed(_process_mouse_participation)(mouse, all_results.get(mouse, {}))
+        delayed(_process_mouse_participation)(mouse, all_results[mouse])
         for mouse in all_mice
     )
 
@@ -606,6 +612,7 @@ if __name__ == '__main__':
     print(f"Output directory: {OUTPUT_DIR}")
 
     if MODE == 'compute':
+        compute_participation_csv(PARTICIPATION_CSV)
         compute_lmi_data_csv(LMI_DATA_CSV)
     elif MODE == 'plot':
         if not os.path.exists(LMI_DATA_CSV):

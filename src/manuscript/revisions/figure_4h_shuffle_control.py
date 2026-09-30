@@ -31,6 +31,9 @@ Statistics are deliberately two-layered:
     for a p-value would reintroduce the exact pseudoreplication problem
     this rebuttal is fixing elsewhere.
 
+Mice: all imaging mice, as in Figure 4h (the participation mouse selection
+in fast_learning.reactivations does not apply to event rates).
+
 Execution modes:
     MODE = 'compute' : run the (expensive, ~n_mice x n_days x 1000 shuffles)
                         shuffle-detection pipeline, save CSVs, then plot

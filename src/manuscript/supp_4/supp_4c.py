@@ -14,6 +14,10 @@ Panel: Proportion of cells participating across days (-2 to +2) separately
        independently for each of the four groups (R+ positive LMI,
        R+ negative LMI, R- positive LMI, R- negative LMI).
 
+Mice: those in the participation mouse selection (>= 3 reactivation events
+on day 0; see fast_learning.reactivations). Within those, a mouse x day is
+kept only if it has at least MIN_EVENTS_FOR_RELIABILITY valid events.
+
 Execution modes:
     MODE = 'compute' : run circular-shift pipeline, save CSV, then plot
     MODE = 'plot'    : load previously saved CSV and plot only
@@ -44,7 +48,7 @@ from scipy.stats import kruskal
 from joblib import Parallel, delayed
 
 from fast_learning import paths
-from fast_learning import imaging
+from fast_learning import imaging, reactivations
 from fast_learning.plotting import reward_palette
 
 
@@ -77,7 +81,7 @@ SIGNIFICANCE_PCTILE = 95      # top 5 % -> p < 0.05
 EVENT_WINDOW_MS = 150
 EVENT_WINDOW_FRAMES = int(EVENT_WINDOW_MS / 1000 * SAMPLING_RATE)
 PARTICIPATION_THRESHOLD = 0.10
-MIN_EVENTS_FOR_RELIABILITY = 5
+MIN_EVENTS_FOR_RELIABILITY = reactivations.MIN_EVENTS_PER_DAY
 
 
 # ============================================================================
@@ -233,8 +237,9 @@ def _compute_binary_participation():
 
     with open(REACTIVATION_RESULTS_FILE, 'rb') as f:
         data = pickle.load(f)
-    r_plus_results  = data['r_plus_results']
-    r_minus_results = data['r_minus_results']
+    included = reactivations.load_participation_mice()
+    r_plus_results  = {m: r for m, r in data['r_plus_results'].items() if m in included}
+    r_minus_results = {m: r for m, r in data['r_minus_results'].items() if m in included}
     all_results = {**r_plus_results, **r_minus_results}
     reward_group_map = {m: 'R+' for m in r_plus_results}
     reward_group_map.update({m: 'R-' for m in r_minus_results})

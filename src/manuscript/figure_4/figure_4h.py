@@ -5,6 +5,10 @@ Grouped bar plot (one bar per group per day) showing reactivation event
 frequency (events/min) across the 5 experimental days. Individual mouse
 trajectories are overlaid. Mann-Whitney U test per day (R+ vs R-).
 
+Mice: all imaging mice. The participation mouse selection
+(fast_learning.reactivations) is deliberately not applied here: a day with
+zero events is a valid event-rate measurement.
+
 Result files are loaded from data_processed/reactivation/.
 Figures and CSVs are saved to output/.
 """
