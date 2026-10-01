@@ -18,8 +18,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import mannwhitneyu
-from statsmodels.formula.api import ols
-from statsmodels.stats.anova import anova_lm
 
 from fast_learning import imaging
 from fast_learning import paths, database
@@ -290,7 +288,7 @@ def panel_i_within_day_correlations(
 
     Saves:
         figure_3i_data.csv: per-mouse within-day correlations for each day
-        figure_3i_stats.csv: 2-way ANOVA (day x reward_group) + Mann-Whitney U post-hoc per day
+        figure_3i_stats.csv: Mann-Whitney U (R+ vs R-) per day
     """
     if corr_matrices_rew is None or corr_matrices_nonrew is None:
         corr_matrices_rew, corr_matrices_nonrew, mice_rew, mice_nonrew = load_and_process_data(
@@ -306,7 +304,7 @@ def panel_i_within_day_correlations(
     metrics_nonrew = compute_within_day_metrics(corr_matrices_nonrew, mice_nonrew, 'R-')
     metrics_combined = pd.concat([metrics_rew, metrics_nonrew], ignore_index=True)
 
-    # Reshape to long format for ANOVA
+    # Long format for plotting
     day_cols = [f'within_day{d:+d}' for d in DAYS]
     long_df = metrics_combined.melt(
         id_vars=['mouse_id', 'reward_group'],
@@ -317,23 +315,8 @@ def panel_i_within_day_correlations(
     long_df['day'] = long_df['day_label'].str.extract(r'day([+-]?\d+)').astype(int)
     long_df['day_label'] = pd.Categorical(long_df['day_label'], categories=day_cols, ordered=True)
 
-    # Statistics: 2-way ANOVA (day x reward_group)
-    model = ols('correlation ~ C(reward_group) * C(day)', data=long_df).fit()
-    anova_table = anova_lm(model, typ=2)
-    anova_rows = []
-    for term, row in anova_table.iterrows():
-        anova_rows.append(
-            {
-                'test': '2-way ANOVA',
-                'term': term,
-                'F': row.get('F', np.nan),
-                'p_value': row['PR(>F)'],
-                'significance': _significance_stars(row['PR(>F)']) if not np.isnan(row['PR(>F)']) else '',
-            }
-        )
-
-    # Post-hoc: Mann-Whitney U between groups for each day (no correction)
-    stats_rows = anova_rows
+    # Mann-Whitney U between groups for each day (one value per mouse, no correction)
+    stats_rows = []
     stats_dict = {}
     for day in DAYS:
         col = f'within_day{day:+d}'

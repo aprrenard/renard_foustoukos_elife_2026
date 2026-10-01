@@ -124,3 +124,59 @@ def per_mouse_slope_test(mouse_day_data, y='participation_rate', x='day'):
         'p_value': float(p_value),
         'n_mice': len(slopes),
     }
+
+
+def ks_permutation_test(df, value, label, groups, shuffle, n_perm=10000, seed=0, mouse='mouse_id'):
+    """Kolmogorov-Smirnov comparison of two groups of cells whose p-value
+    respects that cells are recorded in mice.
+
+    The statistic is the usual two-sample KS distance between the pooled cell
+    values of groups[0] and groups[1]. Its null distribution is built by
+    shuffling labels at the level where they are exchangeable under the null:
+      shuffle='between_mice': the label is a property of the mouse (e.g. R+ vs
+          R-); whole mice are reassigned to the groups, each keeping all its
+          cells, with the number of mice per group fixed.
+      shuffle='within_mice': the label is a property of the cell within mice
+          (e.g. wS2 vs wM1); labels are shuffled among the cells of each
+          mouse, so each mouse keeps its number of cells of each label.
+    p = (1 + number of shuffles with a distance >= observed) / (1 + n_perm).
+    """
+    import numpy as np
+    from scipy.stats import ks_2samp
+
+    df = df[df[label].isin(groups)].dropna(subset=[value])
+    values = df[value].to_numpy()
+    labels = (df[label] == groups[0]).to_numpy()
+    mice = df[mouse].to_numpy()
+
+    def distance(is_first):
+        return ks_2samp(values[is_first], values[~is_first]).statistic
+
+    observed = distance(labels)
+    rng = np.random.default_rng(seed)
+    null = np.empty(n_perm)
+    if shuffle == 'between_mice':
+        mouse_ids, inverse = np.unique(mice, return_inverse=True)
+        mouse_label = np.zeros(len(mouse_ids), dtype=bool)
+        mouse_label[inverse[labels]] = True
+        if np.any(mouse_label[inverse] != labels):
+            raise ValueError(f'{label} is not constant within mice.')
+        for k in range(n_perm):
+            null[k] = distance(rng.permutation(mouse_label)[inverse])
+    elif shuffle == 'within_mice':
+        blocks = [np.flatnonzero(mice == m) for m in np.unique(mice)]
+        shuffled = labels.copy()
+        for k in range(n_perm):
+            for idx in blocks:
+                shuffled[idx] = rng.permutation(labels[idx])
+            null[k] = distance(shuffled)
+    else:
+        raise ValueError(shuffle)
+    return {
+        'ks_statistic': observed,
+        'p_value': (1 + np.sum(null >= observed - 1e-12)) / (1 + n_perm),
+        'n_perm': n_perm,
+        'shuffle': shuffle,
+        'n_cells': (int(labels.sum()), int((~labels).sum())),
+        'n_mice': len(np.unique(mice)),
+    }

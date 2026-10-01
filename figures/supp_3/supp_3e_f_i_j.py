@@ -2,13 +2,16 @@
 Supplementary Figure 3e, f, i, j: Proportions and distributions of LMI for
 projection neurons.
 
-  Panel e: wS2 — distribution of LMI values (R+ vs R-, KS test)
+  Panel e: wS2 — distribution of LMI values (R+ vs R-)
   Panel f: wS2 — proportion of cells with significant positive/negative LMI
-  Panel i: wM1 — distribution of LMI values (R+ vs R-, KS test)
+  Panel i: wM1 — distribution of LMI values (R+ vs R-)
   Panel j: wM1 — proportion of cells with significant positive/negative LMI
 
-Statistics: Mann-Whitney U test (R+ vs R-) per cell type × LMI sign.
-           Kolmogorov-Smirnov test (R+ vs R-) per cell type for distributions.
+Statistics: f, j: Mann-Whitney U test (R+ vs R-, one proportion per mouse)
+           per cell type x LMI sign.
+           e, i: KS distance between pooled cells (R+ vs R-) per cell type,
+           with a permutation p-value that respects mice (whole mice
+           reassigned to R+/R-, 10,000 shuffles).
 """
 
 import os
@@ -17,11 +20,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.stats import mannwhitneyu, ks_2samp
+from scipy.stats import mannwhitneyu
 
 from fast_learning import paths, database
 from fast_learning.plotting import reward_palette, save_figure
-from fast_learning.stats import significance_stars as get_star
+from fast_learning.stats import format_p, ks_permutation_test
 
 
 # ============================================================================
@@ -87,11 +90,18 @@ if __name__ == '__main__':
     ks_rows = []
     for ct in ['wS2', 'wM1']:
         sub = lmi_df[lmi_df['cell_type'] == ct]
-        rp = sub[sub['reward_group'] == 'R+']['lmi'].values
-        rm = sub[sub['reward_group'] == 'R-']['lmi'].values
-        stat, p = ks_2samp(rp, rm, alternative='two-sided')
-        ks_rows.append({'cell_type': ct, 'test': 'KS', 'statistic': stat, 'p_value': p})
-        print(f"{ct} LMI distribution KS: D={stat:.3f}, p={p:.4f}")
+        ks = ks_permutation_test(sub, 'lmi', 'reward_group', ('R+', 'R-'), shuffle='between_mice')
+        stat, p = ks['ks_statistic'], ks['p_value']
+        ks_rows.append(
+            {
+                'cell_type': ct,
+                'test': 'KS, permutation across mice',
+                'statistic': stat,
+                'p_value': p,
+                'n_mice': ks['n_mice'],
+            }
+        )
+        print(f"{ct} LMI distribution KS: D={stat:.3f}, permutation p={p:.4f}")
 
     ks_df = pd.DataFrame(ks_rows)
 
@@ -115,8 +125,8 @@ if __name__ == '__main__':
             )
         ks_row = ks_df[ks_df['cell_type'] == cell_type]
         if not ks_row.empty:
-            star = get_star(ks_row.iloc[0]['p_value'])
-            ax.text(0.98, 0.98, star, ha='right', va='top', fontsize=10, transform=ax.transAxes)
+            p_text = f"KS {format_p(ks_row.iloc[0]['p_value'])}"
+            ax.text(0.98, 0.98, p_text, ha='right', va='top', fontsize=8, transform=ax.transAxes)
         ax.set_xlim(-1, 1)
         ax.set_xlabel('LMI')
         ax.set_ylabel('Probability')
@@ -149,17 +159,15 @@ if __name__ == '__main__':
             # Significance annotation
             stat_row = stats_df[(stats_df['cell_type'] == cell_type) & (stats_df['lmi_sign'] == sign)]
             if not stat_row.empty:
-                star = get_star(stat_row.iloc[0]['p_value'])
-                if star:
-                    ax.annotate(
-                        star,
-                        xy=(0.5, 0.95),
-                        xycoords='axes fraction',
-                        ha='center',
-                        va='top',
-                        fontsize=14,
-                        color='black',
-                    )
+                ax.annotate(
+                    format_p(stat_row.iloc[0]['p_value']),
+                    xy=(0.5, 0.95),
+                    xycoords='axes fraction',
+                    ha='center',
+                    va='top',
+                    fontsize=8,
+                    color='black',
+                )
 
     # ============================================================================
     # Figures

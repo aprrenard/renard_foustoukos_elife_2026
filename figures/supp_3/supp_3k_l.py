@@ -4,28 +4,26 @@ Supplementary Figure 3k, l: CDF comparison of wS2 vs wM1 projector neurons.
   Panel k: CDF of LMI values (positive and negative, 2 reward groups)
   Panel l: CDF of classifier weights (positive and negative, 2 reward groups)
 
-Statistics: Kolmogorov-Smirnov test (two-sided, wS2 vs wM1) per reward group
-and sign.
+Statistics: KS distance between pooled wS2 and wM1 cells per reward group and
+sign, with a permutation p-value that respects mice (wS2/wM1 labels shuffled
+among the cells of each mouse, 10,000 shuffles).
 
 Classifier weights are loaded from paths.processed_dir/decoding (saved by
 pipeline/06_decoder.py). Cell-type labels for the weight file are retrieved from the
 mapping xarrays.
 """
 
-from functools import partial
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.stats import ks_2samp
 
 from fast_learning import imaging
 from fast_learning import paths, database
 from fast_learning.plotting import s2_m1_palette, save_figure
-from fast_learning.stats import significance_stars
-from fast_learning.stats import format_p
+from fast_learning.stats import format_p, ks_permutation_test, significance_stars
 
 
 # ============================================================================
@@ -42,8 +40,6 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
 # Helper
 # ============================================================================
 
-pvalue_to_stars = partial(significance_stars, ns='ns')
-
 
 def compute_ks_test(df, value_col, reward_groups, positive_only=False, negative_only=False):
     rows = []
@@ -56,7 +52,8 @@ def compute_ks_test(df, value_col, reward_groups, positive_only=False, negative_
         ws2 = sub[sub['cell_type_group'] == 'wS2'][value_col].values
         wm1 = sub[sub['cell_type_group'] == 'wM1'][value_col].values
         if len(ws2) > 0 and len(wm1) > 0:
-            stat, p = ks_2samp(ws2, wm1, alternative='two-sided')
+            ks = ks_permutation_test(sub, value_col, 'cell_type_group', ('wS2', 'wM1'), shuffle='within_mice')
+            stat, p = ks['ks_statistic'], ks['p_value']
             rows.append(
                 {
                     'reward_group': rg,
@@ -65,7 +62,9 @@ def compute_ks_test(df, value_col, reward_groups, positive_only=False, negative_
                     'n_wM1': len(wm1),
                     'ks_statistic': stat,
                     'ks_pvalue': p,
-                    'ks_stars': pvalue_to_stars(p),
+                    'test': 'KS, permutation within mice',
+                    'n_mice': ks['n_mice'],
+                    'ks_stars': significance_stars(p, ns='ns'),
                 }
             )
     return pd.DataFrame(rows)

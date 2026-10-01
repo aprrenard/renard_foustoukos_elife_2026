@@ -72,3 +72,25 @@ def test_lmm_accounts_for_mouse_clustering():
     # Pooled pairs would make the mean change look highly significant; by mouse it is not.
     df['change'] = df['y']
     assert lmm_mean(df, 'change')['p_value'] > 0.01
+
+
+def test_ks_permutation_respects_mice():
+    import pandas as pd
+    from scipy.stats import ks_2samp
+    from fast_learning.stats import ks_permutation_test
+
+    rng = np.random.default_rng(1)
+    # 10 mice, 5 per group, strong mouse offsets but no group effect.
+    rows = [
+        (m, 'A' if m < 5 else 'B', off + rng.normal(0, 0.2))
+        for m, off in enumerate(rng.normal(0, 1, 10))
+        for _ in range(100)
+    ]
+    df = pd.DataFrame(rows, columns=['mouse_id', 'group', 'v'])
+    pooled_p = ks_2samp(df[df.group == 'A'].v, df[df.group == 'B'].v).pvalue
+    perm = ks_permutation_test(df, 'v', 'group', ('A', 'B'), 'between_mice', n_perm=500)
+    assert pooled_p < 1e-6 and perm['p_value'] > 0.05
+    # Within-mouse labels with a real shift: detected.
+    df['ct'] = np.where(rng.random(len(df)) < 0.5, 'x', 'y')
+    df.loc[df.ct == 'x', 'v'] += 0.3
+    assert ks_permutation_test(df, 'v', 'ct', ('x', 'y'), 'within_mice', n_perm=200)['p_value'] < 0.01
