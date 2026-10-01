@@ -96,13 +96,13 @@ def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
             mouse_id, paths.tensor_dir, 'tensor_xarray_mapping_data.nc', subtracted=False
         )
         data_mapping = data_mapping - np.nanmean(
-            data_mapping.sel(time=slice(*BASELINE_WIN)), axis=2, keepdims=True
+            imaging.select_time(data_mapping, *BASELINE_WIN), axis=2, keepdims=True
         )
 
         data_pre = data_mapping.sel(trial=data_mapping.coords['day'].isin([-2, -1]))
-        data_pre = data_pre.sel(time=slice(*RESPONSE_WIN)).mean(dim='time')
+        data_pre = imaging.select_time(data_pre, *RESPONSE_WIN).mean(dim='time')
         data_post = data_mapping.sel(trial=data_mapping.coords['day'].isin([1, 2]))
-        data_post = data_post.sel(time=slice(*RESPONSE_WIN)).mean(dim='time')
+        data_post = imaging.select_time(data_post, *RESPONSE_WIN).mean(dim='time')
 
         _, _, lmi_shuffles = imaging.compute_roc(
             data_pre, data_post, nshuffles=n_shuffles, return_shuffles=True

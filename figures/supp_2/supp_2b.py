@@ -80,7 +80,7 @@ if __name__ == '__main__':
         roi = int(cell['roi'])
 
         xarr = imaging.load_mouse_xarray(mouse_id, folder, 'tensor_xarray_mapping_data.nc', subtracted=True)
-        xarr = xarr.sel(cell=xarr['roi'].isin([roi])).sel(time=slice(*WIN_SEC))
+        xarr = imaging.select_time(xarr.sel(cell=xarr['roi'].isin([roi])), *WIN_SEC)
 
         y_min, y_max = YLIMS[mouse_id]
 

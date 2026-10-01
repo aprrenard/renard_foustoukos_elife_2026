@@ -100,7 +100,7 @@ def create_whisker_template(mouse, day, threshold_dff=THRESHOLD_DFF, verbose=Fal
     xarray_day = xarray_map.sel(trial=xarray_map['day'] == day)
     xarray_day = xarray_day.groupby('day').apply(lambda x: x.isel(trial=slice(-N_MAP_TRIALS, None)))
 
-    d = xarray_day.sel(time=slice(WIN[0], WIN[1])).mean(dim='time').fillna(0)
+    d = imaging.select_time(xarray_day, WIN[0], WIN[1]).mean(dim='time').fillna(0)
     template = d.mean(dim='trial').values
 
     if threshold_dff is None:
@@ -138,7 +138,7 @@ def select_trials_by_type(xarray_day, no_lick_only=False, time_window=None):
         mask = mask & (xarray_day['lick_flag'] == 0)
     selected = xarray_day.sel(trial=mask)
     if time_window is not None:
-        selected = selected.sel(time=slice(time_window[0], time_window[1]))
+        selected = imaging.select_time(selected, time_window[0], time_window[1])
     return selected, len(selected.trial)
 
 

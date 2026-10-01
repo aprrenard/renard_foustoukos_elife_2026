@@ -64,3 +64,23 @@ def test_baseline_frames_follow_the_time_axis():
         t = x.time.values
         assert t[i0] == -1 and t[i1 - 1] < 0 <= t[i1]  # -1 to 0 s whatever the tensor start
         assert i1 - i0 == 30
+
+
+def test_time_axis_puts_the_stimulus_at_zero():
+    from fast_learning import tensors
+
+    assert tensors.window_frames((1, 6)) == (30, 180)
+    t = tensors.time_axis((2, 6))
+    assert len(t) == 60 + 180 + 1 and t[60] == 0 and t[0] == -2 and np.isclose(t[-1], 6)
+
+
+def test_select_time_is_half_open():
+    import xarray as xr
+    from fast_learning import tensors
+
+    t = tensors.time_axis((1, 6))
+    x = xr.DataArray(np.arange(len(t)), dims=['time'], coords={'time': t})
+    resp = imaging.select_time(x, 0, 0.3)
+    base = imaging.select_time(x, -1, 0)
+    assert len(resp) == 9 and resp.time.values[0] == 0  # stimulus frame to +267 ms
+    assert len(base) == 30 and base.time.values[-1] < 0  # stimulus frame excluded

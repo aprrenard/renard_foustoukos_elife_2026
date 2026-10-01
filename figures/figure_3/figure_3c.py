@@ -43,7 +43,7 @@ if __name__ == '__main__':
         xarr = imaging.load_mouse_xarray(mouse_id, folder, 'tensor_xarray_mapping_data.nc')
         xarr = imaging.subtract_baseline(xarr, 2, imaging.baseline_frames(xarr))
         xarr = xarr.sel(trial=xarr['day'].isin(DAYS))
-        xarr = xarr.sel(time=slice(WIN_SEC[0], WIN_SEC[1]))
+        xarr = imaging.select_time(xarr, WIN_SEC[0], WIN_SEC[1])
         xarr = xarr.groupby('day').mean(dim='trial')
 
         xarr.name = 'psth'

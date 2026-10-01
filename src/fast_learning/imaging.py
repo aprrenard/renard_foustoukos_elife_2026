@@ -42,11 +42,26 @@ def load_mouse_xarray(mouse_id, dir_path, file_name, subtracted=True):
 BASELINE_WIN_S = (-1, 0)  # seconds relative to stimulus onset
 
 
+# Tolerance for comparing frame times (multiples of 1/30 s) with window edges.
+_TIME_EPS = 1e-6
+
+
+def _in_window(t, start, stop):
+    """Half-open window start <= t < stop, so a frame on an edge (e.g. the
+    stimulus frame at t = 0) belongs to one window only."""
+    return (t >= start - _TIME_EPS) & (t < stop - _TIME_EPS)
+
+
+def select_time(xarr, start, stop):
+    """Frames of an xarray with start <= time < stop (seconds)."""
+    return xarr.isel(time=np.flatnonzero(_in_window(xarr['time'].values, start, stop)))
+
+
 def baseline_frames(xarr, win=BASELINE_WIN_S):
     """Frame range (start, stop) of a baseline window given in seconds, from
     the time coordinate of an xarray; independent of where the tensor starts."""
     t = xarr['time'].values
-    idx = np.flatnonzero((t >= win[0]) & (t < win[1]))
+    idx = np.flatnonzero(_in_window(t, win[0], win[1]))
     if len(idx) == 0:
         raise ValueError(
             f'Baseline window {win} s is outside the tensor time axis ({t[0]:.2f} to {t[-1]:.2f} s).'

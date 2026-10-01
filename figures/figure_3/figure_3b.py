@@ -61,7 +61,7 @@ if __name__ == '__main__':
     xarr = imaging.subtract_baseline(xarr, 2, imaging.baseline_frames(xarr))
 
     xarr = xarr.sel(trial=xarr['day'].isin(days))
-    xarr = xarr.sel(time=slice(win_sec[0], win_sec[1]))
+    xarr = imaging.select_time(xarr, win_sec[0], win_sec[1])
     xarr = xarr.groupby('day').mean(dim='trial')
 
     xarr.name = 'psth'

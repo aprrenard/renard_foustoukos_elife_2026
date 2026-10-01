@@ -60,7 +60,7 @@ def load_and_process_response_data(
 
         # Average response
         avg = xarr.sel(trial=xarr['day'].isin(days))
-        avg = avg.sel(time=slice(win_sec_amp[0], win_sec_amp[1])).mean(dim='time')
+        avg = imaging.select_time(avg, win_sec_amp[0], win_sec_amp[1]).mean(dim='time')
         avg.name = 'average_response'
         avg_df = avg.to_dataframe().reset_index()
         avg_df['mouse_id'] = mouse_id
@@ -69,7 +69,7 @@ def load_and_process_response_data(
 
         # PSTH
         p = xarr.sel(trial=xarr['day'].isin(days))
-        p = p.sel(time=slice(win_sec_psth[0], win_sec_psth[1]))
+        p = imaging.select_time(p, win_sec_psth[0], win_sec_psth[1])
         p = p.groupby('day').mean(dim='trial')
         p.name = 'psth'
         p_df = p.to_dataframe().reset_index()

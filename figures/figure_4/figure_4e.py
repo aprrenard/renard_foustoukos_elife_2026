@@ -71,14 +71,14 @@ if __name__ == '__main__':
             continue
 
         d = xarray.groupby('day').apply(lambda x: x.isel(trial=slice(-n_map_trials, None)))
-        d = d.sel(time=slice(win[0], win[1])).mean(dim='time')
+        d = imaging.select_time(d, win[0], win[1]).mean(dim='time')
         d = d.fillna(0)
 
         # --- Day 0 learning data ---
         xarray_l = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')
         xarray_l = xarray_l.sel(trial=xarray_l['day'].isin([0]))
         xarray_l = xarray_l.sel(trial=xarray_l['whisker_stim'] == 1)
-        xarray_l = xarray_l.sel(time=slice(win[0], win[1])).mean(dim='time')
+        xarray_l = imaging.select_time(xarray_l, win[0], win[1]).mean(dim='time')
         xarray_l = xarray_l.fillna(0)
 
         if rew_gp == 'R+':

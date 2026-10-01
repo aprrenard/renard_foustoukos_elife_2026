@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
         # Average response (amplitude window)
         avg = xarr.sel(trial=xarr['day'].isin(DAYS))
-        avg = avg.sel(time=slice(WIN_SEC_AMP[0], WIN_SEC_AMP[1])).mean(dim='time')
+        avg = imaging.select_time(avg, WIN_SEC_AMP[0], WIN_SEC_AMP[1]).mean(dim='time')
         avg.name = 'average_response'
         avg = avg.to_dataframe().reset_index()
         avg['mouse_id'] = mouse_id
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
         # PSTH
         p = xarr.sel(trial=xarr['day'].isin(DAYS))
-        p = p.sel(time=slice(WIN_SEC_PSTH[0], WIN_SEC_PSTH[1]))
+        p = imaging.select_time(p, WIN_SEC_PSTH[0], WIN_SEC_PSTH[1])
         p = p.groupby('day').mean(dim='trial')
         p.name = 'psth'
         p = p.to_dataframe().reset_index()

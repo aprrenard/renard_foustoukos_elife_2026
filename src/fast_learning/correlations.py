@@ -45,7 +45,7 @@ def pairwise_correlations_mouse(mouse_id):
         )
     xarr.name = 'dff'
     xarr = xarr.sel(trial=xarr['day'].isin(PRE_DAYS + POST_DAYS))
-    xarr = xarr.sel(time=slice(WIN_SEC[0], WIN_SEC[1]))
+    xarr = imaging.select_time(xarr, WIN_SEC[0], WIN_SEC[1])
 
     mouse_results = []
     for period, days in [('pre', PRE_DAYS), ('post', POST_DAYS)]:

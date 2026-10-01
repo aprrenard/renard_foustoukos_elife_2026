@@ -71,13 +71,13 @@ for mouse_id in mice_list:
         mouse_id, paths.tensor_dir, 'tensor_xarray_mapping_data.nc', subtracted=False
     )
     data_mapping = data_mapping - np.nanmean(
-        data_mapping.sel(time=slice(*baseline_win)), axis=2, keepdims=True
+        imaging.select_time(data_mapping, *baseline_win), axis=2, keepdims=True
     )
 
     data_pre = data_mapping.sel(trial=data_mapping.coords['day'].isin([-2, -1]))
-    data_pre = data_pre.sel(time=slice(*response_win)).mean(dim='time')
+    data_pre = imaging.select_time(data_pre, *response_win).mean(dim='time')
     data_post = data_mapping.sel(trial=data_mapping.coords['day'].isin([1, 2]))
-    data_post = data_post.sel(time=slice(*response_win)).mean(dim='time')
+    data_post = imaging.select_time(data_post, *response_win).mean(dim='time')
 
     lmi, lmi_p = imaging.compute_roc(data_pre, data_post, nshuffles=nshuffles)
     df.append(

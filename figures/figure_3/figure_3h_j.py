@@ -117,7 +117,7 @@ def load_and_process_data(
 
         # Select last N_MAP_TRIALS mapping trials per day and average over time window
         d = xarray.groupby('day').apply(lambda x: x.isel(trial=slice(-N_MAP_TRIALS, None)))
-        d = d.sel(time=slice(WIN[0], WIN[1])).mean(dim='time')
+        d = imaging.select_time(d, WIN[0], WIN[1]).mean(dim='time')
 
         # Optionally z-score within each day to remove recording drift
         if zscore:

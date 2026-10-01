@@ -76,7 +76,7 @@ def load_and_process_data(
         xarray = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_mapping_data.nc')
         # Manual baseline subtraction
         xarray = xarray - np.nanmean(
-            xarray.sel(time=slice(BASELINE_WIN[0], BASELINE_WIN[1])).values, axis=2, keepdims=True
+            imaging.select_time(xarray, BASELINE_WIN[0], BASELINE_WIN[1]).values, axis=2, keepdims=True
         )
         rew_gp = database.get_mouse_reward_group_from_db(paths.db_path, mouse, db)
 
@@ -98,7 +98,7 @@ def load_and_process_data(
             continue
 
         d = xarray.groupby('day').apply(lambda x: x.isel(trial=slice(-N_MAP_TRIALS, None)))
-        d = d.sel(time=slice(WIN[0], WIN[1])).mean(dim='time')
+        d = imaging.select_time(d, WIN[0], WIN[1]).mean(dim='time')
         d = d.fillna(0)
 
         if rew_gp == 'R-':

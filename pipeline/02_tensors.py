@@ -26,7 +26,7 @@ import xarray as xr
 from fast_learning import paths, database
 from cicada_nwb import NWBSession
 from fast_learning import imaging
-from fast_learning.tensors import make_events_aligned_array_3d
+from fast_learning.tensors import make_events_aligned_array_3d, time_axis
 from fast_learning.behavior import make_behavior_table
 
 
@@ -114,18 +114,11 @@ for mouse in mice_list:
         metadatas.append(metadata)
         kept_trial_ids.append(pd.DataFrame({'session_id': session_id, 'trial_id': metadata['trials']}))
 
-    # Sessions are concatenated on the trial dim. Different sessions can
-    # yield a slightly different number of timepoints (per-session sampling
-    # rate jitter rounds differently in align_array_to_timestamps), so
-    # truncate all sessions to the shortest common time length first.
-    n_t_per_session = [d.shape[2] for d in data]
-    min_n_t = min(n_t_per_session)
-    if len(set(n_t_per_session)) > 1:
-        print(
-            f'  Truncating sessions to common length: {min_n_t} timepoints '
-            f'(session lengths: {n_t_per_session})'
-        )
-        data = [d[:, :, :min_n_t] for d in data]
+    # Sessions are concatenated on the trial dim; all have the same window
+    # (fixed frame rate), with the stimulus at the same frame.
+    n_t_per_session = {d.shape[2] for d in data}
+    if len(n_t_per_session) > 1:
+        raise ValueError(f'{mouse}: sessions have different window lengths {n_t_per_session}.')
     tensor = np.concatenate(data, axis=1)
     kept_trial_ids = pd.concat(kept_trial_ids, ignore_index=True)
 
@@ -145,7 +138,7 @@ for mouse in mice_list:
     behav_table = behav_table.set_index(['session_id', 'trial_id'])
     behav_table = behav_table.loc[list(kept_trial_ids.itertuples(index=False, name=None))].reset_index()
 
-    time = np.linspace(-time_range[0], time_range[1], tensor.shape[2])
+    time = time_axis(time_range)
     # Create xarray.
     ds = xr.DataArray(
         tensor,
@@ -251,21 +244,14 @@ for mouse in mice_list:
             _, d = nwb_session.petersen.get_bhv_type_and_training_day_index()
         behavior_days.extend([d for _ in range(traces.shape[1])])
 
-    # Sessions are concatenated on the trial dim. Different sessions can
-    # yield a slightly different number of timepoints (per-session sampling
-    # rate jitter rounds differently in align_array_to_timestamps), so
-    # truncate all sessions to the shortest common time length first.
-    n_t_per_session = [d.shape[2] for d in data]
-    min_n_t = min(n_t_per_session)
-    if len(set(n_t_per_session)) > 1:
-        print(
-            f'  Truncating sessions to common length: {min_n_t} timepoints '
-            f'(session lengths: {n_t_per_session})'
-        )
-        data = [d[:, :, :min_n_t] for d in data]
+    # Sessions are concatenated on the trial dim; all have the same window
+    # (fixed frame rate), with the stimulus at the same frame.
+    n_t_per_session = {d.shape[2] for d in data}
+    if len(n_t_per_session) > 1:
+        raise ValueError(f'{mouse}: sessions have different window lengths {n_t_per_session}.')
     tensor = np.concatenate(data, axis=1)
 
-    time = np.linspace(-time_range[0], time_range[1], tensor.shape[2])
+    time = time_axis(time_range)
     # Create xarray.
     ds = xr.DataArray(
         tensor,

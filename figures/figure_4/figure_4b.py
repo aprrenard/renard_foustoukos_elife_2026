@@ -80,7 +80,7 @@ if __name__ == '__main__':
         xarr = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')
         xarr = xarr.sel(trial=xarr['day'].isin([0]))
         xarr = xarr.sel(trial=xarr['whisker_stim'] == 1)
-        xarr = xarr.sel(time=slice(win[0], win[1])).mean(dim='time')
+        xarr = imaging.select_time(xarr, win[0], win[1]).mean(dim='time')
         xarr = xarr.fillna(0)
         xarrays_learning[mouse] = xarr
 
