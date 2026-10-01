@@ -2,9 +2,11 @@
 Supplementary Figure 2c: Relationship between classifier weights and the
 Learning Modulation Index (LMI).
 
-Scatter plot (one dot per cell, all mice pooled) with a global linear
-regression line and bootstrapped 95% CI. Classifier weights are loaded from
-the CSV produced by pipeline/06_decoder.py.
+Scatter plot (one dot per cell, all mice pooled) with the pooled linear
+regression line and bootstrapped 95% CI, for illustration. Stats with mice
+as the unit: one regression slope of classifier weight vs LMI per mouse,
+then a Wilcoxon signed-rank test of the slopes against zero. Classifier
+weights are loaded from the CSV produced by pipeline/06_decoder.py.
 """
 
 import os
@@ -19,6 +21,7 @@ from sklearn.utils import resample
 
 from fast_learning import paths
 from fast_learning.plotting import save_figure
+from fast_learning.stats import format_p, per_mouse_slope_test
 
 
 # ============================================================================
@@ -60,6 +63,13 @@ if __name__ == '__main__':
         f"  |  slope = {reg.coef_[0]:.4f}  |  intercept = {reg.intercept_:.4f}"
     )
 
+    # Stats: per-mouse slopes tested against zero (n = mice).
+    slope_test = per_mouse_slope_test(merged, y='classifier_weight', x='lmi')
+    print(
+        f"Per-mouse slopes: median = {slope_test['median_slope']:.4f}, "
+        f"Wilcoxon p = {slope_test['p_value']:.3g}, n = {slope_test['n_mice']} mice"
+    )
+
     x_vals = np.linspace(lmi_flat.min(), lmi_flat.max(), 200)
     y_pred = reg.predict(x_vals.reshape(-1, 1))
 
@@ -98,9 +108,14 @@ if __name__ == '__main__':
     ax.plot(x_vals, y_pred, color='#2d2d2d', linewidth=2)
     ax.fill_between(x_vals, ci_low, ci_high, color='black', alpha=0.2, label='95% CI')
 
-    p_str = f'p = {p_pearson:.2e}' if p_pearson >= 1e-4 else 'p < 0.0001'
     ax.text(
-        0.05, 0.95, f'r = {r_pearson:.3f}\n{p_str}', transform=ax.transAxes, va='top', ha='left', fontsize=9
+        0.05,
+        0.95,
+        f"Per-mouse slopes vs 0: {format_p(slope_test['p_value'])}\n(n = {slope_test['n_mice']} mice)",
+        transform=ax.transAxes,
+        va='top',
+        ha='left',
+        fontsize=9,
     )
 
     ax.set_xlabel('Learning Modulation Index (LMI)')
@@ -126,8 +141,13 @@ if __name__ == '__main__':
     pd.DataFrame(
         [
             {
-                'r': r_pearson,
-                'p_value': p_pearson,
+                'test': 'Per-mouse slope of weight vs LMI, Wilcoxon signed-rank (n = mice)',
+                'median_slope': slope_test['median_slope'],
+                'mean_slope': slope_test['mean_slope'],
+                'w_stat': slope_test['w_stat'],
+                'p_value': slope_test['p_value'],
+                'pooled_r': r_pearson,
+                'pooled_p_cells': p_pearson,
                 'r2': r2,
                 'r2_ci_low': r2_ci[0],
                 'r2_ci_high': r2_ci[1],
