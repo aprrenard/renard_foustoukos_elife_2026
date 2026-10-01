@@ -10,24 +10,17 @@ cells simultaneously, preserving inter-cell correlations).
 
 Panel: Proportion of cells participating across days (-2 to +2) separately
        for LMI+ vs LMI- cells. Per-mouse averages with individual
-       trajectories. Stats: Kruskal-Wallis test (effect of day) run
-       independently for each of the four groups (R+ positive LMI,
-       R+ negative LMI, R- positive LMI, R- negative LMI).
+       trajectories. Stats: linear trend across days with mice as the unit:
+       one proportion-vs-day slope per mouse, then a Wilcoxon signed-rank
+       test of the slopes against zero, for each of the four groups
+       (R+ / R- x LMI+ / LMI-), as in Figure 4j.
 
 Mice: those in the participation mouse selection (>= 3 reactivation events
 on day 0; see fast_learning.reactivations). Within those, a mouse x day is
 kept only if it has at least 3 valid events (fast_learning.participation).
 
 Inputs:  binary participation per cell-day (pipeline/08_participation.py).
-Outputs: <figures_dir>/supp_4/output/supp_4c.svg, supp_4c_data.csv, supp_4c_stats.csv.
-
-NOTE (revision): per reviewer comment (3), the per-group Kruskal-Wallis test
-treats the 5 repeated days per mouse as independent cross-sections. A
-corrected version (per-mouse day-slope fit, then a one-sample t-test of
-those slopes across mice within each reward_group x lmi_category group) is
-implemented in figures/revisions/supp_4c_lmm.py, on the same data.
-(A random-intercept mixed model was tried first but gave anti-conservative
-p-values with this few mice per group — see that script's docstring.)
+Outputs: <figures_dir>/supp_4/output/supp_4c.pdf, supp_4c_data.csv, supp_4c_stats.csv.
 """
 
 import os
@@ -36,11 +29,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import kruskal
 
 from fast_learning import paths, participation
-from fast_learning.stats import significance_stars
-from fast_learning.stats import format_p
+from fast_learning.stats import format_p, per_mouse_slope_test, significance_stars
 from fast_learning.plotting import save_figure
 
 
@@ -87,10 +78,6 @@ def panel_supp4c_proportion_across_days(
         .reset_index()
         .rename(columns={'participating': 'proportion'})
     )
-    # Round away summation-order noise (~1e-16) so that equal proportions stay
-    # tied in the rank-based Kruskal-Wallis test.
-    mouse_day_prop['proportion'] = mouse_day_prop['proportion'].round(12)
-
     cell_counts = {
         (rg, cat): lmi_df[(lmi_df['reward_group'] == rg) & (lmi_df['lmi_category'] == cat)][
             ['mouse_id', 'roi']
@@ -101,37 +88,34 @@ def panel_supp4c_proportion_across_days(
         for cat in lmi_categories
     }
 
-    # Kruskal-Wallis: effect of day within each (reward_group, lmi_category) group
+    # Linear trend across days, tested per mouse (n = mice)
     all_stats_rows = []
-    kw_results = {}
+    tests = {}
     for rg in reward_groups:
         for cat in lmi_categories:
             grp_data = mouse_day_prop[
                 (mouse_day_prop['reward_group'] == rg) & (mouse_day_prop['lmi_category'] == cat)
             ]
-            day_groups = [grp_data[grp_data['day'] == day]['proportion'].values for day in days_sorted]
-            day_groups = [g for g in day_groups if len(g) > 0]
-            if len(day_groups) >= 2:
-                try:
-                    H, p = kruskal(*day_groups)
-                except Exception:
-                    H, p = np.nan, np.nan
-            else:
-                H, p = np.nan, np.nan
-            kw_results[(rg, cat)] = (H, p)
+            test = per_mouse_slope_test(grp_data, y='proportion')
+            if test is None:
+                continue
+            tests[(rg, cat)] = test
             all_stats_rows.append(
                 {
                     'reward_group': rg,
                     'lmi_category': cat,
-                    'test': 'Kruskal-Wallis',
-                    'effect': 'day',
-                    'H_statistic': H,
-                    'p_value': p,
-                    'significance': significance_stars(p) if not np.isnan(p) else 'n.a.',
-                    'n_days': len(day_groups),
+                    'test': 'Per-mouse day slope, Wilcoxon signed-rank (n = mice)',
+                    'mean_day_slope': test['mean_slope'],
+                    'median_day_slope': test['median_slope'],
+                    'w_stat': test['w_stat'],
+                    'p_value': test['p_value'],
+                    'significance': significance_stars(test['p_value']),
+                    'n_mice': test['n_mice'],
                 }
             )
-            print(f"  KW {rg} {cat} LMI: H={H:.3f}, p={p:.4g}")
+            print(
+                f"  {rg} {cat} LMI: median slope={test['median_slope']:.4g}, p={test['p_value']:.4g}, n={test['n_mice']}"
+            )
 
     fig, axes = plt.subplots(1, 2, figsize=(9, 4), sharey=True)
     plot_data_rows = []
@@ -178,11 +162,12 @@ def panel_supp4c_proportion_across_days(
 
         # Annotate Kruskal-Wallis results for each LMI group
         for j, cat in enumerate(lmi_categories):
-            H, p = kw_results.get((rg, cat), (np.nan, np.nan))
+            test = tests.get((rg, cat))
+            p = test['p_value'] if test else float('nan')
             ax.text(
                 0.02,
                 0.97 - j * 0.12,
-                f'{cat.capitalize()} LMI: KW {format_p(p)}',
+                f'{cat.capitalize()} LMI day slope: {format_p(p)}',
                 transform=ax.transAxes,
                 va='top',
                 ha='left',
@@ -205,7 +190,7 @@ def panel_supp4c_proportion_across_days(
 
     plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
-    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.pdf'))
     plt.close()
     print(f"Panel saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 

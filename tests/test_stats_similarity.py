@@ -52,6 +52,7 @@ def test_format_p():
     assert format_p(3.2e-12) == 'p=3×10$^{-12}$'
     assert format_p(0.00096) == 'p=1×10$^{-3}$'
     assert format_p(float('nan')) == 'n.a.'
+    assert format_p(0.0) == 'p<10$^{-300}$'
     assert format_p(0.2, prefix='KW p=') == 'KW p=0.200'
 
 

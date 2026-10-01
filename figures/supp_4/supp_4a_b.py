@@ -3,29 +3,27 @@ Supplementary Figure 4a-b: Spontaneous activity controls for the
 LMI-participation relationship.
 
 Panel 4a: Scatter plot of cell participation rate vs spontaneous transient
-frequency (Day 0). One dot per cell, color-coded by LMI using the coolwarm
-colormap (blue = negative LMI, red = positive LMI, centered at 0).
-One panel per reward group.
+frequency (Day 0). One dot per cell, color-coded by LMI (blue = negative,
+red = positive, centered at 0). One panel per reward group. Stats: linear
+mixed-effects model participation_rate ~ transient_freq + (1 | mouse).
 
-Panel 4b: Partial correlation — LMI vs participation rate, raw and after
-controlling for spontaneous transient frequency. Layout: 2 rows (R+, R-) x
-2 columns (raw, partial). Tests whether spontaneous activity explains the
-LMI-participation relationship.
+Panel 4b: LMI vs participation rate, raw and controlling for spontaneous
+transient frequency. Layout: 2 rows (R+, R-) x 2 columns (raw, partial).
+Stats: mixed models with mouse as random intercept,
+    raw:     participation_rate ~ lmi + (1 | mouse)
+    partial: participation_rate ~ lmi + transient_freq + (1 | mouse)
+The lmi slope of the partial model (transient frequency held fixed) is the
+mixed-model analogue of the partial correlation. The right-hand column plots
+residuals after regressing out transient frequency (added-variable plot) for
+illustration; the reported statistics come from the mixed models.
 
 Mice: those in the participation mouse selection (>= 3 reactivation events
 on day 0; see fast_learning.reactivations).
 
 Inputs:  day-0 participation, transient frequency and LMI per cell
          (pipeline/08_participation.py).
-Outputs: <figures_dir>/supp_4/output/supp_4a.svg, supp_4b.svg and their
+Outputs: <figures_dir>/supp_4/output/supp_4a.pdf, supp_4b.pdf and their
          _data.csv / _stats.csv.
-
-NOTE (revision): per reviewer comment (3), both panels' Pearson correlations
-(raw and partial) pool cells across mice as independent observations. A
-mixed-effects version (mouse_id as random intercept; the partial correlation
-becomes the lmi coefficient of a participation_rate ~ lmi + transient_freq
-model) is implemented in figures/revisions/supp_4a_b_lmm.py, on the
-same data.
 """
 
 import os
@@ -35,10 +33,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import seaborn as sns
-from scipy.stats import pearsonr, linregress
+from scipy.stats import linregress
 
 from fast_learning import paths, participation
 from fast_learning.plotting import reward_palette, save_figure, lmi_cmap
+from fast_learning.stats import format_p, lmm_slope
 
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_4', 'output')
@@ -99,25 +98,16 @@ def panel_supp4a_scatter(
             linewidths=0,
         )
 
-        slope, intercept, _, _, _ = linregress(gdata['transient_freq'], gdata['participation_rate'])
+        fit = lmm_slope(gdata, 'participation_rate', 'transient_freq')
         x_range = np.linspace(gdata['transient_freq'].min(), gdata['transient_freq'].max(), 100)
-        ax.plot(x_range, slope * x_range + intercept, 'k-', linewidth=1.5)
+        ax.plot(x_range, fit['slope'] * x_range + fit['intercept'], 'k-', linewidth=1.5)
 
-        r, p = pearsonr(gdata['transient_freq'], gdata['participation_rate'])
-        p_str = (
-            'p < 0.001 ***'
-            if p < 0.001
-            else f'p = {p:.3f} **'
-            if p < 0.01
-            else f'p = {p:.3f} *'
-            if p < 0.05
-            else f'p = {p:.3f} ns'
-        )
         n_mice = gdata['mouse_id'].nunique()
         ax.text(
             0.05,
             0.95,
-            f'r = {r:.3f}\n{p_str}\nn = {len(gdata)} cells, {n_mice} mice',
+            f"LMM slope = {fit['slope']:.3f} [{fit['ci_low']:.3f}, {fit['ci_high']:.3f}]\n"
+            f"{format_p(fit['p_value'])}\nn = {len(gdata)} cells, {n_mice} mice",
             transform=ax.transAxes,
             fontsize=10,
             va='top',
@@ -134,14 +124,20 @@ def panel_supp4a_scatter(
         stats_rows.append(
             {
                 'reward_group': reward_group,
-                'pearson_r': r,
-                'p_value': p,
+                'test': 'LMM participation_rate ~ transient_freq + (1 | mouse)',
+                'lmm_slope': fit['slope'],
+                'lmm_ci_low': fit['ci_low'],
+                'lmm_ci_high': fit['ci_high'],
+                'p_value': fit['p_value'],
+                'icc_mouse': fit['icc_mouse'],
+                'method': fit['method'],
                 'n_cells': len(gdata),
                 'n_mice': n_mice,
-                'test': 'Pearson r (transient_freq vs participation_rate)',
             }
         )
-        print(f"  {reward_group}: r={r:.3f}, p={p:.4f}, n={len(gdata)} cells, {n_mice} mice")
+        print(
+            f"  {reward_group}: LMM slope={fit['slope']:.4g}, p={fit['p_value']:.4g}, n={len(gdata)} cells, {n_mice} mice"
+        )
 
     fig.suptitle(
         'Participation Rate vs Transient Frequency (Day 0, colored by LMI)',
@@ -151,7 +147,7 @@ def panel_supp4a_scatter(
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
-    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.pdf'))
     plt.close()
     print(f"Panel saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 
@@ -203,22 +199,13 @@ def panel_supp4b_partial_corr(
         slope, intercept, _, _, _ = linregress(b, a)
         return a - (slope * b + intercept)
 
-    def annotate(ax, r, p):
-        p_str = (
-            'p < 0.001 ***'
-            if p < 0.001
-            else f'p = {p:.3f} **'
-            if p < 0.01
-            else f'p = {p:.3f} *'
-            if p < 0.05
-            else f'p = {p:.3f} ns'
-        )
+    def annotate(ax, label, fit):
         ax.text(
             0.05,
             0.95,
-            f'r = {r:.3f}\n{p_str}',
+            f"{label}\nLMM slope = {fit['slope']:.3f} [{fit['ci_low']:.3f}, {fit['ci_high']:.3f}]\n{format_p(fit['p_value'])}",
             transform=ax.transAxes,
-            fontsize=10,
+            fontsize=9,
             va='top',
             bbox=dict(boxstyle='round', facecolor='white', alpha=0.9, edgecolor='gray'),
         )
@@ -250,26 +237,32 @@ def panel_supp4b_partial_corr(
         lmi_resid = residuals(lmi, freq)
         part_resid = residuals(part, freq)
 
-        r_raw, p_raw = pearsonr(lmi, part)
-        r_partial, p_partial = pearsonr(lmi_resid, part_resid)
+        fit_raw = lmm_slope(gdata, 'participation_rate', 'lmi')
+        fit_partial = lmm_slope(gdata, 'participation_rate', 'lmi', covariates=['transient_freq'])
 
         n_mice = gdata['mouse_id'].nunique()
         print(
-            f"  {reward_group}  raw r={r_raw:.3f} p={p_raw:.4f} | "
-            f"partial r={r_partial:.3f} p={p_partial:.4f}  "
+            f"  {reward_group}  raw LMM slope={fit_raw['slope']:.3f} p={fit_raw['p_value']:.4g} | "
+            f"partial LMM slope={fit_partial['slope']:.3f} p={fit_partial['p_value']:.4g}  "
             f"(n={len(lmi)} cells, {n_mice} mice)"
         )
 
         stats_rows.append(
             {
                 'reward_group': reward_group,
-                'r_raw': r_raw,
-                'p_raw': p_raw,
-                'r_partial': r_partial,
-                'p_partial': p_partial,
+                'test': 'LMM (1 | mouse): raw lmi; partial lmi + transient_freq',
+                'raw_slope': fit_raw['slope'],
+                'raw_ci_low': fit_raw['ci_low'],
+                'raw_ci_high': fit_raw['ci_high'],
+                'raw_p': fit_raw['p_value'],
+                'partial_slope': fit_partial['slope'],
+                'partial_ci_low': fit_partial['ci_low'],
+                'partial_ci_high': fit_partial['ci_high'],
+                'partial_p': fit_partial['p_value'],
+                'raw_method': fit_raw['method'],
+                'partial_method': fit_partial['method'],
                 'n_cells': len(lmi),
                 'n_mice': n_mice,
-                'test': 'Pearson r (LMI vs participation_rate)',
             }
         )
 
@@ -278,14 +271,14 @@ def panel_supp4b_partial_corr(
         gdata['part_resid'] = part_resid
         data_rows.append(gdata)
 
-        for col, (x, y, r, p, xlabel, ylabel) in enumerate(
+        for col, (x, y, label, fit, xlabel, ylabel) in enumerate(
             [
-                (lmi, part, r_raw, p_raw, 'LMI', 'Participation rate'),
+                (lmi, part, 'Raw', fit_raw, 'LMI', 'Participation rate'),
                 (
                     lmi_resid,
                     part_resid,
-                    r_partial,
-                    p_partial,
+                    'Partial (ctrl transient freq)',
+                    fit_partial,
                     'LMI  (residual | transient freq)',
                     'Participation rate  (residual | transient freq)',
                 ),
@@ -294,13 +287,14 @@ def panel_supp4b_partial_corr(
             ax = axes[row, col]
             ax.scatter(x, y, color=color, alpha=0.3, s=10, linewidths=0)
 
+            # Line: least-squares fit of the plotted points (illustration).
             slope, intercept, _, _, _ = linregress(x, y)
             x_range = np.linspace(x.min(), x.max(), 100)
             ax.plot(x_range, slope * x_range + intercept, color='black', linewidth=1.5)
 
             ax.axvline(0, color='gray', linestyle='--', linewidth=0.7, alpha=0.5)
             ax.axhline(0, color='gray', linestyle='--', linewidth=0.7, alpha=0.5)
-            annotate(ax, r, p)
+            annotate(ax, label, fit)
 
             ax.set_xlim(-1, 1)
             ax.set_xlabel(xlabel, fontsize=11)
@@ -315,14 +309,14 @@ def panel_supp4b_partial_corr(
             sns.despine(ax=ax)
 
     fig.suptitle(
-        'LMI vs Participation Rate: Raw and Partial Correlation (Day 0)',
+        'LMI vs Participation Rate: Raw and Partial (Day 0, LMM with mouse random intercept)',
         fontsize=13,
         fontweight='bold',
     )
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
-    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))
+    save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.pdf'))
     plt.close()
     print(f"Panel saved: {os.path.join(output_dir, filename + '.' + save_format)}")
 

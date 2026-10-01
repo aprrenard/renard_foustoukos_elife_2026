@@ -5,7 +5,8 @@ import math
 
 def format_p(p, prefix='p='):
     """P-value label for figures: 'p=0.051' (three decimals) from 0.001 up,
-    'p=5×10$^{-4}$' (one significant digit, rendered as a superscript) below.
+    'p=5×10$^{-4}$' (one significant digit, rendered as a superscript) below,
+    and 'p<10$^{-300}$' when the p-value underflows to 0.
 
     A NaN p-value gives 'n.a.'.
     """
@@ -13,6 +14,8 @@ def format_p(p, prefix='p='):
         return 'n.a.'
     if p >= 0.001:
         return f'{prefix}{p:.3f}'
+    if p == 0:  # underflow: below the smallest representable double
+        return prefix.replace('=', '<') + '10$^{-300}$'
     mantissa, exponent = f'{p:.0e}'.split('e')
     return f'{prefix}{mantissa}×10$^{{{int(exponent)}}}$'
 
@@ -55,15 +58,18 @@ def _mixed_fit(formula, df, group):
     return ols, 0.0, ols.scale, 'OLS, mouse-clustered SE (mouse variance estimated at 0)'
 
 
-def lmm_slope(df, y, x, group='mouse_id'):
-    """Mixed model y ~ x + (1 | group): the fixed-effect slope of x with cells
-    (or cell pairs) grouped by mouse, so that cells recorded in the same mouse
-    are not treated as independent.
+def lmm_slope(df, y, x, group='mouse_id', covariates=()):
+    """Mixed model y ~ x [+ covariates] + (1 | group): the fixed-effect slope
+    of x with cells (or cell pairs) grouped by mouse, so that cells recorded in
+    the same mouse are not treated as independent. With covariates, the slope
+    of x is the one holding them fixed (the mixed-model analogue of a partial
+    correlation).
 
     Returns a dict with slope, se, CI, p-value (Wald), intercept, the
     intraclass correlation of the mouse term and the method used.
     """
-    result, re_var, resid_var, method = _mixed_fit(f'{y} ~ {x}', df, group)
+    formula = ' + '.join([f'{y} ~ {x}', *covariates])
+    result, re_var, resid_var, method = _mixed_fit(formula, df, group)
     ci_low, ci_high = result.conf_int().loc[x]
     return {
         'slope': result.params[x],
