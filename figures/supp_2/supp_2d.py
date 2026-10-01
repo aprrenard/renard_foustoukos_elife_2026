@@ -17,6 +17,7 @@ import seaborn as sns
 from scipy.stats import bootstrap
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 from fast_learning import paths
@@ -86,9 +87,10 @@ if __name__ == '__main__':
                 labels = np.array(['pre' if day in [-2, -1] else 'post' for day in days[mask]])
                 y_enc = le.transform(labels)
 
-                X = StandardScaler().fit_transform(X_raw)
+                # Scaling is fitted on the training folds only, inside cross-validation.
+                model = make_pipeline(StandardScaler(), LogisticRegression(max_iter=50000))
                 cv = StratifiedKFold(n_splits=N_SPLITS, shuffle=True, random_state=SEED)
-                acc = np.mean(cross_val_score(LogisticRegression(max_iter=50000), X, y_enc, cv=cv, n_jobs=1))
+                acc = np.mean(cross_val_score(model, X_raw, y_enc, cv=cv, n_jobs=1))
 
                 if group == 'R+':
                     accs_rew_perc.append(acc)
