@@ -51,7 +51,7 @@ the 5 days differ, rather than a Kruskal-Wallis test across days -- the 11
 R+ mice are the same across all 5 days, so treating each day as an
 independent sample (as Kruskal-Wallis would) ignores that repeated-measures
 structure, the same pseudoreplication issue already flagged and fixed for
-the reactivation panels (see figure_4i_j_lmm.py's docstring); mice missing
+the reactivation panels (see figures/figure_4/figure_4i_j.py); mice missing
 any of the 5 days are dropped from that panel's test (complete-case).
 """
 

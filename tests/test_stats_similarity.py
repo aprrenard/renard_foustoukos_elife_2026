@@ -53,3 +53,22 @@ def test_format_p():
     assert format_p(0.00096) == 'p=1×10$^{-3}$'
     assert format_p(float('nan')) == 'n.a.'
     assert format_p(0.2, prefix='KW p=') == 'KW p=0.200'
+
+
+def test_lmm_accounts_for_mouse_clustering():
+    import pandas as pd
+    from fast_learning.stats import lmm_mean, lmm_slope
+
+    rng = np.random.default_rng(0)
+    # 8 mice whose offsets differ; no true effect within mice.
+    rows = [
+        (m, rng.normal(), off + rng.normal(0, 0.1))
+        for m, off in enumerate(rng.normal(0, 1, 8))
+        for _ in range(200)
+    ]
+    df = pd.DataFrame(rows, columns=['mouse_id', 'x', 'y'])
+    fit = lmm_slope(df, 'y', 'x')
+    assert fit['p_value'] > 0.01 and fit['icc_mouse'] > 0.9
+    # Pooled pairs would make the mean change look highly significant; by mouse it is not.
+    df['change'] = df['y']
+    assert lmm_mean(df, 'change')['p_value'] > 0.01

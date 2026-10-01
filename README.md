@@ -138,7 +138,6 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | — | [`figures/revisions/figure_3f_LMIshuffles.py`](figures/revisions/figure_3f_LMIshuffles.py) | LMI distribution vs. shuffled null |
 | — | [`figures/revisions/figure_3h_i_magnitude_reliability.py`](figures/revisions/figure_3h_i_magnitude_reliability.py) | Response magnitude and split-half reliability controls |
 | — | [`figures/revisions/figure_4h_shuffle_control.py`](figures/revisions/figure_4h_shuffle_control.py) | Shuffled-template reactivation detection |
-| — | [`figures/revisions/figure_4i_j_lmm.py`](figures/revisions/figure_4i_j_lmm.py) | LMM-based reactivation participation rate vs LMI |
 | — | [`figures/revisions/movement_state_summary.py`](figures/revisions/movement_state_summary.py) | Facial/whisker movement during the passive mapping epoch, across days |
 | — | [`figures/revisions/supp_4a_b_lmm.py`](figures/revisions/supp_4a_b_lmm.py) | LMM-based spontaneous activity controls for the LMI-participation relationship |
 | — | [`figures/revisions/supp_4c_lmm.py`](figures/revisions/supp_4c_lmm.py) | LMM-based proportion of cells participating in reactivation across days (LMI+ vs LMI-) |

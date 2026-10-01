@@ -6,7 +6,7 @@ Addresses reviewer comment (3), which also applies here: the original
 panel runs a Kruskal-Wallis test of the effect of day within each
 (reward_group, lmi_category) group, treating the 5 repeated days from the
 same mice as independent cross-sections. This mirrors the issue fixed in
-figure_4i_j_lmm.py for Figure 4J — and, like there, a random-intercept LMM
+figures/figure_4/figure_4i_j.py for Figure 4J — and, like there, a random-intercept LMM
 (participating ~ day + (1 | mouse_id)) turned out to give anti-conservative
 p-values: it assumes every mouse shares the same day-slope, so real
 mouse-to-mouse differences in that slope leak into the (large, cell-level)

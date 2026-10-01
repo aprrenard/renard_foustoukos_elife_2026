@@ -3,7 +3,9 @@ Supplementary Figure 3m: Pairwise correlations between projection neurons
 (wS2-wS2 and wM1-wM1 pairs) during a 2 s pre-stimulus quiet window,
 compared pre vs post learning. Mapping trials only.
 
-Stats at the cell-pair level (Mann-Whitney U, pre vs post).
+Stats: change of each pair's correlation (post - pre), tested with a linear
+mixed-effects model change ~ 1 + (1 | mouse), so that pairs recorded in the
+same mouse are not treated as independent.
 
 Inputs:  pair-level correlations (pipeline/09_pairwise_correlations.py).
 Outputs: <figures_dir>/supp_3/output/supp_3m_<group>.svg, _data.csv, _stats.csv.
@@ -15,12 +17,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.stats import mannwhitneyu
 
 
 from fast_learning import paths, correlations
 from fast_learning.plotting import save_figure
-from fast_learning.stats import format_p
+from fast_learning.stats import format_p, lmm_mean
 
 
 # ============================================================================
@@ -67,28 +68,41 @@ if __name__ == '__main__':
 
         print(f"Pairs: {corr_df['pair_type'].value_counts().to_dict()}")
 
-        # ── Pair-level stats ─────────────────────────────────────────────────
+        # ── Stats: per-pair change, mixed model with mouse as random intercept ─
+        key = ['mouse_id', 'pair_type', 'roi_i', 'roi_j']
+        paired = (
+            corr_df.pivot_table(index=key, columns='period', values='correlation')
+            .dropna(subset=['pre', 'post'])
+            .reset_index()
+        )
+        paired['change'] = paired['post'] - paired['pre']
         stats_pair = []
         for pt in PAIR_TYPES:
-            sub = corr_df[corr_df['pair_type'] == pt]
-            pre = sub[sub['period'] == 'pre']['correlation'].values
-            post = sub[sub['period'] == 'post']['correlation'].values
-            if len(pre) > 0 and len(post) > 0:
-                stat, p = mannwhitneyu(pre, post, alternative='two-sided')
-                stats_pair.append(
-                    {
-                        'pair_type': pt,
-                        'test': 'Mann-Whitney U',
-                        'mean_pre': np.mean(pre),
-                        'sem_pre': np.std(pre) / np.sqrt(len(pre)),
-                        'mean_post': np.mean(post),
-                        'sem_post': np.std(post) / np.sqrt(len(post)),
-                        'n_pre': len(pre),
-                        'n_post': len(post),
-                        'statistic': stat,
-                        'p_value': p,
-                    }
-                )
+            sub = paired[paired['pair_type'] == pt]
+            if sub['mouse_id'].nunique() < 2:
+                continue
+            fit = lmm_mean(sub, 'change')
+            stats_pair.append(
+                {
+                    'pair_type': pt,
+                    'test': 'LMM change ~ 1 + (1 | mouse)',
+                    'mean_pre': sub['pre'].mean(),
+                    'sem_pre': sub['pre'].std() / np.sqrt(len(sub)),
+                    'mean_post': sub['post'].mean(),
+                    'sem_post': sub['post'].std() / np.sqrt(len(sub)),
+                    'n_pairs': len(sub),
+                    'n_mice': sub['mouse_id'].nunique(),
+                    'lmm_change': fit['mean'],
+                    'lmm_ci_low': fit['ci_low'],
+                    'lmm_ci_high': fit['ci_high'],
+                    'p_value': fit['p_value'],
+                    'icc_mouse': fit['icc_mouse'],
+                    'method': fit['method'],
+                }
+            )
+            print(
+                f"  {reward_group} {pt}: change={fit['mean']:.4g}, p={fit['p_value']:.3g}, n={len(sub)} pairs"
+            )
         stats_pair_df = pd.DataFrame(stats_pair)
 
         stats_pair_df.to_csv(os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}_stats.csv'), index=False)
