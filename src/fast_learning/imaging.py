@@ -53,8 +53,18 @@ def _in_window(t, start, stop):
 
 
 def select_time(xarr, start, stop):
-    """Frames of an xarray with start <= time < stop (seconds)."""
-    return xarr.isel(time=np.flatnonzero(_in_window(xarr['time'].values, start, stop)))
+    """Frames of an xarray with start <= time < stop (seconds).
+
+    Raises if the window extends beyond the tensor's time axis, so that a
+    window is never silently shortened.
+    """
+    t = xarr['time'].values
+    frame = np.median(np.diff(t)) if len(t) > 1 else 0
+    if start < t[0] - _TIME_EPS or stop > t[-1] + frame + _TIME_EPS:
+        raise ValueError(
+            f'Time window ({start}, {stop}) s extends beyond the tensor ({t[0]:.2f} to {t[-1]:.2f} s).'
+        )
+    return xarr.isel(time=np.flatnonzero(_in_window(t, start, stop)))
 
 
 def baseline_frames(xarr, win=BASELINE_WIN_S):

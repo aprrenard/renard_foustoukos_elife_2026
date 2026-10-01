@@ -84,3 +84,15 @@ def test_select_time_is_half_open():
     base = imaging.select_time(x, -1, 0)
     assert len(resp) == 9 and resp.time.values[0] == 0  # stimulus frame to +267 ms
     assert len(base) == 30 and base.time.values[-1] < 0  # stimulus frame excluded
+
+
+def test_select_time_refuses_windows_beyond_the_tensor():
+    import pytest
+    import xarray as xr
+    from fast_learning import tensors
+
+    t = tensors.time_axis((1, 6))
+    x = xr.DataArray(np.arange(len(t)), dims=['time'], coords={'time': t})
+    with pytest.raises(ValueError):
+        imaging.select_time(x, -2, 0)
+    assert len(imaging.select_time(x, -1, 1)) == 60

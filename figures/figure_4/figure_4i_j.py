@@ -42,7 +42,7 @@ DAYS = [-2, -1, 0, 1, 2]
 
 # Trial selection of the reactivation events:
 #   False : all no-stim trials, full window (main analysis)
-#   True  : no-stim trials without licks, +/- 2 s around no-stim onset
+#   True  : no-stim trials without licks, -1 to +1 s around no-stim onset
 NO_LICK_ONLY = False
 SELECTION = 'nolick' if NO_LICK_ONLY else 'allnostim'
 

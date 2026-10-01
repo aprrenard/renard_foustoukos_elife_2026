@@ -13,7 +13,7 @@ Outputs: <processed_dir>/reactivation/
              surrogate_thresholds_per_mouse_p<N>.csv
              reactivation_results_p<N>.pkl      (all mice)
              mouse_selection.csv
-         With --nolick (no-stim trials without licks, +/- 2 s around no-stim
+         With --nolick (no-stim trials without licks, -1 to +1 s around no-stim
          onset), the same files except mouse_selection.csv in reactivation/nolick/.
 
 Usage:
@@ -50,7 +50,9 @@ PERCENTILE_TO_USE = 99  # main threshold; defines the mouse selection
 
 OUTPUT_DIR = os.path.join(paths.processed_dir, 'reactivation')
 NOLICK_OUTPUT_DIR = os.path.join(OUTPUT_DIR, 'nolick')
-NOLICK_TIME_WINDOW = (-2, 2)
+# No-lick control: correct-rejection no-stim trials, frames from 1 s before to
+# 1 s after no-stim onset (no licks before onset, none in the 0-1 s response window).
+NOLICK_TIME_WINDOW = (-1, 1)
 
 
 # ============================================================================
@@ -304,7 +306,7 @@ def save_mouse_selection(results_data, path=rx.MOUSE_SELECTION_CSV):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Pipeline step 07: reactivation events.')
     parser.add_argument(
-        '--nolick', action='store_true', help='no-stim trials without licks, +/- 2 s around no-stim onset'
+        '--nolick', action='store_true', help='no-stim trials without licks, -1 to +1 s around no-stim onset'
     )
     parser.add_argument(
         '--selection-only',

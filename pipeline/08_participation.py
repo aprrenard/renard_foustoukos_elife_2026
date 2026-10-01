@@ -44,7 +44,9 @@ N_JOBS = 35
 RESULTS_DIR = pt.RESULTS_DIR
 REACTIVATION_RESULTS_FILE = os.path.join(RESULTS_DIR, 'reactivation_results_p99.pkl')
 NOLICK_RESULTS_FILE = os.path.join(RESULTS_DIR, 'nolick', 'reactivation_results_p99.pkl')
-NOLICK_TIME_WINDOW = (-2, 2)
+# No-lick control: correct-rejection no-stim trials, frames from 1 s before to
+# 1 s after no-stim onset (no licks before onset, none in the 0-1 s response window).
+NOLICK_TIME_WINDOW = (-1, 1)
 LMI_RESULTS_CSV = os.path.join(paths.processed_dir, 'lmi_results.csv')
 
 
