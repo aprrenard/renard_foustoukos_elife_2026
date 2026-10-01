@@ -40,6 +40,7 @@ PIPELINE = [
     ('07_reactivations', 'pipeline/07_reactivations.py', [], True),
     ('07_reactivations_nolick', 'pipeline/07_reactivations.py', ['--nolick'], True),
     ('08_participation', 'pipeline/08_participation.py', [], True),
+    ('08_participation_nolick', 'pipeline/08_participation.py', ['--nolick'], True),
     ('09_pairwise_correlations', 'pipeline/09_pairwise_correlations.py', [], True),
 ]
 
