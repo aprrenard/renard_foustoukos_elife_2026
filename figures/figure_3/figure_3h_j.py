@@ -348,6 +348,7 @@ def panel_i_within_day_correlations(
         linestyles='-',
         markersize=8,
         linewidth=2,
+        seed=0,
     )
 
     for mouse_id in metrics_combined['mouse_id'].unique():
@@ -466,6 +467,7 @@ def panel_j_reorganization_index(
         palette=reward_palette[::-1],
         ax=ax,
         errorbar='ci',
+        seed=0,
     )
     sns.swarmplot(
         data=long_df,

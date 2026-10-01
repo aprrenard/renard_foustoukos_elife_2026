@@ -176,6 +176,7 @@ def plot_session_summary(
             alpha=0.7,
             edgecolor='black',
             ax=ax,
+            seed=0,
         )
 
         y_max = df[metric].max()

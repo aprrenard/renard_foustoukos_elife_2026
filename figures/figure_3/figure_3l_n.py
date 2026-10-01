@@ -165,7 +165,9 @@ def panel_l_decoding_accuracy(
     # Plot
     fig, ax = plt.subplots(1, 1, figsize=(4, 5))
     data_plot = [accs_rew, accs_nonrew]
-    sns.barplot(data=data_plot, palette=reward_palette[::-1], estimator=np.nanmean, errorbar='ci', ax=ax)
+    sns.barplot(
+        data=data_plot, palette=reward_palette[::-1], estimator=np.nanmean, errorbar='ci', ax=ax, seed=0
+    )
     sns.swarmplot(data=data_plot, palette=reward_palette[::-1], alpha=0.7, ax=ax)
     ax.set_xticks([0, 1])
     ax.set_xticklabels(['R+', 'R-'])
@@ -577,7 +579,9 @@ def panel_n_day0_classification(
                 'accuracy': np.concatenate([acc_pre, acc_post]),
             }
         )
-        sns.barplot(data=df_plot, x='comparison', y='accuracy', errorbar='ci', ax=ax, color=color, alpha=0.7)
+        sns.barplot(
+            data=df_plot, x='comparison', y='accuracy', errorbar='ci', ax=ax, color=color, alpha=0.7, seed=0
+        )
         sns.swarmplot(data=df_plot, x='comparison', y='accuracy', ax=ax, color=color, alpha=0.5, size=7)
         ax.set_title(f'{group} group')
         ax.set_ylim(0, 1.0)

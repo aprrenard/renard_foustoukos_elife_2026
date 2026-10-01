@@ -10,8 +10,8 @@ same mouse are not treated as independent.
 Inputs:  pair-level correlations (pipeline/09_pairwise_correlations.py).
 Outputs: <figures_dir>/supp_3/output/supp_3m_<group>.pdf, _data.csv (pairs),
          _mouse_means.csv (plotted, one value per mouse), _stats.csv.
-Figure: mean over each mouse's pairs, pre and post (lines), bars = mean +/- SEM
-across mice.
+Figure: mean over each mouse's pairs, pre and post (lines); bars = mean across
+mice with bootstrapped 95% CI (seeded).
 """
 
 import os
@@ -119,16 +119,22 @@ if __name__ == '__main__':
         for idx, pt in enumerate(PAIR_TYPES):
             ax = axes[idx]
             mm = mouse_means[mouse_means['pair_type'] == pt]
-            means = mm[['pre', 'post']].mean()
-            sems = mm[['pre', 'post']].sem()
-            ax.bar(
-                [0, 1],
-                means.values,
-                yerr=sems.values,
+            # Bars: mean across mice, bootstrapped 95% CI (seeded) as in the other panels.
+            long = mm.melt(
+                id_vars='mouse_id', value_vars=['pre', 'post'], var_name='period', value_name='corr'
+            )
+            sns.barplot(
+                data=long,
+                x='period',
+                y='corr',
+                order=['pre', 'post'],
                 color='lightgrey',
                 edgecolor='black',
                 width=0.6,
-                capsize=4,
+                errorbar=('ci', 95),
+                seed=0,
+                capsize=0.1,
+                ax=ax,
             )
             for _, row in mm.iterrows():
                 ax.plot(

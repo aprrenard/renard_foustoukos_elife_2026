@@ -85,6 +85,7 @@ if __name__ == '__main__':
         err_style='band',
         ax=ax,
         legend=False,
+        seed=0,
     )
 
     for _, row in stats_df.iterrows():

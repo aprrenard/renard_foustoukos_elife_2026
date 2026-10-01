@@ -100,6 +100,7 @@ if __name__ == '__main__':
                 estimator='mean',
                 ax=ax,
                 legend=False,
+                seed=0,
             )
             ax.axvline(0, color='#FF9600', linestyle='-')
             ax.set_title(f'{cell_type} — Day {day:+d}')

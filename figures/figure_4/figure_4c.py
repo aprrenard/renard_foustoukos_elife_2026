@@ -112,7 +112,7 @@ if __name__ == '__main__':
         (axes[0, 0], data_rew, reward_palette[1], 'R+ mice'),
         (axes[0, 1], data_nonrew, reward_palette[0], 'R- mice'),
     ]:
-        sns.lineplot(data=data, x='trial_w', y='learning_curve_w', color=color, errorbar='ci', ax=ax)
+        sns.lineplot(data=data, x='trial_w', y='learning_curve_w', color=color, errorbar='ci', ax=ax, seed=0)
         ax.set_xlabel('Trial within Day 0')
         ax.set_ylabel('Learning curve (w)')
         ax.set_title(title)
@@ -132,6 +132,7 @@ if __name__ == '__main__':
             errorbar='ci',
             color=color,
             ax=ax,
+            seed=0,
         )
         ax.axhline(y=0, color='black', linestyle='--', alpha=0.5)
         ax.set_xlabel('Trial within Day 0')

@@ -123,6 +123,7 @@ if __name__ == '__main__':
         order=ON_OFF_ORDER,
         color=trial_type_rew_palette[3],
         ax=ax,
+        seed=0,
     )
     for mouse_id in df_w['mouse_id'].unique():
         v = {
@@ -152,6 +153,7 @@ if __name__ == '__main__':
         order=ON_OFF_ORDER,
         color=trial_type_rew_palette[5],
         ax=ax,
+        seed=0,
     )
     for mouse_id in df_ns['mouse_id'].unique():
         v = {
@@ -180,6 +182,7 @@ if __name__ == '__main__':
         order=['Whisker hit', 'False alarm'],
         palette={'Whisker hit': trial_type_rew_palette[3], 'False alarm': trial_type_rew_palette[5]},
         ax=ax,
+        seed=0,
     )
     for mouse_id in df_off['mouse_id'].unique():
         row = df_off[df_off['mouse_id'] == mouse_id]

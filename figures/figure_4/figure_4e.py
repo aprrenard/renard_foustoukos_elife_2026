@@ -250,6 +250,7 @@ if __name__ == '__main__':
         markersize=10,
         join=False,
         ax=ax,
+        seed=0,
     )
     ax.axhline(0, color='black', linestyle='--', alpha=0.5, linewidth=1)
 

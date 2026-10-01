@@ -235,6 +235,7 @@ def _dprime_barplot_by_group(
         palette=bar_palette,
         width=0.3,
         dodge=True,
+        seed=0,
     )
     sns.swarmplot(
         data=day_data,
@@ -364,6 +365,7 @@ def panel_1d_dprime(
         errorbar='ci',
         err_style='band',
         ax=ax,
+        seed=0,
     )
 
     # Same p-value color code as figure_1d.py: p > 0.05 (not significant)
@@ -708,7 +710,7 @@ def panel_4c_dprime(
         (axes[0], data_rew, reward_palette[1], 'R+ mice'),
         (axes[1], data_nonrew, reward_palette[0], 'R- mice'),
     ]:
-        sns.lineplot(data=data, x='trial_w', y='dprime_w', color=color, errorbar='ci', ax=ax)
+        sns.lineplot(data=data, x='trial_w', y='dprime_w', color=color, errorbar='ci', ax=ax, seed=0)
         ax.axhline(0, color='black', linestyle='--', alpha=0.4)
         ax.set_xlabel('Trial within Day 0')
         ax.set_ylabel("d' (whisker vs. catch)")
@@ -860,6 +862,7 @@ def panel_4e_dprime_correlation(
         markersize=10,
         join=False,
         ax=ax,
+        seed=0,
     )
     ax.axhline(0, color='black', linestyle='--', alpha=0.5, linewidth=1)
 

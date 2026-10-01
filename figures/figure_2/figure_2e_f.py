@@ -140,6 +140,7 @@ def panel_e_opto_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
@@ -153,6 +154,7 @@ def panel_e_opto_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
@@ -166,6 +168,7 @@ def panel_e_opto_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
 
     # Plot group averages
@@ -177,6 +180,7 @@ def panel_e_opto_timecourse(
         color=stim_palette[2],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
@@ -186,6 +190,7 @@ def panel_e_opto_timecourse(
         color=stim_palette[0],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
@@ -195,6 +200,7 @@ def panel_e_opto_timecourse(
         color=reward_palette[1],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
 
     # Add dots for individual points
@@ -256,6 +262,7 @@ def panel_e_opto_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
@@ -269,6 +276,7 @@ def panel_e_opto_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
@@ -282,6 +290,7 @@ def panel_e_opto_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
 
     # Plot group averages
@@ -293,6 +302,7 @@ def panel_e_opto_timecourse(
         color=stim_palette[2],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(fpS1_mice)],
@@ -302,6 +312,7 @@ def panel_e_opto_timecourse(
         color=stim_palette[0],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(fpS1_mice)],
@@ -311,6 +322,7 @@ def panel_e_opto_timecourse(
         color=reward_palette[1],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
 
     ax.set_title('fpS1')
@@ -450,6 +462,7 @@ def panel_f_opto_barplot(
         dodge=True,
         order=day_labels,
         hue_order=['wS1', 'fpS1'],
+        seed=0,
     )
 
     # Swarm plot for individual mice

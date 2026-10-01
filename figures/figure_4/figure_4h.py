@@ -165,6 +165,7 @@ def panel_h_reactivation_rate(
         alpha=0.7,
         edgecolor='black',
         ax=ax,
+        seed=0,
     )
 
     # # Individual mouse trajectories

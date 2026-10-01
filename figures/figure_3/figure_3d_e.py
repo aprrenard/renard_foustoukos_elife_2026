@@ -138,6 +138,7 @@ def generate_panel(
         palette=['#a3a3a3', color],
         ax=axes[0],
         legend=False,
+        seed=0,
     )
     axes[0].axvline(0, color='orange', linestyle='-', linewidth=0.8)
     axes[0].set_xlabel('Time (s)')
@@ -152,6 +153,7 @@ def generate_panel(
         order=['pre', 'post'],
         color=color,
         ax=axes[1],
+        seed=0,
     )
     sns.swarmplot(
         data=mouse_avg,

@@ -164,6 +164,7 @@ if __name__ == '__main__':
         hue_order=['R+', 'R-'],
         palette=reward_palette[::-1],
         ax=ax,
+        seed=0,
     )
 
     for group, color in zip(['R+', 'R-'], reward_palette[::-1]):

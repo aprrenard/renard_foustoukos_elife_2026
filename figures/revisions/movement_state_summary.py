@@ -470,6 +470,7 @@ def plot_movement_summary(
                 alpha=0.7,
                 edgecolor='black',
                 ax=ax,
+                seed=0,
             )
 
             stat, p, n_mice = _friedman_p(fdata, value_col, days_sorted)

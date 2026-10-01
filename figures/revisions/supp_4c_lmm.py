@@ -205,6 +205,7 @@ def panel_supp4c_proportion_across_days_lmm(
             err_kws={'linewidth': 1.5},
             alpha=0.7,
             ax=ax,
+            seed=0,
         )
         for patch in ax.patches:
             patch.set_edgecolor('black')

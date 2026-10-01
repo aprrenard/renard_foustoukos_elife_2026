@@ -245,6 +245,7 @@ if __name__ == '__main__':
         errorbar='ci',
         markersize=10,
         join=False,
+        seed=0,
     )
     ax.axhline(0, color='black', linestyle='--', alpha=0.5, linewidth=1)
 

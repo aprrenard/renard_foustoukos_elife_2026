@@ -219,6 +219,7 @@ def panel_j_participation_across_days(merged_df, per_day_df, output_dir=OUTPUT_D
             err_kws={'linewidth': 1.5},
             alpha=0.7,
             ax=ax,
+            seed=0,
         )
         for patch in ax.patches:
             patch.set_edgecolor('black')

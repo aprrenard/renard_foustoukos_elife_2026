@@ -101,6 +101,7 @@ def panel_c_left_performance_across_days(
         ax=ax,
         marker=None,
         linewidth=1,
+        seed=0,
     )
     sns.lineplot(
         data=table_agg,
@@ -116,6 +117,7 @@ def panel_c_left_performance_across_days(
         ax=ax,
         marker=None,
         linewidth=1,
+        seed=0,
     )
     sns.lineplot(
         data=table_agg,
@@ -131,6 +133,7 @@ def panel_c_left_performance_across_days(
         ax=ax,
         marker=None,
         linewidth=1,
+        seed=0,
     )
 
     # Plot group averages (thick lines with markers)
@@ -146,6 +149,7 @@ def panel_c_left_performance_across_days(
         legend=True,
         ax=ax,
         linewidth=2,
+        seed=0,
     )
     sns.pointplot(
         data=table_agg,
@@ -159,6 +163,7 @@ def panel_c_left_performance_across_days(
         legend=True,
         ax=ax,
         linewidth=2,
+        seed=0,
     )
     sns.pointplot(
         data=table_agg,
@@ -172,6 +177,7 @@ def panel_c_left_performance_across_days(
         legend=True,
         ax=ax,
         linewidth=2,
+        seed=0,
     )
 
     # Formatting
@@ -272,6 +278,7 @@ def panel_c_right_performance_barplot(
         palette=behavior_palette[2:4][::-1],
         width=0.3,
         dodge=True,
+        seed=0,
     )
 
     # Swarm plot for individual mice

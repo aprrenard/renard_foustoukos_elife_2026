@@ -102,6 +102,7 @@ if __name__ == '__main__':
         errorbar='ci',
         err_style='band',
         ax=ax,
+        seed=0,
     )
 
     for _, row in stats_df.iterrows():

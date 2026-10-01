@@ -332,6 +332,7 @@ def _panel_metric_across_days(
         linestyles='-',
         markersize=8,
         linewidth=2,
+        seed=0,
     )
     for mouse_id in metrics_combined['mouse_id'].unique():
         mouse_data = long_df[long_df['mouse_id'] == mouse_id].sort_values('day')

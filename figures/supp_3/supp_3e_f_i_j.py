@@ -148,6 +148,7 @@ if __name__ == '__main__':
                 palette=reward_palette,
                 legend=False,
                 ax=ax,
+                seed=0,
             )
             sns.swarmplot(
                 data=data, x='reward_group', order=['R+', 'R-'], y=sign, color='k', size=4, alpha=0.7, ax=ax

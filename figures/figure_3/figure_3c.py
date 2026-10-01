@@ -91,6 +91,7 @@ if __name__ == '__main__':
             estimator='mean',
             ax=axes[j],
             legend=False,
+            seed=0,
         )
         axes[j].axvline(0, color='#FF9600', linestyle='-')
         axes[j].set_title(f'Day {day:+d}')

@@ -131,6 +131,7 @@ if __name__ == '__main__':
                 err_style='band',
                 label=f'{stim_labels[stim_name]} {rg}',
                 ax=ax,
+                seed=0,
             )
 
     ax.set_xlabel('Time from session start (min)')

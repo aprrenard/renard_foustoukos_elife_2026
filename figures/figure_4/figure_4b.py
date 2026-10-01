@@ -131,7 +131,13 @@ if __name__ == '__main__':
         ax_beh = axes[0, col]
         if not bh_mouse.empty:
             sns.lineplot(
-                data=bh_mouse, x='trial_w', y='learning_curve_w', ax=ax_beh, color=color, linewidth=2.5
+                data=bh_mouse,
+                x='trial_w',
+                y='learning_curve_w',
+                ax=ax_beh,
+                color=color,
+                linewidth=2.5,
+                seed=0,
             )
         ax_beh.set_ylabel('Performance (whisker trials)')
         ax_beh.set_ylim(0, 1)
@@ -144,7 +150,12 @@ if __name__ == '__main__':
             common_trials = np.intersect1d(dec_df['trial_start'], bh_mouse['trial_w'])
             dec_plot = dec_df.set_index('trial_start').loc[common_trials]
             sns.lineplot(
-                x=common_trials, y=dec_plot['mean_decision_value'], ax=ax_dec, color=color, linewidth=2.5
+                x=common_trials,
+                y=dec_plot['mean_decision_value'],
+                ax=ax_dec,
+                color=color,
+                linewidth=2.5,
+                seed=0,
             )
         ax_dec.axhline(0, color='gray', linestyle='--', linewidth=1)
         ax_dec.set_ylabel('Decoder decision value')

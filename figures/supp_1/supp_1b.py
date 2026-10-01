@@ -91,6 +91,7 @@ if __name__ == '__main__':
         width=0.3,
         dodge=True,
         ax=ax,
+        seed=0,
     )
     sns.swarmplot(
         data=avg_performance,

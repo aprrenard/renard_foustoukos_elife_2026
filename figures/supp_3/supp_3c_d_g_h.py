@@ -155,6 +155,7 @@ if __name__ == '__main__':
                 palette=sns.color_palette(pal),
                 ax=ax_psth,
                 legend=False,
+                seed=0,
             )
             ax_psth.axvline(0, color='#FF9600', linestyle='-')
             ax_psth.set_ylabel('DF/F0 (%)')
@@ -173,6 +174,7 @@ if __name__ == '__main__':
                 order=['pre', 'post'],
                 color=BAR_COLORS[rg],
                 ax=ax_bar,
+                seed=0,
             )
             sns.swarmplot(
                 data=d,

@@ -102,6 +102,7 @@ def generate_panel(
         err_style='band',
         ax=ax,
         legend=False,
+        seed=0,
     )
 
     # Statistical testing for each trial
@@ -146,6 +147,7 @@ def generate_panel(
         errorbar='ci',
         err_style='band',
         ax=ax,
+        seed=0,
     )
 
     # Statistical testing for each trial

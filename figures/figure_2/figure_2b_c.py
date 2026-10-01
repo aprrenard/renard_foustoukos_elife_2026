@@ -158,6 +158,7 @@ def panel_b_muscimol_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
@@ -171,6 +172,7 @@ def panel_b_muscimol_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
@@ -184,6 +186,7 @@ def panel_b_muscimol_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
 
     # Plot group averages
@@ -195,6 +198,7 @@ def panel_b_muscimol_timecourse(
         color=stim_palette[2],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
@@ -204,6 +208,7 @@ def panel_b_muscimol_timecourse(
         color=stim_palette[0],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
@@ -213,6 +218,7 @@ def panel_b_muscimol_timecourse(
         color=reward_palette[1],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
 
     ax.set_title('wS1')
@@ -236,6 +242,7 @@ def panel_b_muscimol_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
@@ -249,6 +256,7 @@ def panel_b_muscimol_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
         sns.lineplot(
             data=data.loc[data.mouse_id == imouse],
@@ -262,6 +270,7 @@ def panel_b_muscimol_timecourse(
             marker=None,
             err_style='bars',
             linewidth=1,
+            seed=0,
         )
 
     # Plot group averages
@@ -273,6 +282,7 @@ def panel_b_muscimol_timecourse(
         color=stim_palette[2],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(fpS1_mice)],
@@ -282,6 +292,7 @@ def panel_b_muscimol_timecourse(
         color=stim_palette[0],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
     sns.pointplot(
         data=data.loc[data.mouse_id.isin(fpS1_mice)],
@@ -291,6 +302,7 @@ def panel_b_muscimol_timecourse(
         color=reward_palette[1],
         ax=ax,
         linewidth=2,
+        seed=0,
     )
 
     ax.set_title('fpS1')
@@ -446,6 +458,7 @@ def panel_c_muscimol_barplot(
         palette=[reward_palette[1]],
         width=0.3,
         dodge=True,
+        seed=0,
     )
 
     # Swarm plot for individual mice

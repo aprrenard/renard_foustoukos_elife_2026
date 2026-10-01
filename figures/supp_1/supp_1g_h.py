@@ -138,6 +138,7 @@ if __name__ == '__main__':
             capsize=0.05,
             alpha=0.8,
             ax=ax,
+            seed=0,
         )
 
         day_positions = {d: i for i, d in enumerate(DAYS)}
@@ -203,6 +204,7 @@ if __name__ == '__main__':
                 err_style='band',
                 label=rg,
                 ax=ax,
+                seed=0,
             )
 
             for _, row in df_rg.groupby(trial_col)['reaction_time'].mean().reset_index().iterrows():

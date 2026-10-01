@@ -75,6 +75,7 @@ if __name__ == '__main__':
         palette=reward_palette[::-1],
         width=0.3,
         ax=ax,
+        seed=0,
     )
     sns.swarmplot(
         data=fh,
