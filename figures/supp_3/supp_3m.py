@@ -8,7 +8,10 @@ mixed-effects model change ~ 1 + (1 | mouse), so that pairs recorded in the
 same mouse are not treated as independent.
 
 Inputs:  pair-level correlations (pipeline/09_pairwise_correlations.py).
-Outputs: <figures_dir>/supp_3/output/supp_3m_<group>.svg, _data.csv, _stats.csv.
+Outputs: <figures_dir>/supp_3/output/supp_3m_<group>.pdf, _data.csv (pairs),
+         _mouse_means.csv (plotted, one value per mouse), _stats.csv.
+Figure: mean over each mouse's pairs, pre and post (lines), bars = mean +/- SEM
+across mice.
 """
 
 import os
@@ -108,39 +111,52 @@ if __name__ == '__main__':
         stats_pair_df.to_csv(os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}_stats.csv'), index=False)
         corr_df.to_csv(os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}_data.csv'), index=False)
 
-        # ── Pair-level figure ─────────────────────────────────────────────────
-        fig, axes = plt.subplots(1, 2, figsize=(10, 5), sharey=True)
+        # ── Figure: one value per mouse (mean over its pairs), the unit of the test ─
+        mouse_means = paired.groupby(['mouse_id', 'pair_type'])[['pre', 'post']].mean().reset_index()
+        mouse_means.to_csv(os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}_mouse_means.csv'), index=False)
+
+        fig, axes = plt.subplots(1, 2, figsize=(6, 4), sharey=True)
         for idx, pt in enumerate(PAIR_TYPES):
             ax = axes[idx]
-            sub = corr_df[corr_df['pair_type'] == pt]
-            sns.barplot(
-                data=sub,
-                x='period',
-                y='correlation',
-                order=['pre', 'post'],
-                ax=ax,
-                errorbar='se',
-                capsize=0.1,
+            mm = mouse_means[mouse_means['pair_type'] == pt]
+            means = mm[['pre', 'post']].mean()
+            sems = mm[['pre', 'post']].sem()
+            ax.bar(
+                [0, 1],
+                means.values,
+                yerr=sems.values,
+                color='lightgrey',
+                edgecolor='black',
+                width=0.6,
+                capsize=4,
             )
+            for _, row in mm.iterrows():
+                ax.plot(
+                    [0, 1],
+                    [row['pre'], row['post']],
+                    '-o',
+                    color='grey',
+                    markersize=3,
+                    linewidth=0.8,
+                    alpha=0.7,
+                )
             ax.axhline(0, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
-            ax.set_title(pt, fontsize=14, fontweight='bold')
-            ax.set_xlabel('Period', fontsize=12)
-            ax.set_ylabel('Pearson correlation' if idx == 0 else '', fontsize=12)
-            ax.set_ylim(0, 0.02)
+            ax.set_xticks([0, 1], ['Pre', 'Post'])
+            ax.set_title(f'{pt} (n = {len(mm)} mice)', fontsize=10, fontweight='bold')
+            ax.set_xlabel('')
+            ax.set_ylabel('Pearson correlation (mean over pairs)' if idx == 0 else '', fontsize=9)
 
             row = stats_pair_df[stats_pair_df['pair_type'] == pt]
             if not row.empty:
-                p_val = row.iloc[0]['p_value']
-                pre_top = sub[sub['period'] == 'pre']['correlation'].agg(['mean', 'sem']).sum()
-                post_top = sub[sub['period'] == 'post']['correlation'].agg(['mean', 'sem']).sum()
+                top = mm[['pre', 'post']].max().max()
                 add_p_value_bracket(
-                    ax, 0, 1, max(pre_top, post_top) + (ax.get_ylim()[1] - ax.get_ylim()[0]) * 0.06, p_val
+                    ax, 0, 1, top + (ax.get_ylim()[1] - ax.get_ylim()[0]) * 0.05, row.iloc[0]['p_value']
                 )
 
-        plt.suptitle(f'Pre vs Post — Pair Level ({reward_group})', fontsize=14, y=1.02)
+        plt.suptitle(f'Pre vs post learning ({reward_group})', fontsize=11, y=1.02)
         plt.tight_layout()
         sns.despine()
-        save_figure(fig, os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}.svg'))
+        save_figure(fig, os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}.pdf'))
         print(f"Saved: supp_3m_{reward_group}.svg")
         plt.close()
 
