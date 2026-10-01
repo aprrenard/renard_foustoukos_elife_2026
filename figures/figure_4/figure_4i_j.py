@@ -251,7 +251,7 @@ def panel_j_participation_across_days(merged_df, per_day_df, output_dir=OUTPUT_D
         ax.set_ylim(0, 0.4)
         ax.tick_params(labelsize=8)
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, [cat_labels[lab] for lab in labels], fontsize=8)
+        ax.legend(handles, [cat_labels[lab] for lab in labels], fontsize=8, loc='upper right')
         sns.despine(ax=ax)
 
     plt.tight_layout()

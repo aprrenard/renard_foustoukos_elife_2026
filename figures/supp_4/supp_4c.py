@@ -183,7 +183,7 @@ def panel_supp4c_proportion_across_days(
         ax.set_ylim(0, None)
         ax.tick_params(labelsize=8)
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, [f'{lab.capitalize()} LMI' for lab in labels], fontsize=8)
+        ax.legend(handles, [f'{lab.capitalize()} LMI' for lab in labels], fontsize=8, loc='upper right')
         sns.despine(ax=ax)
 
         plot_data_rows.append(grp)
