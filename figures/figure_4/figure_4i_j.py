@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from fast_learning import paths, participation
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import save_figure
 from fast_learning.stats import format_p, lmm_slope, per_mouse_slope_test, significance_stars
 
 
@@ -71,7 +71,9 @@ def panel_i_participation_vs_lmi(merged_df, output_dir=OUTPUT_DIR, filename='fig
         df = df[df['reliable_learning']]
 
     reward_groups = ['R+', 'R-']
-    rg_colors = {'R+': reward_palette[1], 'R-': reward_palette[0]}
+    # Final figure colours, set here because the dots are rasterized and cannot be
+    # recoloured in Illustrator.
+    rg_colors = {'R+': '#00b400', 'R-': '#c800c8'}
     fig, axes = plt.subplots(1, 2, figsize=(9, 4), sharey=True)
     stats_rows = []
 
@@ -81,9 +83,7 @@ def panel_i_participation_vs_lmi(merged_df, output_dir=OUTPUT_DIR, filename='fig
         x = grp['lmi'].values
         n_mice = grp['mouse_id'].nunique()
 
-        ax.scatter(
-            x, grp['learning_rate'].values, color=rg_colors[rg], s=4, alpha=0.4, linewidths=0, rasterized=True
-        )
+        ax.scatter(x, grp['learning_rate'].values, color=rg_colors[rg], s=4, linewidths=0, rasterized=True)
 
         if len(grp) >= 3 and n_mice >= 2:
             fit = lmm_slope(grp, 'learning_rate', 'lmi')
