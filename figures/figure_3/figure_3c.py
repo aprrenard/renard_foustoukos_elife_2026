@@ -14,7 +14,7 @@ import seaborn as sns
 
 from fast_learning import imaging
 from fast_learning import paths, database
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 
 
 # ============================================================================
@@ -68,15 +68,9 @@ if __name__ == '__main__':
     # Figure
     # ============================================================================
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
-    fig, axes = plt.subplots(1, len(DAYS), figsize=(18, 4), sharey=True)
+    fig, axes = plt.subplots(1, len(DAYS), figsize=panel_size(len(DAYS), w=0.7), sharey=True)
 
     for j, day in enumerate(DAYS):
         d = data[data['day'] == day]

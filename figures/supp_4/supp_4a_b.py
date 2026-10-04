@@ -36,7 +36,7 @@ import seaborn as sns
 from scipy.stats import linregress
 
 from fast_learning import paths, participation
-from fast_learning.plotting import reward_palette, save_figure, lmi_cmap
+from fast_learning.plotting import reward_palette, save_figure, lmi_cmap, set_style, panel_size
 from fast_learning.stats import format_p, lmm_slope
 
 
@@ -67,7 +67,7 @@ def panel_supp4a_scatter(
         <filename>_stats.csv -- Pearson r and p per reward group
     """
 
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     merged = pd.read_csv(data_csv_path)
     merged = merged.dropna(subset=['lmi', 'transient_freq', 'participation_rate', 'reward_group'])
@@ -75,7 +75,7 @@ def panel_supp4a_scatter(
     lmi_abs_max = np.abs(merged['lmi']).max()
     norm = mcolors.TwoSlopeNorm(vmin=-lmi_abs_max, vcenter=0, vmax=lmi_abs_max)
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    fig, axes = plt.subplots(1, 2, figsize=panel_size(2, w=1.15))
     stats_rows = []
 
     for i, reward_group in enumerate(['R+', 'R-']):
@@ -94,13 +94,13 @@ def panel_supp4a_scatter(
             cmap=lmi_cmap,
             norm=norm,
             alpha=0.6,
-            s=15,
+            s=2,
             linewidths=0,
         )
 
         fit = lmm_slope(gdata, 'participation_rate', 'transient_freq')
         x_range = np.linspace(gdata['transient_freq'].min(), gdata['transient_freq'].max(), 100)
-        ax.plot(x_range, fit['slope'] * x_range + fit['intercept'], 'k-', linewidth=1.5)
+        ax.plot(x_range, fit['slope'] * x_range + fit['intercept'], 'k-', linewidth=1)
 
         n_mice = gdata['mouse_id'].nunique()
         ax.text(
@@ -109,15 +109,14 @@ def panel_supp4a_scatter(
             f"LMM slope = {fit['slope']:.3f} [{fit['ci_low']:.3f}, {fit['ci_high']:.3f}]\n"
             f"{format_p(fit['p_value'])}\nn = {len(gdata)} cells, {n_mice} mice",
             transform=ax.transAxes,
-            fontsize=10,
             va='top',
             bbox=dict(boxstyle='round', facecolor='white', alpha=0.9, edgecolor='gray'),
         )
 
         plt.colorbar(sc, ax=ax, label='LMI')
-        ax.set_xlabel('Transient frequency (events/min)', fontweight='bold', fontsize=12)
-        ax.set_ylabel('Participation rate' if i == 0 else '', fontweight='bold', fontsize=12)
-        ax.set_title(f'{reward_group}  (n={n_mice} mice, {len(gdata)} cells)', fontweight='bold', fontsize=13)
+        ax.set_xlabel('Transient frequency (events/min)', fontweight='bold')
+        ax.set_ylabel('Participation rate' if i == 0 else '', fontweight='bold')
+        ax.set_title(f'{reward_group}  (n={n_mice} mice, {len(gdata)} cells)', fontweight='bold')
         ax.grid(True, alpha=0.3)
         sns.despine(ax=ax)
 
@@ -141,7 +140,6 @@ def panel_supp4a_scatter(
 
     fig.suptitle(
         'Participation Rate vs Transient Frequency (Day 0, colored by LMI)',
-        fontsize=13,
         fontweight='bold',
     )
     plt.tight_layout()
@@ -188,7 +186,7 @@ def panel_supp4b_partial_corr(
         <filename>_data.csv  -- data with residuals per reward group
         <filename>_stats.csv -- raw and partial Pearson r / p per reward group
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     merged = pd.read_csv(data_csv_path)
     merged = merged.dropna(subset=['lmi', 'participation_rate', 'transient_freq', 'reward_group'])
@@ -205,12 +203,11 @@ def panel_supp4b_partial_corr(
             0.95,
             f"{label}\nLMM slope = {fit['slope']:.3f} [{fit['ci_low']:.3f}, {fit['ci_high']:.3f}]\n{format_p(fit['p_value'])}",
             transform=ax.transAxes,
-            fontsize=9,
             va='top',
             bbox=dict(boxstyle='round', facecolor='white', alpha=0.9, edgecolor='gray'),
         )
 
-    fig, axes = plt.subplots(2, 2, figsize=(12, 10), sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=panel_size(2, 2), sharey=True)
     stats_rows = []
     data_rows = []
 
@@ -285,32 +282,30 @@ def panel_supp4b_partial_corr(
             ]
         ):
             ax = axes[row, col]
-            ax.scatter(x, y, color=color, alpha=0.3, s=10, linewidths=0)
+            ax.scatter(x, y, color=color, alpha=0.3, s=2, linewidths=0)
 
             # Line: least-squares fit of the plotted points (illustration).
             slope, intercept, _, _, _ = linregress(x, y)
             x_range = np.linspace(x.min(), x.max(), 100)
-            ax.plot(x_range, slope * x_range + intercept, color='black', linewidth=1.5)
+            ax.plot(x_range, slope * x_range + intercept, color='black', linewidth=1)
 
             ax.axvline(0, color='gray', linestyle='--', linewidth=0.7, alpha=0.5)
             ax.axhline(0, color='gray', linestyle='--', linewidth=0.7, alpha=0.5)
             annotate(ax, label, fit)
 
             ax.set_xlim(-1, 1)
-            ax.set_xlabel(xlabel, fontsize=11)
-            ax.set_ylabel(ylabel if col == 0 else '', fontsize=11)
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabel if col == 0 else '')
             title = 'Raw' if col == 0 else 'Partial  (ctrl transient freq)'
             ax.set_title(
                 f'{reward_group} — {title}  (n={len(lmi)} cells, {n_mice} mice)',
                 fontweight='bold',
-                fontsize=12,
             )
             ax.grid(True, alpha=0.3)
             sns.despine(ax=ax)
 
     fig.suptitle(
         'LMI vs Participation Rate: Raw and Partial (Day 0, LMM with mouse random intercept)',
-        fontsize=13,
         fontweight='bold',
     )
     plt.tight_layout()

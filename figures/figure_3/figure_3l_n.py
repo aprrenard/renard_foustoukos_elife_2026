@@ -29,7 +29,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 from fast_learning import paths
 from fast_learning.decoding import load_and_process_data, DAYS
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 from fast_learning.stats import significance_stars as _significance_stars
 
 
@@ -136,7 +136,7 @@ def panel_l_decoding_accuracy(
             projection_type=projection_type,
         )
 
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     le = LabelEncoder()
     le.fit(['pre', 'post'])
@@ -163,12 +163,12 @@ def panel_l_decoding_accuracy(
     ]
 
     # Plot
-    fig, ax = plt.subplots(1, 1, figsize=(4, 5))
+    fig, ax = plt.subplots(1, 1, figsize=panel_size(w=0.7))
     data_plot = [accs_rew, accs_nonrew]
     sns.barplot(
         data=data_plot, palette=reward_palette[::-1], estimator=np.nanmean, errorbar='ci', ax=ax, seed=0
     )
-    sns.swarmplot(data=data_plot, palette=reward_palette[::-1], alpha=0.7, ax=ax)
+    sns.swarmplot(data=data_plot, palette=reward_palette[::-1], alpha=0.7, ax=ax, size=2)
     ax.set_xticks([0, 1])
     ax.set_xticklabels(['R+', 'R-'])
     ax.set_ylabel('Cross-validated accuracy')
@@ -178,7 +178,7 @@ def panel_l_decoding_accuracy(
     p_text = (
         'p<0.001' if p_between < 0.001 else f'p={p_between:.3f}' if p_between < 0.01 else f'p={p_between:.2f}'
     )
-    ax.text(0.5, 0.95, p_text, ha='center', va='bottom', transform=ax.transAxes, fontsize=9)
+    ax.text(0.5, 0.95, p_text, ha='center', va='bottom', transform=ax.transAxes)
 
     sns.despine()
     plt.tight_layout()
@@ -334,7 +334,7 @@ def panel_m_pairwise_decoding(
             projection_type=projection_type,
         )
 
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     if accs_rew_matrix is None:
         print("Computing pairwise day decoding for R+ mice...")
@@ -379,7 +379,7 @@ def panel_m_pairwise_decoding(
     vmin = 0.5
     vmax = max(np.nanmax(mean_accs_rew_sym), np.nanmax(mean_accs_nonrew_sym))
 
-    fig = plt.figure(figsize=(9, 4))
+    fig = plt.figure(figsize=panel_size(2, h=1.1))
     gs = gridspec.GridSpec(1, 3, width_ratios=[1, 1, 0.05])
     ax0 = fig.add_subplot(gs[0])
     ax1 = fig.add_subplot(gs[1])
@@ -502,7 +502,7 @@ def panel_n_day0_classification(
         print("Computing pairwise day decoding for R- mice...")
         accs_nonrew_matrix = _pairwise_day_decoding_fixed_decoder_cv(vectors_nonrew, DAYS, seed=seed)
 
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     acc_pre_vs_day0_rew, acc_day0_vs_post_rew = _extract_pairwise_decoding_accuracy(accs_rew_matrix)
     acc_pre_vs_day0_nonrew, acc_day0_vs_post_nonrew = _extract_pairwise_decoding_accuracy(accs_nonrew_matrix)
@@ -564,7 +564,7 @@ def panel_n_day0_classification(
         )
 
     # Plot
-    fig, axes = plt.subplots(1, 2, figsize=(6, 4), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=panel_size(2, w=0.7), sharey=True)
 
     for ax, group, acc_pre, acc_post, color in zip(
         axes,
@@ -582,7 +582,7 @@ def panel_n_day0_classification(
         sns.barplot(
             data=df_plot, x='comparison', y='accuracy', errorbar='ci', ax=ax, color=color, alpha=0.7, seed=0
         )
-        sns.swarmplot(data=df_plot, x='comparison', y='accuracy', ax=ax, color=color, alpha=0.5, size=7)
+        sns.swarmplot(data=df_plot, x='comparison', y='accuracy', ax=ax, color=color, alpha=0.5, size=3)
         ax.set_title(f'{group} group')
         ax.set_ylim(0, 1.0)
         ax.axhline(0.5, color='grey', linestyle='--', linewidth=1)

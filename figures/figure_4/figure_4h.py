@@ -23,7 +23,7 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 from fast_learning.stats import significance_stars as _significance_stars
 from fast_learning.stats import format_p
 
@@ -81,7 +81,7 @@ def panel_h_reactivation_rate(
         <filename>_data.csv: mouse_id, reward_group, day, event_frequency
         <filename>_stats.csv: Mann-Whitney U results per day
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     days_sorted = sorted(days)
 
@@ -152,7 +152,7 @@ def panel_h_reactivation_rate(
                 )
 
     # Plot
-    fig, ax = plt.subplots(1, 1, figsize=(5, 4))
+    fig, ax = plt.subplots(1, 1, figsize=panel_size(w=1.6))
 
     sns.barplot(
         data=df,
@@ -211,11 +211,11 @@ def panel_h_reactivation_rate(
             x1 = day_idx - width / 2
             x2 = day_idx + width / 2
             ax.plot([x1, x1, x2, x2], [y1, y2, y2, y1], 'k-', linewidth=1)
-            ax.text((x1 + x2) / 2, y2, format_p(p), ha='center', va='bottom', fontsize=8)
+            ax.text((x1 + x2) / 2, y2, format_p(p), ha='center', va='bottom')
 
-    ax.set_xlabel('Day', fontsize=10)
-    ax.set_ylabel('Reactivation rate (events/min)', fontsize=10)
-    ax.legend(title='', fontsize=9)
+    ax.set_xlabel('Day')
+    ax.set_ylabel('Reactivation rate (events/min)')
+    ax.legend(title='')
     ax.set_ylim(0, 20)
     sns.despine()
     plt.tight_layout()

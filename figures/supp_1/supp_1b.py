@@ -13,7 +13,7 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths
-from fast_learning.plotting import behavior_palette, save_figure
+from fast_learning.plotting import behavior_palette, save_figure, set_style, panel_size
 from fast_learning.stats import format_p
 
 
@@ -71,15 +71,9 @@ if __name__ == '__main__':
     # Figure
     # ============================================================================
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=panel_size())
 
     sns.barplot(
         data=avg_performance,
@@ -103,12 +97,13 @@ if __name__ == '__main__':
         color='grey',
         alpha=0.6,
         ax=ax,
+        size=2,
     )
 
     # p-value above each day
     for row in stats_rows:
         xpos = DAYS.index(row['day'])
-        ax.text(xpos, 95, format_p(row['p_value']), ha='center', va='bottom', color='black', fontsize=8)
+        ax.text(xpos, 95, format_p(row['p_value']), ha='center', va='bottom', color='black')
 
     ax.set_xlabel('Day')
     ax.set_ylabel('Lick probability (%)')

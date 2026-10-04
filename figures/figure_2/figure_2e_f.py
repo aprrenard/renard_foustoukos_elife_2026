@@ -14,7 +14,7 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths, database
-from fast_learning.plotting import stim_palette, reward_palette, save_figure
+from fast_learning.plotting import stim_palette, reward_palette, save_figure, set_style, panel_size
 from fast_learning.stats import format_p
 
 
@@ -109,17 +109,10 @@ def panel_e_opto_timecourse(
     data['outcome_w'] = data['outcome_w'] * 100
 
     # Set plotting theme
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        palette='deep',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
     # Create figure with two subplots
-    fig, axes = plt.subplots(1, 2, sharey=True, figsize=(12, 5))
+    fig, axes = plt.subplots(1, 2, sharey=True, figsize=panel_size(2))
 
     # ========================================================================
     # Left panel: wS1 inactivation
@@ -179,7 +172,7 @@ def panel_e_opto_timecourse(
         order=inactivation_labels,
         color=stim_palette[2],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
     sns.pointplot(
@@ -189,7 +182,7 @@ def panel_e_opto_timecourse(
         order=inactivation_labels,
         color=stim_palette[0],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
     sns.pointplot(
@@ -199,7 +192,7 @@ def panel_e_opto_timecourse(
         order=inactivation_labels,
         color=reward_palette[1],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
 
@@ -214,7 +207,7 @@ def panel_e_opto_timecourse(
         jitter=False,
         dodge=True,
         alpha=0.5,
-        size=4,
+        size=2,
     )
     sns.stripplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
@@ -226,7 +219,7 @@ def panel_e_opto_timecourse(
         jitter=False,
         dodge=True,
         alpha=0.5,
-        size=4,
+        size=2,
     )
     sns.stripplot(
         data=data.loc[data.mouse_id.isin(wS1_mice)],
@@ -238,7 +231,7 @@ def panel_e_opto_timecourse(
         jitter=False,
         dodge=True,
         alpha=0.5,
-        size=4,
+        size=2,
     )
 
     ax.set_title('wS1')
@@ -301,7 +294,7 @@ def panel_e_opto_timecourse(
         order=inactivation_labels,
         color=stim_palette[2],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
     sns.pointplot(
@@ -311,7 +304,7 @@ def panel_e_opto_timecourse(
         order=inactivation_labels,
         color=stim_palette[0],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
     sns.pointplot(
@@ -321,7 +314,7 @@ def panel_e_opto_timecourse(
         order=inactivation_labels,
         color=reward_palette[1],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
 
@@ -446,10 +439,10 @@ def panel_f_opto_barplot(
     day_data['day_label'] = day_data['opto_day'].map(dict(zip(days_of_interest, day_labels)))
 
     # Set plotting theme
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     # Create figure
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=panel_size())
 
     # Bar plot
     sns.barplot(
@@ -476,6 +469,7 @@ def panel_f_opto_barplot(
         alpha=0.6,
         order=day_labels,
         hue_order=['wS1', 'fpS1'],
+        size=2,
     )
 
     # Formatting
@@ -500,7 +494,7 @@ def panel_f_opto_barplot(
         xpos = day_labels.index(label)
         ypos = 95
 
-        plt.text(xpos, ypos, format_p(p_value), ha='center', va='bottom', color='black', fontsize=8)
+        plt.text(xpos, ypos, format_p(p_value), ha='center', va='bottom', color='black')
 
     # Save figure and data
     os.makedirs(save_path, exist_ok=True)

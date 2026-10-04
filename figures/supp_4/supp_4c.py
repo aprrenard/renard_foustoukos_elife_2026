@@ -32,7 +32,7 @@ import seaborn as sns
 
 from fast_learning import paths, participation
 from fast_learning.stats import format_p, per_mouse_slope_test, significance_stars
-from fast_learning.plotting import save_figure
+from fast_learning.plotting import save_figure, set_style, panel_size
 
 
 DAYS = participation.DAYS
@@ -63,7 +63,7 @@ def panel_supp4c_proportion_across_days(
         <filename>_data.csv    -- per-mouse x day x LMI-category proportions
         <filename>_stats.csv   -- Kruskal-Wallis results per group
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     days_sorted = sorted(DAYS)
     lmi_categories = ['positive', 'negative']
@@ -117,7 +117,7 @@ def panel_supp4c_proportion_across_days(
                 f"  {rg} {cat} LMI: median slope={test['median_slope']:.4g}, p={test['p_value']:.4g}, n={test['n_mice']}"
             )
 
-    fig, axes = plt.subplots(1, 2, figsize=(9, 4), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=panel_size(2), sharey=True)
     plot_data_rows = []
 
     for i, rg in enumerate(reward_groups):
@@ -171,19 +171,24 @@ def panel_supp4c_proportion_across_days(
                 transform=ax.transAxes,
                 va='top',
                 ha='left',
-                fontsize=7,
                 color=cat_colors[cat],
             )
 
         n_pos = cell_counts.get((rg, 'positive'), 0)
         n_neg = cell_counts.get((rg, 'negative'), 0)
-        ax.set_title(f'{rg}  (LMI+: {n_pos} cells | LMI-: {n_neg} cells)', fontsize=9, fontweight='bold')
-        ax.set_xlabel('Day', fontsize=9)
-        ax.set_ylabel('Proportion of cells participating' if i == 0 else '', fontsize=9)
+        ax.set_title(f'{rg}  (LMI+: {n_pos} cells | LMI-: {n_neg} cells)', fontweight='bold')
+        ax.set_xlabel('Day')
+        ax.set_ylabel('Proportion of cells participating' if i == 0 else '')
         ax.set_ylim(0, None)
-        ax.tick_params(labelsize=8)
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, [f'{lab.capitalize()} LMI' for lab in labels], fontsize=8, loc='upper right')
+        ax.legend(
+            handles,
+            [f'{lab.capitalize()} LMI' for lab in labels],
+            loc='upper center',
+            bbox_to_anchor=(0.5, -0.25),
+            ncol=2,
+            frameon=False,
+        )
         sns.despine(ax=ax)
 
         plot_data_rows.append(grp)

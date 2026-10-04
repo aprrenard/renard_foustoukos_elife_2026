@@ -18,7 +18,7 @@ import seaborn as sns
 from scipy.stats import wilcoxon
 
 from fast_learning import paths
-from fast_learning.plotting import trial_type_rew_palette, save_figure
+from fast_learning.plotting import trial_type_rew_palette, save_figure, set_style, panel_size
 from fast_learning.stats import format_p
 
 
@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     def draw_stat_bracket(ax, x1, x2, y, p_value, h=3):
         ax.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=0.8, color='black')
-        ax.text((x1 + x2) / 2, y + h, format_p(p_value), ha='center', va='bottom', fontsize=8)
+        ax.text((x1 + x2) / 2, y + h, format_p(p_value), ha='center', va='bottom')
 
     def paired_wilcoxon(df, group_col, value_col, group1, group2):
         g1 = df[df[group_col] == group1].sort_values('mouse_id')[value_col].values
@@ -104,15 +104,9 @@ if __name__ == '__main__':
     # Figure
     # ============================================================================
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
-    fig, axes = plt.subplots(1, 3, figsize=(10, 5), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=panel_size(3, w=0.8), sharey=True)
 
     # Panel 1: whisker hit rate ON / OFF / ON
     ax = axes[0]

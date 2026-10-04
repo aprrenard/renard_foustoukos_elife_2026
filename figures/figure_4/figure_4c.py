@@ -22,7 +22,7 @@ import seaborn as sns
 
 from fast_learning import imaging
 from fast_learning import paths
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, panel_size
 
 
 # ============================================================================
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     # Figure
     # ============================================================================
 
-    fig, axes = plt.subplots(2, 2, figsize=(10, 6))
+    fig, axes = plt.subplots(2, 2, figsize=panel_size(2, 2))
 
     data_rew = bh_df.loc[bh_df['mouse_id'].isin(mice_rew)]
     data_nonrew = bh_df.loc[bh_df['mouse_id'].isin(mice_nonrew)]

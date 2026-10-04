@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from fast_learning import paths, participation
-from fast_learning.plotting import save_figure
+from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 from fast_learning.stats import format_p, lmm_slope, per_mouse_slope_test, significance_stars
 
 
@@ -64,17 +64,16 @@ def panel_i_participation_vs_lmi(merged_df, output_dir=OUTPUT_DIR, filename='fig
     Saves <filename>.pdf and <filename>_stats.csv (per reward group: slope,
     CI, p-value, intraclass correlation of the mouse term).
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     df = merged_df.dropna(subset=['lmi', 'learning_rate']).copy()
     if 'reliable_learning' in df.columns:
         df = df[df['reliable_learning']]
 
     reward_groups = ['R+', 'R-']
-    # Final figure colours, set here because the dots are rasterized and cannot be
-    # recoloured in Illustrator.
-    rg_colors = {'R+': '#00b400', 'R-': '#c800c8'}
-    fig, axes = plt.subplots(1, 2, figsize=(9, 4), sharey=True)
+    # Dots are rasterized (cannot be recoloured in Illustrator) and opaque.
+    rg_colors = {'R+': reward_palette[1], 'R-': reward_palette[0]}
+    fig, axes = plt.subplots(1, 2, figsize=panel_size(2), sharey=True)
     stats_rows = []
 
     for i, rg in enumerate(reward_groups):
@@ -83,20 +82,19 @@ def panel_i_participation_vs_lmi(merged_df, output_dir=OUTPUT_DIR, filename='fig
         x = grp['lmi'].values
         n_mice = grp['mouse_id'].nunique()
 
-        ax.scatter(x, grp['learning_rate'].values, color=rg_colors[rg], s=4, linewidths=0, rasterized=True)
+        ax.scatter(x, grp['learning_rate'].values, color=rg_colors[rg], s=2, linewidths=0, rasterized=True)
 
         if len(grp) >= 3 and n_mice >= 2:
             fit = lmm_slope(grp, 'learning_rate', 'lmi')
             x_line = np.linspace(x.min(), x.max(), 200)
-            ax.plot(x_line, fit['slope'] * x_line + fit['intercept'], color='black', linewidth=1.2, zorder=5)
+            ax.plot(x_line, fit['slope'] * x_line + fit['intercept'], color='black', linewidth=1, zorder=5)
             ax.text(
                 0.05,
                 0.95,
-                f"LMM slope = {fit['slope']:.3f} [{fit['ci_low']:.3f}, {fit['ci_high']:.3f}]\n{format_p(fit['p_value'])}",
+                f"LMM slope = {fit['slope']:.3f}\n[{fit['ci_low']:.3f}, {fit['ci_high']:.3f}]\n{format_p(fit['p_value'])}",
                 transform=ax.transAxes,
                 va='top',
                 ha='left',
-                fontsize=8,
             )
             stats_rows.append(
                 {
@@ -117,10 +115,9 @@ def panel_i_participation_vs_lmi(merged_df, output_dir=OUTPUT_DIR, filename='fig
             print(f"  LMM {rg}: slope={fit['slope']:.4g}, p={fit['p_value']:.4g}, ICC={fit['icc_mouse']:.3f}")
 
         ax.axvline(x=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
-        ax.set_title(f'{rg}  (n = {len(grp)} cells, {n_mice} mice)', fontsize=10, fontweight='bold')
-        ax.set_xlabel('LMI', fontsize=9)
-        ax.set_ylabel('Participation rate (day 0)' if i == 0 else '', fontsize=9)
-        ax.tick_params(labelsize=8)
+        ax.set_title(f'{rg}\n{len(grp)} cells, {n_mice} mice', fontweight='bold')
+        ax.set_xlabel('LMI')
+        ax.set_ylabel('Participation rate (day 0)' if i == 0 else '')
         sns.despine(ax=ax)
 
     plt.tight_layout()
@@ -146,7 +143,7 @@ def panel_j_participation_across_days(merged_df, per_day_df, output_dir=OUTPUT_D
     Saves <filename>.pdf, <filename>_data.csv (per mouse x day x LMI
     category averages) and <filename>_stats.csv.
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     days_sorted = sorted(DAYS)
     lmi_categories = ['positive', 'negative']
@@ -201,7 +198,7 @@ def panel_j_participation_across_days(merged_df, per_day_df, output_dir=OUTPUT_D
                 f"  {rg} {cat} LMI: median slope={test['median_slope']:.4g}, p={test['p_value']:.4g}, n={test['n_mice']}"
             )
 
-    fig, axes = plt.subplots(1, 2, figsize=(9, 4), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=panel_size(2), sharey=True)
     for i, rg in enumerate(reward_groups):
         ax = axes[i]
         grp = mouse_day_avg[mouse_day_avg['reward_group'] == rg]
@@ -239,19 +236,24 @@ def panel_j_participation_across_days(merged_df, per_day_df, output_dir=OUTPUT_D
                 transform=ax.transAxes,
                 va='top',
                 ha='left',
-                fontsize=7,
                 color=cat_colors[cat],
             )
 
         n_pos = cell_counts.get((rg, 'positive'), 0)
         n_neg = cell_counts.get((rg, 'negative'), 0)
-        ax.set_title(f'{rg}  (LMI+: {n_pos} cells | LMI−: {n_neg} cells)', fontsize=9, fontweight='bold')
-        ax.set_xlabel('Day', fontsize=9)
-        ax.set_ylabel('Participation rate' if i == 0 else '', fontsize=9)
+        ax.set_title(f'{rg}\nLMI+: {n_pos} cells, LMI−: {n_neg} cells', fontweight='bold')
+        ax.set_xlabel('Day')
+        ax.set_ylabel('Participation rate' if i == 0 else '')
         ax.set_ylim(0, 0.4)
-        ax.tick_params(labelsize=8)
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, [cat_labels[lab] for lab in labels], fontsize=8, loc='upper right')
+        ax.legend(
+            handles,
+            [cat_labels[lab] for lab in labels],
+            loc='upper center',
+            bbox_to_anchor=(0.5, -0.25),
+            ncol=2,
+            frameon=False,
+        )
         sns.despine(ax=ax)
 
     plt.tight_layout()

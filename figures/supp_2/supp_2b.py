@@ -20,7 +20,7 @@ import seaborn as sns
 
 from fast_learning import paths
 from fast_learning import imaging
-from fast_learning.plotting import save_figure
+from fast_learning.plotting import save_figure, panel_size
 
 
 # ============================================================================
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
     folder = paths.tensor_dir
 
-    fig, axes = plt.subplots(len(cells), len(DAYS), figsize=(15, 9))
+    fig, axes = plt.subplots(len(cells), len(DAYS), figsize=panel_size(len(DAYS), len(cells), w=0.7, h=0.7))
 
     for i, (cell, label) in enumerate(cells):
         mouse_id = cell['mouse_id']
@@ -103,7 +103,7 @@ if __name__ == '__main__':
                 )
 
             mean_trace = day_data.mean(dim='trial').squeeze().values * 100
-            ax.plot(time, mean_trace, color='k', linewidth=1.5)
+            ax.plot(time, mean_trace, color='k', linewidth=1)
             ax.axvline(0, color='#FF9600', linestyle='-', linewidth=1)
             ax.set_ylim(y_min, y_max)
             ax.set_xlabel('Time (s)')
@@ -112,7 +112,7 @@ if __name__ == '__main__':
                 ax.set_title(f'Day {day:+d}')
 
         row_label = f'{label}\n{mouse_id} ROI {roi}\nLMI = {cell["lmi"]:.2f}  p = {cell["lmi_p"]:.3f}'
-        axes[i, 0].set_ylabel(row_label, fontsize=8)
+        axes[i, 0].set_ylabel(row_label)
 
     plt.tight_layout()
     sns.despine()

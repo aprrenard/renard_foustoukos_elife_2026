@@ -15,7 +15,7 @@ import pandas as pd
 import seaborn as sns
 
 from fast_learning import paths
-from fast_learning.plotting import behavior_palette, save_figure
+from fast_learning.plotting import behavior_palette, save_figure, set_style, panel_size
 
 
 # ============================================================================
@@ -108,15 +108,9 @@ if __name__ == '__main__':
     # Figure
     # ============================================================================
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
-    fig, ax = plt.subplots(figsize=(4, 4))
+    fig, ax = plt.subplots(figsize=panel_size())
 
     for rg in ['R+', 'R-']:
         df_rg = df_interp[df_interp['reward_group'] == rg]

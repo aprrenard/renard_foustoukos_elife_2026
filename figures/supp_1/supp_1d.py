@@ -16,7 +16,7 @@ from scipy.stats import mannwhitneyu
 from statsmodels.stats.multitest import multipletests
 
 from fast_learning import paths
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 
 
 # ============================================================================
@@ -61,18 +61,12 @@ if __name__ == '__main__':
     # Figure
     # ============================================================================
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
     cmap = matplotlib.colors.LinearSegmentedColormap.from_list('pval_cmap', ['black', 'white'])
     norm = matplotlib.colors.Normalize(vmin=0, vmax=0.05)
 
-    fig, ax = plt.subplots(figsize=(7, 4))
+    fig, ax = plt.subplots(figsize=panel_size(w=1.3))
 
     sns.lineplot(
         data=df,

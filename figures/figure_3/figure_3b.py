@@ -13,7 +13,7 @@ from matplotlib.gridspec import GridSpec
 
 from fast_learning import paths
 from fast_learning import imaging
-from fast_learning.plotting import save_figure
+from fast_learning.plotting import save_figure, panel_size
 
 
 # #############################################################################
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     session_vmin = 0
 
     # Create figure
-    fig = plt.figure(figsize=(7.5, 4))
+    fig = plt.figure(figsize=panel_size(5, w=0.7, h=1.2))
     gs = GridSpec(1, 6, width_ratios=[1, 1, 1, 1, 1, 0.08], wspace=0.08)
 
     axes = [fig.add_subplot(gs[0, i]) for i in range(5)]
@@ -119,26 +119,25 @@ if __name__ == '__main__':
         )
 
         # Add stimulus onset line
-        ax.axvline(0, color='#FF9600', linestyle='-', linewidth=1.2)
+        ax.axvline(0, color='#FF9600', linestyle='-', linewidth=1)
 
         # Title
-        ax.set_title(days_str[i], fontsize=10)
+        ax.set_title(days_str[i])
 
         # X-axis
         if i == 2:
-            ax.set_xlabel('Time (s)', fontsize=9)
+            ax.set_xlabel('Time (s)')
         ax.set_xticks([-0.5, 0, 0.5, 1, 1.5])
-        ax.tick_params(axis='x', labelsize=8)
+        ax.tick_params(axis='x')
 
         # Y-axis
         if i == 0:
-            ax.set_ylabel('Cells (by LMI)', fontsize=9)
+            ax.set_ylabel('Cells (by LMI)')
         ax.set_yticks([])
 
     # Add colorbar
     cbar = fig.colorbar(im, cax=cbar_ax)
-    cbar.set_label('DF/F0 (%)', fontsize=9)
-    cbar.ax.tick_params(labelsize=8)
+    cbar.set_label('DF/F0 (%)')
 
     plt.tight_layout()
 

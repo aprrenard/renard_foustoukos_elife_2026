@@ -14,7 +14,7 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 
 
 # ============================================================================
@@ -58,15 +58,9 @@ if __name__ == '__main__':
     # Figure
     # ============================================================================
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
-    fig, ax = plt.subplots(figsize=(4, 6))
+    fig, ax = plt.subplots(figsize=panel_size(w=0.7))
     sns.barplot(
         data=fh,
         x='reward_group',
@@ -86,6 +80,7 @@ if __name__ == '__main__':
         dodge=True,
         alpha=0.4,
         ax=ax,
+        size=2,
     )
     ax.set_ylabel('First hit trial')
     ax.set_xlabel('')

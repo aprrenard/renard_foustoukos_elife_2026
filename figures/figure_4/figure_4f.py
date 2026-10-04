@@ -21,7 +21,7 @@ import matplotlib.gridspec as gridspec
 from matplotlib.ticker import AutoLocator
 
 from fast_learning import paths, participation, reactivations
-from fast_learning.plotting import save_figure
+from fast_learning.plotting import save_figure, panel_size
 
 
 # ============================================================================
@@ -145,7 +145,7 @@ def panel_f_reactivation_heatmap(
     vmax_tmpl = max(float(np.nanmax(template_sorted)), 1e-6)
 
     # Build figure
-    fig = plt.figure(figsize=(11, 6))
+    fig = plt.figure(figsize=panel_size(3, 2))
     gs = gridspec.GridSpec(
         3,
         5,
@@ -187,9 +187,9 @@ def panel_f_reactivation_heatmap(
         origin='upper',
         extent=[0, n_frames / sampling_rate, n_cells - 0.5, -0.5],
     )
-    ax_heatmap.set_xlabel('Time (s)', fontsize=9)
+    ax_heatmap.set_xlabel('Time (s)')
     ax_heatmap.set_yticks([])
-    ax_heatmap.tick_params(axis='x', labelsize=7)
+    ax_heatmap.tick_params(axis='x')
     ax_heatmap.spines['top'].set_visible(False)
     ax_heatmap.spines['right'].set_visible(False)
     ax_heatmap.spines['left'].set_visible(False)
@@ -211,7 +211,6 @@ def panel_f_reactivation_heatmap(
     ax_events.spines['left'].set_visible(False)
     ax_events.set_title(
         f'{mouse} ({reward_group})  |  Day {day}  |  {len(events)} reactivations',
-        fontsize=10,
         fontweight='bold',
         pad=4,
     )
@@ -226,7 +225,7 @@ def panel_f_reactivation_heatmap(
         )
         ax.set_xticks([])
         ax.set_yticks([])
-        ax.set_xlabel(xlabel, fontsize=8)
+        ax.set_xlabel(xlabel)
         for sp in ax.spines.values():
             sp.set_visible(False)
         return im
@@ -243,8 +242,7 @@ def panel_f_reactivation_heatmap(
     cb_act.ax.set_ylim(act_data_min, act_data_max)
     cb_act.set_ticks([act_data_min, 0, act_data_max])
     cb_act.set_ticklabels([f'{act_data_min:.2f}', '0', f'{act_data_max:.2f}'])
-    ax_cbar.set_ylabel('dF/F', fontsize=8)
-    ax_cbar.tick_params(labelsize=7)
+    ax_cbar.set_ylabel('dF/F')
 
     for im, cax, label, dmin, dmax in [
         (im_lmi, ax_cbar_lmi, 'LMI', -1, 1),
@@ -255,8 +253,7 @@ def panel_f_reactivation_heatmap(
         cb.ax.set_xlim(dmin, dmax)
         cb.set_ticks([dmin, dmax])
         cb.set_ticklabels([f'{dmin:.2f}', f'{dmax:.2f}'])
-        cb.set_label(label, fontsize=7)
-        cb.ax.tick_params(labelsize=6)
+        cb.set_label(label)
 
     os.makedirs(output_dir, exist_ok=True)
     save_figure(plt.gcf(), os.path.join(output_dir, f'{filename}.{save_format}'))

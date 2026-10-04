@@ -22,7 +22,7 @@ import seaborn as sns
 
 from fast_learning import imaging
 from fast_learning import paths, database
-from fast_learning.plotting import s2_m1_palette, save_figure
+from fast_learning.plotting import s2_m1_palette, save_figure, set_style, panel_size
 from fast_learning.stats import format_p, ks_permutation_test, significance_stars
 
 
@@ -84,12 +84,12 @@ def plot_cdf_panel(ax, data, value_col, reward_group, positive_only, ks_df, xlab
         if len(values) > 0:
             sv = np.sort(values)
             cdf = np.arange(1, len(sv) + 1) / len(sv)
-            ax.plot(sv, cdf, label=ct, color=CELL_TYPE_COLORS[ct], linewidth=2, alpha=0.8)
+            ax.plot(sv, cdf, label=ct, color=CELL_TYPE_COLORS[ct], linewidth=1, alpha=0.8)
 
-    ax.set_xlabel(xlabel, fontsize=11)
-    ax.set_ylabel('Cumulative probability', fontsize=11)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel('Cumulative probability')
     sign_label = 'Positive' if positive_only else 'Negative (abs)'
-    ax.set_title(f'{reward_group} — {sign_label}', fontsize=11, fontweight='bold')
+    ax.set_title(f'{reward_group} — {sign_label}', fontweight='bold')
     ax.legend(frameon=False)
     ax.set_xlim(left=0, right=0.8)
     ax.set_ylim(0, 1)
@@ -104,7 +104,6 @@ def plot_cdf_panel(ax, data, value_col, reward_group, positive_only, ks_df, xlab
             f'KS {format_p(pval)}',
             ha='right',
             va='bottom',
-            fontsize=9,
             transform=ax.transAxes,
             bbox=dict(boxstyle='round', facecolor='white', alpha=0.8),
         )
@@ -171,15 +170,9 @@ if __name__ == '__main__':
     # Figure k: CDF of LMI
     # ============================================================================
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
-    fig_k = plt.figure(figsize=(6, 6))
+    fig_k = plt.figure(figsize=panel_size(2, 2))
     gs_k = fig_k.add_gridspec(2, 2, hspace=0.4, wspace=0.4)
 
     for row_idx, rg in enumerate(['R+', 'R-']):
@@ -210,7 +203,7 @@ if __name__ == '__main__':
     # Figure l: CDF of classifier weights
     # ============================================================================
 
-    fig_l = plt.figure(figsize=(6, 6))
+    fig_l = plt.figure(figsize=panel_size(2, 2))
     gs_l = fig_l.add_gridspec(2, 2, hspace=0.4, wspace=0.4)
 
     for row_idx, rg in enumerate(['R+', 'R-']):

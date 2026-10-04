@@ -17,7 +17,13 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths
-from fast_learning.plotting import trial_type_rew_palette, trial_type_nonrew_palette, save_figure
+from fast_learning.plotting import (
+    trial_type_rew_palette,
+    trial_type_nonrew_palette,
+    save_figure,
+    set_style,
+    panel_size,
+)
 from fast_learning.stats import significance_stars as _stars
 from fast_learning.stats import format_p
 
@@ -110,15 +116,9 @@ if __name__ == '__main__':
             )
     stats_g_df = pd.DataFrame(stats_g_rows)
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
-    fig_g, axes_g = plt.subplots(1, 3, figsize=(14, 4), sharey=True)
+    fig_g, axes_g = plt.subplots(1, 3, figsize=panel_size(3), sharey=True)
 
     for ax, (stim_col, outcome_col, trial_col, stim_label, rpi, rmi) in zip(axes_g, STIM_DEFS):
         color_rp = trial_type_rew_palette[rpi]
@@ -152,7 +152,7 @@ if __name__ == '__main__':
             rg = mouse_data['reward_group'].iloc[0]
             xs = [day_positions[d] + group_offsets[rg] for d in mouse_data['day']]
             ax.scatter(
-                xs, mouse_data['reaction_time'].values, color='grey', s=8, alpha=0.5, zorder=5, linewidths=0
+                xs, mouse_data['reaction_time'].values, color='grey', s=2, alpha=0.5, zorder=5, linewidths=0
             )
 
         # p-value above each day
@@ -160,9 +160,7 @@ if __name__ == '__main__':
         for i, day in enumerate(DAYS):
             row = stats_g_df[(stats_g_df['stim_type'] == stim_label) & (stats_g_df['day'] == day)]
             if not row.empty:
-                ax.text(
-                    i, y_max * 1.05, format_p(row.iloc[0]['p_value']), ha='center', va='bottom', fontsize=8
-                )
+                ax.text(i, y_max * 1.05, format_p(row.iloc[0]['p_value']), ha='center', va='bottom')
 
         ax.set_title(stim_label)
         ax.set_xlabel('Day')
@@ -176,7 +174,7 @@ if __name__ == '__main__':
     # Panel h: mean RT across trials within Day 0
     # ============================================================================
 
-    fig_h, axes_h = plt.subplots(1, 3, figsize=(14, 4), sharey=True)
+    fig_h, axes_h = plt.subplots(1, 3, figsize=panel_size(3), sharey=True)
 
     rt_day0_rows = []
     for ax, (stim_col, outcome_col, trial_col, stim_label, rpi, rmi) in zip(axes_h, STIM_DEFS):

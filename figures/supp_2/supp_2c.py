@@ -20,7 +20,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.utils import resample
 
 from fast_learning import paths
-from fast_learning.plotting import save_figure
+from fast_learning.plotting import save_figure, set_style, panel_size
 from fast_learning.stats import format_p, per_mouse_slope_test
 
 
@@ -91,21 +91,15 @@ if __name__ == '__main__':
     # Figure
     # ============================================================================
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
-    fig, ax = plt.subplots(figsize=(4, 4))
+    fig, ax = plt.subplots(figsize=panel_size())
 
     for mouse in merged['mouse_id'].unique():
         sub = merged[merged['mouse_id'] == mouse]
-        ax.scatter(sub['lmi'], sub['classifier_weight'], alpha=0.3, s=8, linewidths=0)
+        ax.scatter(sub['lmi'], sub['classifier_weight'], alpha=0.3, s=2, linewidths=0)
 
-    ax.plot(x_vals, y_pred, color='#2d2d2d', linewidth=2)
+    ax.plot(x_vals, y_pred, color='#2d2d2d', linewidth=1)
     ax.fill_between(x_vals, ci_low, ci_high, color='black', alpha=0.2, label='95% CI')
 
     ax.text(
@@ -115,7 +109,6 @@ if __name__ == '__main__':
         transform=ax.transAxes,
         va='top',
         ha='left',
-        fontsize=9,
     )
 
     ax.set_xlabel('Learning Modulation Index (LMI)')

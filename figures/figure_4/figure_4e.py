@@ -20,7 +20,7 @@ from sklearn.preprocessing import StandardScaler
 
 from fast_learning import imaging
 from fast_learning import paths, database
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, panel_size
 from fast_learning.stats import format_p
 
 
@@ -230,14 +230,14 @@ if __name__ == '__main__':
     # Figure
     # ============================================================================
 
-    fig, ax = plt.subplots(1, 1, figsize=(4, 5))
+    fig, ax = plt.subplots(1, 1, figsize=panel_size(w=0.7))
 
     sns.swarmplot(
         data=df_corr,
         x='reward_group',
         y='correlation',
         palette=reward_palette[::-1],
-        size=8,
+        size=3,
         alpha=0.6,
         ax=ax,
     )
@@ -247,7 +247,7 @@ if __name__ == '__main__':
         y='correlation',
         palette=reward_palette[::-1],
         errorbar='ci',
-        markersize=10,
+        markersize=4,
         join=False,
         ax=ax,
         seed=0,
@@ -259,7 +259,7 @@ if __name__ == '__main__':
         if group in pop_stats:
             p = pop_stats[group]
             y_pos = ax.get_ylim()[1] - 0.1 * (ax.get_ylim()[1] - ax.get_ylim()[0])
-            ax.text(i, y_pos, format_p(p), ha='center', va='top', fontsize=9, fontweight='bold')
+            ax.text(i, y_pos, format_p(p), ha='center', va='top', fontweight='bold')
 
     ax.set_ylim(-1, 1)
     ax.set_xlabel('Reward group')

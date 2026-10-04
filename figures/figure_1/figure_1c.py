@@ -14,7 +14,7 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths
-from fast_learning.plotting import behavior_palette, save_figure
+from fast_learning.plotting import behavior_palette, save_figure, set_style, panel_size
 from fast_learning.stats import format_p
 
 
@@ -67,23 +67,10 @@ def panel_c_left_performance_across_days(
     table_agg['day'] = table_agg['day'].astype(str)
 
     # Set plotting theme
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        palette='deep',
-        font='sans-serif',
-        font_scale=1,
-        rc={
-            'xtick.major.width': 1,
-            'ytick.major.width': 1,
-            'pdf.fonttype': 42,
-            'ps.fonttype': 42,
-            'svg.fonttype': 'none',
-        },
-    )
+    set_style()
 
     # Create figure
-    fig = plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=panel_size(w=1.3))
     ax = plt.gca()
 
     # Plot individual mouse traces (thin lines)
@@ -148,7 +135,7 @@ def panel_c_left_performance_across_days(
         alpha=1,
         legend=True,
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
     sns.pointplot(
@@ -162,7 +149,7 @@ def panel_c_left_performance_across_days(
         alpha=1,
         legend=True,
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
     sns.pointplot(
@@ -176,7 +163,7 @@ def panel_c_left_performance_across_days(
         alpha=1,
         legend=True,
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
 
@@ -257,17 +244,10 @@ def panel_c_right_performance_barplot(
     avg_performance = day_data.groupby(['day', 'mouse_id', 'reward_group'])['outcome_w'].mean().reset_index()
 
     # Set plotting theme
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        palette='deep',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
     # Create figure
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=panel_size(w=1.3))
 
     # Bar plot
     sns.barplot(
@@ -290,6 +270,7 @@ def panel_c_right_performance_barplot(
         dodge=True,
         color='grey',
         alpha=0.6,
+        size=2,
     )
 
     # Formatting
@@ -314,7 +295,7 @@ def panel_c_right_performance_barplot(
         xpos = days_of_interest.index(day)
         ypos = 95
 
-        plt.text(xpos, ypos, format_p(p_value), ha='center', va='bottom', color='black', fontsize=8)
+        plt.text(xpos, ypos, format_p(p_value), ha='center', va='bottom', color='black')
 
     # Save figure and data
     os.makedirs(save_path, exist_ok=True)

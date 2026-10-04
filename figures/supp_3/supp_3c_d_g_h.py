@@ -22,7 +22,7 @@ from scipy.stats import wilcoxon
 
 from fast_learning import imaging
 from fast_learning import paths, database
-from fast_learning.plotting import save_figure
+from fast_learning.plotting import save_figure, panel_size, reward_palette
 
 
 # ============================================================================
@@ -39,10 +39,10 @@ if __name__ == '__main__':
 
     # Colours: pre=grey, post per reward group
     COLORS = {
-        'R+': {'pre': '#a3a3a3', 'post': '#1b9e77'},
-        'R-': {'pre': '#a3a3a3', 'post': '#c959affe'},
+        'R+': {'pre': '#a3a3a3', 'post': reward_palette[1]},
+        'R-': {'pre': '#a3a3a3', 'post': reward_palette[0]},
     }
-    BAR_COLORS = {'R+': '#1b9e77', 'R-': '#c959affe'}
+    BAR_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
 
     OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
     # ============================================================================
 
     def plot_cell_type(cell_type, fig_tag):
-        fig, axes = plt.subplots(2, 2, figsize=(6, 5), sharex=False, sharey=False)
+        fig, axes = plt.subplots(2, 2, figsize=panel_size(2, 2), sharex=False, sharey=False)
 
         for row, rg in enumerate(['R+', 'R-']):
             pal = [COLORS[rg]['pre'], COLORS[rg]['post']]
@@ -183,7 +183,7 @@ if __name__ == '__main__':
                 order=['pre', 'post'],
                 color='black',
                 alpha=0.5,
-                size=4,
+                size=2,
                 ax=ax_bar,
             )
             ax_bar.set_ylim(-2, 15)

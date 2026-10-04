@@ -18,7 +18,7 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths, database
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 from fast_learning.stats import format_p, ks_permutation_test
 
 
@@ -92,15 +92,9 @@ if __name__ == '__main__':
     # Figure f: LMI distribution
     # ============================================================================
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
-    fig_f, ax_f = plt.subplots(1, 1, figsize=(4, 4))
+    fig_f, ax_f = plt.subplots(1, 1, figsize=panel_size())
 
     bin_edges = np.linspace(-1, 1, 31)
     for rg, color in zip(['R-', 'R+'], reward_palette):
@@ -115,7 +109,7 @@ if __name__ == '__main__':
             ax=ax_f,
         )
 
-    ax_f.text(0.98, 0.98, f'KS {format_p(ks_p)}', ha='right', va='top', fontsize=8, transform=ax_f.transAxes)
+    ax_f.text(0.98, 0.98, f'KS {format_p(ks_p)}', ha='right', va='top', transform=ax_f.transAxes)
     ax_f.set_xlim(-1, 1)
     ax_f.set_xlabel('LMI')
     ax_f.set_ylabel('Probability')
@@ -127,7 +121,7 @@ if __name__ == '__main__':
     # Figure g: proportion bar plots
     # ============================================================================
 
-    fig_g, axes_g = plt.subplots(1, 2, figsize=(5, 4), sharey=True)
+    fig_g, axes_g = plt.subplots(1, 2, figsize=panel_size(2, w=0.7), sharey=True)
 
     for ax, sign, title in [
         (axes_g[0], 'lmi_pos', 'Positive LMI'),
@@ -146,7 +140,7 @@ if __name__ == '__main__':
             seed=0,
         )
         sns.swarmplot(
-            data=lmi_prop, x='reward_group', order=['R+', 'R-'], y=sign, color='k', size=4, alpha=0.7, ax=ax
+            data=lmi_prop, x='reward_group', order=['R+', 'R-'], y=sign, color='k', size=2, alpha=0.7, ax=ax
         )
         ax.set_title(title)
         ax.set_xlabel('')
@@ -160,7 +154,6 @@ if __name__ == '__main__':
                 xycoords='axes fraction',
                 ha='center',
                 va='top',
-                fontsize=8,
                 color='black',
             )
 

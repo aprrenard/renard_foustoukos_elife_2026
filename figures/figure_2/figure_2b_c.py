@@ -14,7 +14,7 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths, database
-from fast_learning.plotting import stim_palette, reward_palette, save_figure
+from fast_learning.plotting import stim_palette, reward_palette, save_figure, set_style, panel_size
 from fast_learning.stats import format_p
 
 
@@ -127,17 +127,10 @@ def panel_b_muscimol_timecourse(
     data['outcome_w'] = data['outcome_w'] * 100
 
     # Set plotting theme
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        palette='deep',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
     # Create figure with two subplots
-    fig, axes = plt.subplots(1, 2, sharey=True, figsize=(12, 5))
+    fig, axes = plt.subplots(1, 2, sharey=True, figsize=panel_size(2))
 
     # ========================================================================
     # Left panel: wS1 inactivation
@@ -197,7 +190,7 @@ def panel_b_muscimol_timecourse(
         order=inactivation_labels,
         color=stim_palette[2],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
     sns.pointplot(
@@ -207,7 +200,7 @@ def panel_b_muscimol_timecourse(
         order=inactivation_labels,
         color=stim_palette[0],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
     sns.pointplot(
@@ -217,7 +210,7 @@ def panel_b_muscimol_timecourse(
         order=inactivation_labels,
         color=reward_palette[1],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
 
@@ -281,7 +274,7 @@ def panel_b_muscimol_timecourse(
         order=inactivation_labels,
         color=stim_palette[2],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
     sns.pointplot(
@@ -291,7 +284,7 @@ def panel_b_muscimol_timecourse(
         order=inactivation_labels,
         color=stim_palette[0],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
     sns.pointplot(
@@ -301,7 +294,7 @@ def panel_b_muscimol_timecourse(
         order=inactivation_labels,
         color=reward_palette[1],
         ax=ax,
-        linewidth=2,
+        linewidth=1,
         seed=0,
     )
 
@@ -444,10 +437,10 @@ def panel_c_muscimol_barplot(
     day_data['day_label'] = day_data['pharma_day'].map(dict(zip(days_of_interest, day_labels)))
 
     # Set plotting theme
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     # Create figure
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=panel_size())
 
     # Bar plot
     sns.barplot(
@@ -463,7 +456,14 @@ def panel_c_muscimol_barplot(
 
     # Swarm plot for individual mice
     sns.swarmplot(
-        data=day_data, x='day_label', y='outcome_w', hue='area', dodge=True, color=stim_palette[2], alpha=0.6
+        data=day_data,
+        x='day_label',
+        y='outcome_w',
+        hue='area',
+        dodge=True,
+        color=stim_palette[2],
+        alpha=0.6,
+        size=2,
     )
 
     # Formatting
@@ -488,7 +488,7 @@ def panel_c_muscimol_barplot(
         xpos = day_labels.index(label)
         ypos = 95
 
-        plt.text(xpos, ypos, format_p(p_value), ha='center', va='bottom', color='black', fontsize=8)
+        plt.text(xpos, ypos, format_p(p_value), ha='center', va='bottom', color='black')
 
     # Save figure and data
     os.makedirs(save_path, exist_ok=True)

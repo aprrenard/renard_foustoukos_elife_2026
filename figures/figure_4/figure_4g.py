@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from fast_learning import paths
-from fast_learning.plotting import save_figure
+from fast_learning.plotting import save_figure, panel_size
 
 
 # ============================================================================
@@ -71,7 +71,7 @@ def panel_g_correlation_traces(
         raise ValueError(f"No correlation data found for {mouse}")
     ylim = (np.min(all_correlations), np.max(all_correlations))
 
-    fig, axes = plt.subplots(len(days), 1, figsize=(12, 6.0), sharex=False)
+    fig, axes = plt.subplots(len(days), 1, figsize=panel_size(3, len(days), h=0.4), sharex=False)
 
     for i, day in enumerate(days):
         ax = axes[i]
@@ -84,10 +84,9 @@ def panel_g_correlation_traces(
                 ha='center',
                 va='center',
                 transform=ax.transAxes,
-                fontsize=10,
                 color='gray',
             )
-            ax.set_ylabel(f'Day {day}', fontsize=9, fontweight='bold')
+            ax.set_ylabel(f'Day {day}', fontweight='bold')
             ax.set_ylim(ylim)
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
@@ -166,20 +165,19 @@ def panel_g_correlation_traces(
         ax.set_ylim(ylim)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
-        ax.set_ylabel(f'Day {day}', fontsize=9, fontweight='bold')
+        ax.set_ylabel(f'Day {day}', fontweight='bold')
         ax.text(
             0.98,
             0.98,
             f'n={total_events}',
             transform=ax.transAxes,
-            fontsize=7,
             ha='right',
             va='top',
             bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='gray', alpha=0.8),
         )
-        ax.tick_params(axis='both', labelsize=7)
+        ax.tick_params(axis='both')
         if i == len(days) - 1:
-            ax.set_xlabel('Time (s)', fontsize=9)
+            ax.set_xlabel('Time (s)')
 
     plt.tight_layout()
 

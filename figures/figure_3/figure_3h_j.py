@@ -21,7 +21,7 @@ from scipy.stats import mannwhitneyu
 
 from fast_learning import imaging
 from fast_learning import paths, database
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 from fast_learning.similarity import (
     WIN,
     DAYS,
@@ -179,7 +179,7 @@ def panel_h_correlation_matrices(
             projection_type=projection_type,
         )
 
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     avg_corr_rew = np.nanmean(corr_matrices_rew, axis=0)
     avg_corr_nonrew = np.nanmean(corr_matrices_nonrew, axis=0)
@@ -187,7 +187,7 @@ def panel_h_correlation_matrices(
     vmax = np.nanpercentile(avg_corr_rew, 99)
     vmin = 0
 
-    fig = plt.figure(figsize=(16, 6))
+    fig = plt.figure(figsize=panel_size(2, h=1.1))
     gs = fig.add_gridspec(1, 3, width_ratios=[1, 1, 0.05], wspace=0.25)
     ax0 = fig.add_subplot(gs[0, 0])
     ax1 = fig.add_subplot(gs[0, 1])
@@ -198,8 +198,8 @@ def panel_h_correlation_matrices(
     # R+ group
     ax0.imshow(avg_corr_rew, cmap='viridis', vmax=vmax, vmin=vmin, aspect='auto')
     for edge in edges[:-1] - 0.5:
-        ax0.axvline(x=edge, color='white', linestyle='-', linewidth=1.5)
-        ax0.axhline(y=edge, color='white', linestyle='-', linewidth=1.5)
+        ax0.axvline(x=edge, color='white', linestyle='-', linewidth=1)
+        ax0.axhline(y=edge, color='white', linestyle='-', linewidth=1)
     ax0.set_xticks(edges - N_MAP_TRIALS / 2)
     ax0.set_xticklabels(DAYS)
     ax0.set_yticks(edges - N_MAP_TRIALS / 2)
@@ -211,8 +211,8 @@ def panel_h_correlation_matrices(
     # R- group
     im1 = ax1.imshow(avg_corr_nonrew, cmap='viridis', vmax=vmax, vmin=vmin, aspect='auto')
     for edge in edges[:-1] - 0.5:
-        ax1.axvline(x=edge, color='white', linestyle='-', linewidth=1.5)
-        ax1.axhline(y=edge, color='white', linestyle='-', linewidth=1.5)
+        ax1.axvline(x=edge, color='white', linestyle='-', linewidth=1)
+        ax1.axhline(y=edge, color='white', linestyle='-', linewidth=1)
     ax1.set_xticks(edges - N_MAP_TRIALS / 2)
     ax1.set_xticklabels(DAYS)
     ax1.set_yticks(edges - N_MAP_TRIALS / 2)
@@ -298,7 +298,7 @@ def panel_i_within_day_correlations(
             projection_type=projection_type,
         )
 
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     metrics_rew = compute_within_day_metrics(corr_matrices_rew, mice_rew, 'R+')
     metrics_nonrew = compute_within_day_metrics(corr_matrices_nonrew, mice_nonrew, 'R-')
@@ -334,7 +334,7 @@ def panel_i_within_day_correlations(
             }
         )
 
-    fig, ax = plt.subplots(1, 1, figsize=(6, 5))
+    fig, ax = plt.subplots(1, 1, figsize=panel_size())
 
     sns.pointplot(
         data=long_df,
@@ -346,8 +346,8 @@ def panel_i_within_day_correlations(
         errorbar='ci',
         markers='o',
         linestyles='-',
-        markersize=8,
-        linewidth=2,
+        markersize=4,
+        linewidth=1,
         seed=0,
     )
 
@@ -372,7 +372,6 @@ def panel_i_within_day_correlations(
             format_p(stats_dict[day]),
             ha='center',
             va='bottom',
-            fontsize=9,
         )
 
     ax.set_ylim(0, ylim_top)
@@ -432,7 +431,7 @@ def panel_j_reorganization_index(
             projection_type=projection_type,
         )
 
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     metrics_rew = compute_reorganization_metrics(corr_matrices_rew, mice_rew, 'R+')
     metrics_nonrew = compute_reorganization_metrics(corr_matrices_nonrew, mice_nonrew, 'R-')
@@ -457,7 +456,7 @@ def panel_j_reorganization_index(
     long_df = metrics_combined[['mouse_id', 'reward_group', 'reorganization_index']].copy()
     long_df['metric'] = 'reorganization_index'
 
-    fig, ax = plt.subplots(1, 1, figsize=(4, 5))
+    fig, ax = plt.subplots(1, 1, figsize=panel_size(w=0.7))
 
     sns.barplot(
         data=long_df,
@@ -476,14 +475,14 @@ def panel_j_reorganization_index(
         hue='reward_group',
         dodge=True,
         ax=ax,
-        size=4,
+        size=2,
         color='grey',
         legend=False,
     )
 
     ylim_top = 0.3 if similarity_metric in ('pearson', 'cosine') else 0.15
     p_text = 'p<0.001' if p < 0.001 else f'p={p:.3f}' if p < 0.01 else f'p={p:.2f}'
-    ax.text(0, ylim_top * 0.95, p_text, ha='center', va='bottom', fontsize=9)
+    ax.text(0, ylim_top * 0.95, p_text, ha='center', va='bottom')
 
     ax.set_ylim(0, ylim_top)
     ax.set_xlabel('')

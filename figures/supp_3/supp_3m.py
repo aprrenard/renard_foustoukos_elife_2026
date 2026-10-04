@@ -23,7 +23,7 @@ import seaborn as sns
 
 
 from fast_learning import paths, correlations
-from fast_learning.plotting import save_figure
+from fast_learning.plotting import save_figure, set_style, panel_size
 from fast_learning.stats import format_p, lmm_mean
 
 
@@ -43,8 +43,8 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
 
 def add_p_value_bracket(ax, x1, x2, y, p_value):
     h = (ax.get_ylim()[1] - ax.get_ylim()[0]) * 0.02
-    ax.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1.5, c='black')
-    ax.text((x1 + x2) / 2, y + h, format_p(p_value), ha='center', va='bottom', fontsize=10)
+    ax.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=1, c='black')
+    ax.text((x1 + x2) / 2, y + h, format_p(p_value), ha='center', va='bottom')
 
 
 # ============================================================================
@@ -54,13 +54,7 @@ def add_p_value_bracket(ax, x1, x2, y, p_value):
 if __name__ == '__main__':
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
     for reward_group in ['R+', 'R-']:
         corr_csv = correlations.correlations_csv(reward_group)
@@ -115,7 +109,7 @@ if __name__ == '__main__':
         mouse_means = paired.groupby(['mouse_id', 'pair_type'])[['pre', 'post']].mean().reset_index()
         mouse_means.to_csv(os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}_mouse_means.csv'), index=False)
 
-        fig, axes = plt.subplots(1, 2, figsize=(6, 4), sharey=True)
+        fig, axes = plt.subplots(1, 2, figsize=panel_size(2, w=0.7), sharey=True)
         for idx, pt in enumerate(PAIR_TYPES):
             ax = axes[idx]
             mm = mouse_means[mouse_means['pair_type'] == pt]
@@ -148,9 +142,9 @@ if __name__ == '__main__':
                 )
             ax.axhline(0, color='black', linestyle='--', linewidth=0.5, alpha=0.5)
             ax.set_xticks([0, 1], ['Pre', 'Post'])
-            ax.set_title(f'{pt} (n = {len(mm)} mice)', fontsize=10, fontweight='bold')
+            ax.set_title(f'{pt}\n(n = {len(mm)} mice)', fontweight='bold')
             ax.set_xlabel('')
-            ax.set_ylabel('Pearson correlation (mean over pairs)' if idx == 0 else '', fontsize=9)
+            ax.set_ylabel('Pearson correlation\n(mean over pairs)' if idx == 0 else '')
 
             row = stats_pair_df[stats_pair_df['pair_type'] == pt]
             if not row.empty:
@@ -159,7 +153,7 @@ if __name__ == '__main__':
                     ax, 0, 1, top + (ax.get_ylim()[1] - ax.get_ylim()[0]) * 0.05, row.iloc[0]['p_value']
                 )
 
-        plt.suptitle(f'Pre vs post learning ({reward_group})', fontsize=11, y=1.02)
+        plt.suptitle(f'Pre vs post learning ({reward_group})', y=1.02)
         plt.tight_layout()
         sns.despine()
         save_figure(fig, os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}.pdf'))

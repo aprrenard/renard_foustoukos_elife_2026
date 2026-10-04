@@ -15,7 +15,7 @@ from scipy.stats import mannwhitneyu
 from statsmodels.stats.multitest import multipletests
 
 from fast_learning import paths
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_1', 'output')
@@ -66,10 +66,10 @@ def generate_panel(
     df_learning = df.copy()
 
     # Set plotting theme
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     # Create two-panel figure
-    fig, axes = plt.subplots(1, 2, sharey=True, figsize=(12, 5))
+    fig, axes = plt.subplots(1, 2, sharey=True, figsize=panel_size(2))
 
     # p > 0.05 (not significant) is left pure white. p <= 0.05 uses a log10
     # gradient from a visible grey right at the p=0.05 boundary down to
@@ -190,7 +190,7 @@ def generate_panel(
     tick_vals = [PVALUE_FLOOR, 1e-2, 0.05]
     cbar.set_ticks(tick_vals)
     cbar.set_ticklabels(['≤ {:.0e}'.format(PVALUE_FLOOR), '0.01', '0.05'])
-    cbar.set_label('p-value (FDR-corrected)', fontsize=9)
+    cbar.set_label('p-value (FDR-corrected)')
     cbar.ax.invert_yaxis()
 
     sns.despine()

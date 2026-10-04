@@ -23,7 +23,7 @@ import seaborn as sns
 from scipy.stats import mannwhitneyu
 
 from fast_learning import paths, database
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 from fast_learning.stats import format_p, ks_permutation_test
 
 
@@ -126,7 +126,7 @@ if __name__ == '__main__':
         ks_row = ks_df[ks_df['cell_type'] == cell_type]
         if not ks_row.empty:
             p_text = f"KS {format_p(ks_row.iloc[0]['p_value'])}"
-            ax.text(0.98, 0.98, p_text, ha='right', va='top', fontsize=8, transform=ax.transAxes)
+            ax.text(0.98, 0.98, p_text, ha='right', va='top', transform=ax.transAxes)
         ax.set_xlim(-1, 1)
         ax.set_xlabel('LMI')
         ax.set_ylabel('Probability')
@@ -151,7 +151,7 @@ if __name__ == '__main__':
                 seed=0,
             )
             sns.swarmplot(
-                data=data, x='reward_group', order=['R+', 'R-'], y=sign, color='k', size=4, alpha=0.7, ax=ax
+                data=data, x='reward_group', order=['R+', 'R-'], y=sign, color='k', size=2, alpha=0.7, ax=ax
             )
             ax.set_title(title)
             ax.set_xlabel('')
@@ -166,7 +166,6 @@ if __name__ == '__main__':
                     xycoords='axes fraction',
                     ha='center',
                     va='top',
-                    fontsize=8,
                     color='black',
                 )
 
@@ -174,34 +173,28 @@ if __name__ == '__main__':
     # Figures
     # ============================================================================
 
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
-    )
+    set_style()
 
     # wS2 — panel e: distribution
-    fig_wS2_dist, ax_wS2_dist = plt.subplots(1, 1, figsize=(3, 4))
+    fig_wS2_dist, ax_wS2_dist = plt.subplots(1, 1, figsize=panel_size())
     plot_distribution('wS2', ax_wS2_dist)
     sns.despine(trim=True)
     plt.tight_layout()
 
     # wS2 — panel f: proportions
-    fig_wS2, axes_wS2 = plt.subplots(1, 2, figsize=(5, 4), sharey=True)
+    fig_wS2, axes_wS2 = plt.subplots(1, 2, figsize=panel_size(2, w=0.7), sharey=True)
     plot_proportion_pair('wS2', axes_wS2[0], axes_wS2[1])
     sns.despine(trim=True)
     plt.tight_layout()
 
     # wM1 — panel i: distribution
-    fig_wM1_dist, ax_wM1_dist = plt.subplots(1, 1, figsize=(3, 4))
+    fig_wM1_dist, ax_wM1_dist = plt.subplots(1, 1, figsize=panel_size())
     plot_distribution('wM1', ax_wM1_dist)
     sns.despine(trim=True)
     plt.tight_layout()
 
     # wM1 — panel j: proportions
-    fig_wM1, axes_wM1 = plt.subplots(1, 2, figsize=(5, 4), sharey=True)
+    fig_wM1, axes_wM1 = plt.subplots(1, 2, figsize=panel_size(2, w=0.7), sharey=True)
     plot_proportion_pair('wM1', axes_wM1[0], axes_wM1[1])
     sns.despine(trim=True)
     plt.tight_layout()

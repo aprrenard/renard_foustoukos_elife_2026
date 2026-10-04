@@ -16,7 +16,7 @@ from scipy.stats import wilcoxon
 
 from fast_learning import imaging
 from fast_learning import paths, database
-from fast_learning.plotting import save_figure
+from fast_learning.plotting import save_figure, set_style, panel_size, reward_palette
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
 
@@ -110,7 +110,7 @@ def generate_panel(
 
     Saves <panel_name>.svg, <panel_name>_data.csv, <panel_name>_stats.csv.
     """
-    color = '#1b9e77' if reward_group == 'R+' else '#c959af'
+    color = reward_palette[1] if reward_group == 'R+' else reward_palette[0]
 
     # Select days and reward group
     data_avg = avg_resp[avg_resp['day'].isin(DAYS_SELECTED) & (avg_resp['reward_group'] == reward_group)]
@@ -124,9 +124,9 @@ def generate_panel(
     mouse_avg = data_avg.groupby(['mouse_id', 'learning_period'])['average_response'].mean().reset_index()
     mouse_psth = data_psth.groupby(['mouse_id', 'learning_period', 'time'])['psth'].mean().reset_index()
 
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
-    fig, axes = plt.subplots(1, 2, figsize=(6, 3))
+    fig, axes = plt.subplots(1, 2, figsize=panel_size(2))
 
     # PSTH
     sns.lineplot(
@@ -162,7 +162,7 @@ def generate_panel(
         order=['pre', 'post'],
         color='black',
         alpha=0.7,
-        size=4,
+        size=2,
         ax=axes[1],
     )
     axes[1].set_xlabel('Learning period')

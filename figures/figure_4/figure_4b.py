@@ -23,7 +23,7 @@ import seaborn as sns
 
 from fast_learning import imaging
 from fast_learning import paths
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import reward_palette, save_figure, panel_size
 
 
 # ============================================================================
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     # Figure
     # ============================================================================
 
-    fig, axes = plt.subplots(2, 2, figsize=(7, 7), sharex=False)
+    fig, axes = plt.subplots(2, 2, figsize=panel_size(2, 2), sharex=False)
 
     for col, mouse in enumerate(example_mice):
         reward_group = weights[mouse]['reward_group']
@@ -136,7 +136,7 @@ if __name__ == '__main__':
                 y='learning_curve_w',
                 ax=ax_beh,
                 color=color,
-                linewidth=2.5,
+                linewidth=1.2,
                 seed=0,
             )
         ax_beh.set_ylabel('Performance (whisker trials)')
@@ -154,7 +154,7 @@ if __name__ == '__main__':
                 y=dec_plot['mean_decision_value'],
                 ax=ax_dec,
                 color=color,
-                linewidth=2.5,
+                linewidth=1.2,
                 seed=0,
             )
         ax_dec.axhline(0, color='gray', linestyle='--', linewidth=1)
