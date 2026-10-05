@@ -38,7 +38,7 @@ from fast_learning.stats import format_p
 
 REWARD_UL_PER_TRIAL = 5
 DAYS = [-2, -1, 0, 1, 2]
-OUTPUT_DIR = os.path.join(paths.results_dir, 'behavior', 'session_state_check')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'behavior_state_summary', 'output')
 
 
 # ============================================================================

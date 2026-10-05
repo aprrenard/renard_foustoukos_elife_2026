@@ -70,7 +70,7 @@ from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.stats import significance_stars as _significance_stars
 from fast_learning.stats import format_p
 
-DLC_DIR = '/mnt/lsens-analysis/Anthony_Renard/DLCTrialMatrices'
+DLC_DIR = paths.dlc_dir
 
 
 # ============================================================================
@@ -82,7 +82,7 @@ WINDOW = (0.0, 1.0)  # post-stimulus window, seconds relative to stimulus onset
 BASELINE_WINDOW = (-2.0, 0.0)  # pre-stimulus baseline window
 NORMALISED = False  # per-session (v - mean) / (max - min), see load_dlc.py; off here
 MIN_TRIALS = 5  # skip a mouse x day with fewer usable trials
-OUTPUT_DIR = os.path.join(paths.results_dir, 'behavior', 'passive_epoch_movement')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'movement_state_summary', 'output')
 
 # (value column, y-axis phrase, output filename suffix)
 STATS = [
