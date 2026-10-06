@@ -12,6 +12,12 @@ Reward logic (5 uL per rewarded trial):
          + whisker hit (whisker_stim==1 & lick_flag==1)
     R- : auditory hit only (auditory_stim==1 & lick_flag==1)
 
+Two comparisons:
+    across groups: R+ vs R- on each day (Mann-Whitney U, one session per mouse);
+    within groups: pre-learning (days -2, -1) vs post-learning (days +1, +2),
+        each mouse's mean over the two days of each period, paired Wilcoxon
+        signed-rank test within each reward group (n = mice).
+
 Trial table is recomputed fresh via make_behavior_table() (not loaded from
 a precomputed CSV) for the imaging cohort, same selection pattern as
 exploratory/behavior/behavior.py.
@@ -23,11 +29,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import mannwhitneyu
+from scipy.stats import mannwhitneyu, wilcoxon
 
 from fast_learning import paths, database
 from fast_learning.behavior import make_behavior_table
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.plotting import panel_size, reward_palette, save_figure, set_style
 from fast_learning.stats import significance_stars as _significance_stars
 from fast_learning.stats import format_p
 
@@ -38,6 +44,8 @@ from fast_learning.stats import format_p
 
 REWARD_UL_PER_TRIAL = 5
 DAYS = [-2, -1, 0, 1, 2]
+PRE_DAYS = [-2, -1]
+POST_DAYS = [1, 2]
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'behavior_state_summary', 'output')
 
 
@@ -219,6 +227,106 @@ def plot_session_summary(
     print(f"Data/stats saved to: {output_dir}")
 
 
+def plot_pre_post_within_group(df, output_dir=OUTPUT_DIR, filename='session_state_pre_post'):
+    """Pre (days -2, -1) vs post (days +1, +2) learning within each reward group.
+
+    Each mouse contributes its mean over the two days of each period (only
+    mice with both periods). Paired Wilcoxon signed-rank test per reward group
+    and metric (n = mice). Bars: mean across mice with bootstrapped 95% CI;
+    lines: individual mice.
+
+    Saves:
+        <filename>.pdf         -- figure (one panel per metric)
+        <filename>_data.csv    -- per-mouse pre and post means
+        <filename>_stats.csv   -- Wilcoxon results per reward group and metric
+    """
+    set_style()
+    period = np.where(df['day'].isin(PRE_DAYS), 'pre', np.where(df['day'].isin(POST_DAYS), 'post', None))
+    d = df.assign(period=period).dropna(subset=['period'])
+    metrics = [m for m, _ in METRICS]
+    mouse_means = (
+        d.groupby(['mouse_id', 'reward_group', 'period'])[metrics].mean().unstack('period').dropna()
+    )  # columns: (metric, period)
+
+    stats_rows = []
+    fig, axes = plt.subplots(1, len(METRICS), figsize=panel_size(len(METRICS)))
+    groups = ['R+', 'R-']
+    colors = {'R+': reward_palette[1], 'R-': reward_palette[0]}
+    for ax, (metric, ylabel) in zip(axes, METRICS):
+        long_rows = []
+        for gi, rg in enumerate(groups):
+            mm = mouse_means.xs(rg, level='reward_group')[metric]
+            pre, post = mm['pre'].values, mm['post'].values
+            try:
+                stat, p = wilcoxon(pre, post) if len(mm) >= 2 else (np.nan, np.nan)
+            except ValueError:  # e.g. all differences zero
+                stat, p = np.nan, np.nan
+            stats_rows.append(
+                {
+                    'metric': metric,
+                    'reward_group': rg,
+                    'test': 'Wilcoxon signed-rank, pre (days -2, -1) vs post (days +1, +2), n = mice',
+                    'n_mice': len(mm),
+                    'pre_mean': pre.mean(),
+                    'post_mean': post.mean(),
+                    'statistic': stat,
+                    'p_value': p,
+                    'significance': _significance_stars(p) if not np.isnan(p) else 'n.a.',
+                }
+            )
+            for mouse, row in mm.iterrows():
+                long_rows += [(rg, 'pre', row['pre']), (rg, 'post', row['post'])]
+                x = [gi * 3, gi * 3 + 1]
+                ax.plot(x, [row['pre'], row['post']], '-', color='grey', linewidth=0.5, alpha=0.6, zorder=3)
+            top = np.nanmax(mm.values)
+            ax.plot(
+                [gi * 3, gi * 3, gi * 3 + 1, gi * 3 + 1],
+                [top * 1.04, top * 1.07, top * 1.07, top * 1.04],
+                'k-',
+                linewidth=0.8,
+            )
+            ax.text(gi * 3 + 0.5, top * 1.08, format_p(p), ha='center', va='bottom')
+
+        long = pd.DataFrame(long_rows, columns=['reward_group', 'period', 'value'])
+        for gi, rg in enumerate(groups):
+            sub = long[long['reward_group'] == rg]
+            sns.barplot(
+                data=sub,
+                x=np.where(sub['period'] == 'pre', gi * 3, gi * 3 + 1),
+                y='value',
+                order=list(range(6)),
+                color=colors[rg],
+                alpha=0.7,
+                edgecolor='black',
+                errorbar=('ci', 95),
+                seed=0,
+                native_scale=True,
+                ax=ax,
+            )
+        ax.set_xticks([0, 1, 3, 4], ['Pre', 'Post', 'Pre', 'Post'])
+        ax.set_xlim(-0.7, 4.7)
+        for gi, rg in enumerate(groups):
+            ax.text(gi * 3 + 0.5, -0.2, rg, transform=ax.get_xaxis_transform(), ha='center', va='top')
+        ax.set_xlabel('')
+        ax.set_ylabel(ylabel)
+    sns.despine()
+    plt.tight_layout()
+
+    os.makedirs(output_dir, exist_ok=True)
+    save_figure(fig, os.path.join(output_dir, f'{filename}.pdf'))
+    plt.close(fig)
+    out = mouse_means.copy()
+    out.columns = [f'{m}_{per}' for m, per in out.columns]
+    out.reset_index().to_csv(os.path.join(output_dir, f'{filename}_data.csv'), index=False)
+    pd.DataFrame(stats_rows).to_csv(os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
+    print(
+        pd.DataFrame(stats_rows)[
+            ['metric', 'reward_group', 'n_mice', 'pre_mean', 'post_mean', 'p_value']
+        ].to_string(index=False)
+    )
+    print(f"Pre vs post figure and stats saved to: {output_dir}")
+
+
 # ============================================================================
 # Main execution
 # ============================================================================
@@ -236,6 +344,7 @@ if __name__ == '__main__':
     print(f"\nSummary: {len(summary_df)} sessions")
 
     plot_session_summary(summary_df)
+    plot_pre_post_within_group(summary_df)
 
     print("\n=== Mean per day / reward group ===")
     print(
