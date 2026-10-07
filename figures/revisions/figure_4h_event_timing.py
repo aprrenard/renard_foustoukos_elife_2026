@@ -130,7 +130,7 @@ def plot(bin_df, per_mouse, stats, filename):
         ax=ax,
     )
     ax.axvline(0, color='grey', linestyle='--', linewidth=0.6)
-    ax.set_ylim(bottom=0)
+    ax.set_ylim(bottom=0, top=15)
     ax.set_xlabel('Time from no-stim onset (s)')
     ax.set_ylabel('Reactivation rate (events/min)')
     ax.legend(frameon=False, title='')
@@ -159,6 +159,7 @@ def plot(bin_df, per_mouse, stats, filename):
         ax.text(x.mean(), -0.2, rg, transform=ax.get_xaxis_transform(), ha='center', va='top')
     ax.set_xticks([0, 1, 3, 4], ['-1–1 s', '1–6 s', '-1–1 s', '1–6 s'])
     ax.set_xlim(-0.7, 4.7)
+    ax.set_ylim(bottom=0, top=15)
     ax.set_ylabel('Reactivation rate (events/min)')
     sns.despine()
     plt.tight_layout()

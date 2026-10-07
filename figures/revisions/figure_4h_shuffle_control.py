@@ -163,7 +163,7 @@ def _compute_shuffled_rates_for_mouse_day(day_results, selected_trials, n_shuffl
     threshold = day_results['threshold_used']
     session_duration_min = day_results['session_duration_min']
 
-    n_cells = selected_trials.shape[0]
+    n_cells, _, n_timepoints = selected_trials.shape
     data = np.nan_to_num(selected_trials.values.reshape(n_cells, -1), nan=0.0)
 
     rng = np.random.default_rng(seed)
@@ -173,7 +173,9 @@ def _compute_shuffled_rates_for_mouse_day(day_results, selected_trials, n_shuffl
 
     shuffled_rates = np.empty(n_shuffles)
     for i in range(n_shuffles):
-        events = detect_reactivation_events(corr_matrix[i], threshold, MIN_EVENT_DISTANCE_FRAMES, PROMINENCE)
+        events = detect_reactivation_events(
+            corr_matrix[i], threshold, MIN_EVENT_DISTANCE_FRAMES, PROMINENCE, n_timepoints=n_timepoints
+        )
         shuffled_rates[i] = len(events) / session_duration_min
 
     return shuffled_rates

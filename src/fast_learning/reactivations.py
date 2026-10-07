@@ -174,9 +174,39 @@ def load_selected_trials(mouse, day, no_lick_only=False, time_window=None, folde
 
 
 def detect_reactivation_events(
-    correlations, threshold, min_distance, prominence, smooth=True, window_length=5, polyorder=2
+    correlations,
+    threshold,
+    min_distance,
+    prominence,
+    smooth=True,
+    window_length=5,
+    polyorder=2,
+    n_timepoints=None,
 ):
-    """Detect reactivation events as peaks in correlation timeseries."""
+    """Detect reactivation events as peaks in a template-correlation time series.
+
+    correlations: one value per frame. When it holds several trials put end to
+    end, pass n_timepoints (frames per trial): smoothing, peak finding and
+    peak prominence are then computed within each trial, since consecutive
+    trials are not contiguous in time. Run on the concatenated series, the
+    jump between the end of one trial and the start of the next creates
+    spurious peaks at the trial edges (directly, and through the smoothing
+    overshoot), and a peak's prominence can be measured against a neighbouring
+    trial.
+
+    Returns the frame indices of the events in `correlations`.
+    """
+    if n_timepoints is not None:
+        per_trial = np.asarray(correlations).reshape(-1, n_timepoints)
+        peaks = [
+            i * n_timepoints
+            + detect_reactivation_events(
+                trial, threshold, min_distance, prominence, smooth, window_length, polyorder
+            )
+            for i, trial in enumerate(per_trial)
+        ]
+        return np.concatenate(peaks).astype(int) if peaks else np.array([], dtype=int)
+
     if smooth:
         if window_length % 2 == 0:
             window_length += 1
@@ -380,7 +410,11 @@ def analyze_mouse_reactivation(
 
             current_threshold = get_threshold_for_mouse_day(threshold_dict, mouse, day, THRESHOLD_CORR)
             events = detect_reactivation_events(
-                correlations, current_threshold, MIN_EVENT_DISTANCE_FRAMES, PROMINENCE
+                correlations,
+                current_threshold,
+                MIN_EVENT_DISTANCE_FRAMES,
+                PROMINENCE,
+                n_timepoints=n_timepoints,
             )
 
             pct_above, n_above, total_frames = compute_time_above_threshold(correlations, current_threshold)
