@@ -136,7 +136,7 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | — | [`figures/revisions/behavior_state_summary.py`](figures/revisions/behavior_state_summary.py) | Session-level behavioral state summary (total water reward, session duration, total trial count) per mouse x session, across days and reward groups |
 | — | [`figures/revisions/figure_2b_c_execution.py`](figures/revisions/figure_2b_c_execution.py) | Muscimol inactivation during execution |
 | — | [`figures/revisions/figure_3f_LMIshuffles.py`](figures/revisions/figure_3f_LMIshuffles.py) | LMI distribution vs. shuffled null |
-| — | [`figures/revisions/figure_3h_i_magnitude_reliability.py`](figures/revisions/figure_3h_i_magnitude_reliability.py) | Response magnitude and split-half reliability controls |
+| — | [`figures/revisions/figure_3h_i_signal_noise.py`](figures/revisions/figure_3h_i_signal_noise.py) | What drives the change in within-day similarity? |
 | — | [`figures/revisions/figure_4h_shuffle_control.py`](figures/revisions/figure_4h_shuffle_control.py) | Shuffled-template reactivation detection |
 | — | [`figures/revisions/movement_state_summary.py`](figures/revisions/movement_state_summary.py) | Facial/whisker movement during the passive mapping epoch, across days |
 <!-- figure-table:end -->
