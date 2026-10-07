@@ -43,10 +43,6 @@ N_JOBS = 35
 
 RESULTS_DIR = pt.RESULTS_DIR
 REACTIVATION_RESULTS_FILE = os.path.join(RESULTS_DIR, 'reactivation_results_p99.pkl')
-NOLICK_RESULTS_FILE = os.path.join(RESULTS_DIR, 'nolick', 'reactivation_results_p99.pkl')
-# No-lick control: correct-rejection no-stim trials, frames from 1 s before to
-# 1 s after no-stim onset (no licks before onset, none in the 0-1 s response window).
-NOLICK_TIME_WINDOW = (-1, 1)
 LMI_RESULTS_CSV = os.path.join(paths.processed_dir, 'lmi_results.csv')
 
 
@@ -156,15 +152,21 @@ if __name__ == '__main__':
         '--only', nargs='+', choices=['rates', 'day0', 'binary'], default=['rates', 'day0', 'binary']
     )
     parser.add_argument(
-        '--nolick',
-        action='store_true',
-        help="participation rates from the no-lick reactivation events ('rates' only)",
+        '--selection',
+        choices=list(rx.SELECTIONS),
+        default='allnostim',
+        help="trial selection of the reactivation events; other than allnostim, 'rates' only",
     )
+    parser.add_argument('--nolick', action='store_true', help='same as --selection nolick')
     args = parser.parse_args()
 
-    if args.nolick:
-        results, reward_groups = load_selected_results(NOLICK_RESULTS_FILE)
-        run_rates(results, reward_groups, 'nolick', no_lick_only=True, time_window=NOLICK_TIME_WINDOW)
+    selection = 'nolick' if args.nolick else args.selection
+    if selection != 'allnostim':
+        no_lick_only, time_window = rx.SELECTIONS[selection]
+        results, reward_groups = load_selected_results(
+            os.path.join(rx.selection_dir(selection), 'reactivation_results_p99.pkl')
+        )
+        run_rates(results, reward_groups, selection, no_lick_only=no_lick_only, time_window=time_window)
     else:
         results, reward_groups = load_selected_results(REACTIVATION_RESULTS_FILE)
         if 'rates' in args.only:

@@ -22,6 +22,7 @@ Outputs: <figures_dir>/figure_4/output/figure_4i_<sel>_thr<N>.pdf, _stats.csv
          and figure_4j_<sel>_thr<N>.pdf, _data.csv, _stats.csv.
 """
 
+import argparse
 import os
 
 import numpy as np
@@ -29,7 +30,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from fast_learning import paths, participation
+from fast_learning import paths, participation, reactivations as rx
 from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 from fast_learning.stats import format_p, lmm_slope, per_mouse_slope_test, significance_stars
 
@@ -40,11 +41,8 @@ from fast_learning.stats import format_p, lmm_slope, per_mouse_slope_test, signi
 
 DAYS = [-2, -1, 0, 1, 2]
 
-# Trial selection of the reactivation events:
-#   False : all no-stim trials, full window (main analysis)
-#   True  : no-stim trials without licks, -1 to +1 s around no-stim onset
-NO_LICK_ONLY = False
-SELECTION = 'nolick' if NO_LICK_ONLY else 'allnostim'
+# Trial selection of the reactivation events: --selection (see
+# fast_learning.reactivations.SELECTIONS), default all no-stim trials.
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 
@@ -270,6 +268,9 @@ def panel_j_participation_across_days(merged_df, per_day_df, output_dir=OUTPUT_D
 # ============================================================================
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Figure 4i-j: participation in reactivations vs LMI.')
+    parser.add_argument('--selection', choices=list(rx.SELECTIONS), default='allnostim')
+    SELECTION = parser.parse_args().selection
     print(f"Trial selection:  {SELECTION}")
     print(f"Output directory: {OUTPUT_DIR}")
 

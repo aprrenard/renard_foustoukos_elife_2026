@@ -68,6 +68,24 @@ MIN_EVENTS_PER_DAY = MIN_DAY0_EVENTS
 SELECTION_DAY = 0
 MOUSE_SELECTION_CSV = os.path.join(paths.processed_dir, 'reactivation', 'mouse_selection.csv')
 
+# Trial selections for event detection: (correct rejections only, time window).
+#   allnostim  : all no-stim trials, whole trial (-1 to 6 s)
+#   nolick     : correct-rejection no-stim trials, -1 to +1 s around onset
+#                (lick-free: no licks before onset, none in the 0-1 s window)
+#   nolickfull : correct-rejection no-stim trials, whole trial (-1 to 6 s);
+#                licks after the 1 s response window are possible
+SELECTIONS = {
+    'allnostim': (False, None),
+    'nolick': (True, (-1, 1)),
+    'nolickfull': (True, None),
+}
+
+
+def selection_dir(selection):
+    """Folder of the reactivation results of one trial selection."""
+    base = os.path.join(paths.processed_dir, 'reactivation')
+    return base if selection == 'allnostim' else os.path.join(base, selection)
+
 
 # ============================================================================
 # Helpers

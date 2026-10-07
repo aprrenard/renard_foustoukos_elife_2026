@@ -13,12 +13,13 @@ Outputs: <processed_dir>/reactivation/
              surrogate_thresholds_per_mouse_p<N>.csv
              reactivation_results_p<N>.pkl      (all mice)
              mouse_selection.csv
-         With --nolick (no-stim trials without licks, -1 to +1 s around no-stim
-         onset), the same files except mouse_selection.csv in reactivation/nolick/.
+         With --selection nolick / nolickfull (correct-rejection no-stim trials,
+         -1 to +1 s or whole trial), the same files except mouse_selection.csv
+         in reactivation/<selection>/.
 
 Usage:
     python pipeline/07_reactivations.py                  # all no-stim trials
-    python pipeline/07_reactivations.py --nolick         # no-lick variant
+    python pipeline/07_reactivations.py --selection nolick  # no-lick variant
     python pipeline/07_reactivations.py --selection-only # rebuild mouse_selection.csv
 """
 
@@ -49,10 +50,6 @@ USE_SURROGATE_THRESHOLDS = 'mouse'  # 'day' | 'mouse' | None (fixed threshold)
 PERCENTILE_TO_USE = 99  # main threshold; defines the mouse selection
 
 OUTPUT_DIR = os.path.join(paths.processed_dir, 'reactivation')
-NOLICK_OUTPUT_DIR = os.path.join(OUTPUT_DIR, 'nolick')
-# No-lick control: correct-rejection no-stim trials, frames from 1 s before to
-# 1 s after no-stim onset (no licks before onset, none in the 0-1 s response window).
-NOLICK_TIME_WINDOW = (-1, 1)
 
 
 # ============================================================================
@@ -306,8 +303,12 @@ def save_mouse_selection(results_data, path=rx.MOUSE_SELECTION_CSV):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Pipeline step 07: reactivation events.')
     parser.add_argument(
-        '--nolick', action='store_true', help='no-stim trials without licks, -1 to +1 s around no-stim onset'
+        '--selection',
+        choices=list(rx.SELECTIONS),
+        default='allnostim',
+        help='trial selection (see fast_learning.reactivations.SELECTIONS)',
     )
+    parser.add_argument('--nolick', action='store_true', help='same as --selection nolick')
     parser.add_argument(
         '--selection-only',
         action='store_true',
@@ -324,12 +325,12 @@ if __name__ == '__main__':
             save_mouse_selection(pickle.load(f))
         sys.exit(0)
 
-    no_lick_only = args.nolick
-    time_window = NOLICK_TIME_WINDOW if args.nolick else None
-    output_dir = NOLICK_OUTPUT_DIR if args.nolick else OUTPUT_DIR
+    selection = 'nolick' if args.nolick else args.selection
+    no_lick_only, time_window = rx.SELECTIONS[selection]
+    output_dir = rx.selection_dir(selection)
 
     print("\n" + "=" * 60)
-    print("REACTIVATION PIPELINE" + (" - NO-LICK VARIANT" if args.nolick else ""))
+    print(f"REACTIVATION PIPELINE - {selection}")
     print("=" * 60)
     print(f"  Output directory: {output_dir}")
     print(f"  Run surrogates: {RUN_SURROGATES}  (mode: {SURROGATE_MODE})")
@@ -370,5 +371,5 @@ if __name__ == '__main__':
         # Part 3: Mouse selection, from the main detection threshold
         # (all no-stim trials only; the no-lick variant uses the same one)
         # --------------------------------------------------------------
-        if percentile == PERCENTILE_TO_USE and not args.nolick:
+        if percentile == PERCENTILE_TO_USE and selection == 'allnostim':
             save_mouse_selection(results_data)

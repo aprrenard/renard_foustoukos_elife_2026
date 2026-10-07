@@ -13,6 +13,7 @@ Result files are loaded from data_processed/reactivation/.
 Figures and CSVs are saved to output/.
 """
 
+import argparse
 import os
 import pickle
 
@@ -22,7 +23,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import mannwhitneyu
 
-from fast_learning import paths
+from fast_learning import paths, reactivations as rx
 from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 from fast_learning.stats import significance_stars as _significance_stars
 from fast_learning.stats import format_p
@@ -36,19 +37,11 @@ DAYS = [-2, -1, 0, 1, 2]
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 
-# Trial-selection toggle (mirrors figure_4i_j.py's NO_LICK_ONLY).
-#   True  : no_stim & lick_flag==0 trials, ±2s window (2026 revision
-#           baseline) -- regenerates figure_4h_nolick_p99/p995/p999
-#           (pipeline/07_reactivations.py --nolick)
-#   False : original all no_stim trials, full window (pre-revision
-#           baseline) -- regenerates figure_4h (p99, unsuffixed, original
-#           name) plus figure_4h_p995/p999
-#           (pipeline/07_reactivations.py, PERCENTILES)
-# Both branches are checked at the same three detection percentiles.
-NO_LICK_ONLY = False
+# Trial selection of the reactivation events (--selection; see
+# fast_learning.reactivations.SELECTIONS). allnostim keeps the original file
+# names (figure_4h, figure_4h_p995, figure_4h_p999); the others are suffixed.
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
-NOLICK_RESULTS_DIR = os.path.join(RESULTS_DIR, 'nolick')
 PERCENTILES = ['p99', 'p995', 'p999']
 
 
@@ -241,8 +234,8 @@ def _load_and_plot(results_file, filename):
     if not os.path.exists(results_file):
         raise FileNotFoundError(
             f"Results file not found: {results_file}\n"
-            "Run pipeline/07_reactivations.py (--nolick for the no-lick "
-            "variant) first."
+            "Run pipeline/07_reactivations.py (with --selection for the "
+            "trial-selection variants) first."
         )
 
     with open(results_file, 'rb') as f:
@@ -256,16 +249,16 @@ def _load_and_plot(results_file, filename):
 
 
 if __name__ == '__main__':
-    if NO_LICK_ONLY:
-        # No-lick, ±2s baseline at three detection percentiles (99, 99.5, 99.9).
-        for pstr in PERCENTILES:
-            results_file = os.path.join(NOLICK_RESULTS_DIR, f'reactivation_results_{pstr}.pkl')
-            _load_and_plot(results_file, filename=f'figure_4h_nolick_{pstr}')
-    else:
-        # Original all-no_stim, full window, at the same three detection
-        # percentiles. p99 keeps the original unsuffixed filename (kept
-        # reproducible); p995/p999 are the added robustness-check variants.
-        for pstr in PERCENTILES:
-            results_file = os.path.join(RESULTS_DIR, f'reactivation_results_{pstr}.pkl')
+    parser = argparse.ArgumentParser(description='Figure 4h: reactivation rate across days.')
+    parser.add_argument('--selection', choices=list(rx.SELECTIONS), default='allnostim')
+    selection = parser.parse_args().selection
+    for pstr in PERCENTILES:
+        results_file = os.path.join(rx.selection_dir(selection), f'reactivation_results_{pstr}.pkl')
+        if not os.path.exists(results_file) and pstr != 'p99':
+            print(f'{results_file} not found, skipped.')
+            continue
+        if selection == 'allnostim':
             filename = 'figure_4h' if pstr == 'p99' else f'figure_4h_{pstr}'
-            _load_and_plot(results_file, filename=filename)
+        else:
+            filename = f'figure_4h_{selection}_{pstr}'
+        _load_and_plot(results_file, filename=filename)

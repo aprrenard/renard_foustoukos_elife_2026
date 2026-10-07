@@ -38,9 +38,11 @@ PIPELINE = [
     ('05_lmi', 'pipeline/05_lmi.py', [], True),
     ('06_decoder', 'pipeline/06_decoder.py', [], True),
     ('07_reactivations', 'pipeline/07_reactivations.py', [], True),
-    ('07_reactivations_nolick', 'pipeline/07_reactivations.py', ['--nolick'], True),
+    ('07_reactivations_nolick', 'pipeline/07_reactivations.py', ['--selection', 'nolick'], True),
+    ('07_reactivations_nolickfull', 'pipeline/07_reactivations.py', ['--selection', 'nolickfull'], True),
     ('08_participation', 'pipeline/08_participation.py', [], True),
-    ('08_participation_nolick', 'pipeline/08_participation.py', ['--nolick'], True),
+    ('08_participation_nolick', 'pipeline/08_participation.py', ['--selection', 'nolick'], True),
+    ('08_participation_nolickfull', 'pipeline/08_participation.py', ['--selection', 'nolickfull'], True),
     ('09_pairwise_correlations', 'pipeline/09_pairwise_correlations.py', [], True),
 ]
 
