@@ -1,15 +1,15 @@
 """
 Figure 4h revision: are reactivation events over-represented when mice can lick?
 
-The main reactivation analysis uses correct-rejection no-stim trials over the
-whole trial (-1 to 6 s around no-stim onset; selection 'nolickfull'). These
+The reactivation analysis uses correct-rejection no-stim trials over the
+whole trial (-1 to 6 s around no-stim onset). These
 trials have no lick before onset (no-lick period) and none in the 0-1 s
 response window, but a mouse can lick after 1 s. If lick-related activity
 produced template matches, the reactivation rate would be higher after 1 s
 than in the lick-free part of the trial.
 
 For each mouse and day, event times are taken from the reactivation results
-of the selection, and rates (events/min) are computed in time bins across the
+of step 07, and rates (events/min) are computed in time bins across the
 trial and in two windows: lick-free (-1 to 1 s) and post-response (1 to 6 s).
 Days are pooled per mouse (each mouse's rate averaged over its days).
 
@@ -18,14 +18,10 @@ Days are pooled per mouse (each mouse's rate averaged over its days).
          Wilcoxon signed-rank test per reward group (n = mice).
 
 Outputs: <figures_dir>/revisions/figure_4h_event_timing/output/
-    event_timing_<selection>.pdf, _data.csv (mouse x day x window),
+    event_timing.pdf, _data.csv (mouse x day x window),
     _bins.csv (mouse x time bin), _stats.csv.
-
-Usage:
-    python figures/revisions/figure_4h_event_timing.py [--selection nolickfull]
 """
 
-import argparse
 import os
 import pickle
 
@@ -169,11 +165,7 @@ def plot(bin_df, per_mouse, stats, filename):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Reactivation event timing within trials.')
-    parser.add_argument('--selection', choices=['allnostim', 'nolickfull'], default='nolickfull')
-    selection = parser.parse_args().selection
-    no_lick_only, window = rx.SELECTIONS[selection]
-    results_file = os.path.join(rx.selection_dir(selection), 'reactivation_results_p99.pkl')
+    results_file = os.path.join(rx.RESULTS_DIR, 'reactivation_results_p99.pkl')
     with open(results_file, 'rb') as f:
         results = pickle.load(f)
 
@@ -181,7 +173,7 @@ if __name__ == '__main__':
     win_df, bin_df = event_rates(results, t)
     stats, per_mouse = compute_stats(win_df)
 
-    name = f'event_timing_{selection}'
+    name = 'event_timing'
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     win_df.to_csv(os.path.join(OUTPUT_DIR, f'{name}_data.csv'), index=False)
     bin_df.to_csv(os.path.join(OUTPUT_DIR, f'{name}_bins.csv'), index=False)

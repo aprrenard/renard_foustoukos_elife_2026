@@ -55,4 +55,4 @@ def test_lmi_category():
 
 def test_file_names():
     assert pt.thr_tag(0.1) == 'thr10' and pt.thr_tag(0.5) == 'thr50'
-    assert pt.rates_csv(0.2, 'nolick').endswith('cell_participation_rates_per_day_nolick_thr20.csv')
+    assert pt.rates_csv(0.2).endswith('cell_participation_rates_per_day_thr20.csv')

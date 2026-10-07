@@ -88,7 +88,7 @@ def panel_f_reactivation_heatmap(
     events = np.array(day_data['events'])
     threshold = day_data.get('threshold_used', 0.45)
 
-    # All no-stim trials, full window: the selection of the p99 results file.
+    # The correct-rejection trials the events of the results file were detected in.
     selected_trials = reactivations.load_selected_trials(mouse, day)
     n_cells, n_trials, n_tp = selected_trials.shape
     neural_data = selected_trials.values.reshape(n_cells, -1)

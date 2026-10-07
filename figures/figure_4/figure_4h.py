@@ -13,7 +13,6 @@ Result files are loaded from data_processed/reactivation/.
 Figures and CSVs are saved to output/.
 """
 
-import argparse
 import os
 import pickle
 
@@ -37,9 +36,6 @@ DAYS = [-2, -1, 0, 1, 2]
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 
-# Trial selection of the reactivation events (--selection; see
-# fast_learning.reactivations.SELECTIONS); default: correct-rejection no-stim
-# trials, whole trial. Files: figure_4h_<selection>_<percentile>.
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 PERCENTILES = ['p99', 'p995', 'p999']
@@ -233,9 +229,7 @@ def _load_and_plot(results_file, filename):
     print(f"Loading reactivation results from: {results_file}")
     if not os.path.exists(results_file):
         raise FileNotFoundError(
-            f"Results file not found: {results_file}\n"
-            "Run pipeline/07_reactivations.py (with --selection for the "
-            "trial-selection variants) first."
+            f"Results file not found: {results_file}\nRun pipeline/07_reactivations.py first."
         )
 
     with open(results_file, 'rb') as f:
@@ -249,13 +243,11 @@ def _load_and_plot(results_file, filename):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Figure 4h: reactivation rate across days.')
-    parser.add_argument('--selection', choices=list(rx.SELECTIONS), default='nolickfull')
-    selection = parser.parse_args().selection
     for pstr in PERCENTILES:
-        results_file = os.path.join(rx.selection_dir(selection), f'reactivation_results_{pstr}.pkl')
+        results_file = os.path.join(rx.RESULTS_DIR, f'reactivation_results_{pstr}.pkl')
         if not os.path.exists(results_file) and pstr != 'p99':
             print(f'{results_file} not found, skipped.')
             continue
-        filename = f'figure_4h_{selection}_{pstr}'
+        # p99 is the main threshold; p995 and p999 are robustness checks.
+        filename = 'figure_4h' if pstr == 'p99' else f'figure_4h_{pstr}'
         _load_and_plot(results_file, filename=filename)
