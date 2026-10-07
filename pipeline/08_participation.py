@@ -19,9 +19,10 @@ Outputs: <processed_dir>/reactivation/
              participation_lmi_merged_thr<N>.csv
              supp4ab_lmi_data_day0.csv
              binary_participation_with_lmi.csv
+         With --nolick (no-lick control), the same files with a _nolick suffix.
 
 Usage:
-    python pipeline/08_participation.py [--only rates day0 binary]
+    python pipeline/08_participation.py [--only rates day0 binary] [--nolick]
 """
 
 import argparse
@@ -69,7 +70,7 @@ def load_selected_results(results_file):
 # ============================================================================
 
 
-def run_rates(results, reward_groups):
+def run_rates(results, reward_groups, nolick=False):
     """Participation rates per day and merged with LMI, at each threshold."""
     lmi_df = pd.read_csv(LMI_RESULTS_CSV)
     for threshold in pt.PARTICIPATION_THRESHOLDS:
@@ -79,22 +80,23 @@ def run_rates(results, reward_groups):
                 mouse,
                 results[mouse],
                 participation_threshold=threshold,
+                window=rx.trial_window(nolick),
             )
             for mouse in results
         )
         per_day_df = pd.concat([df for _, df in results_list if df is not None], ignore_index=True)
         os.makedirs(RESULTS_DIR, exist_ok=True)
-        per_day_df.to_csv(pt.rates_csv(threshold), index=False)
+        per_day_df.to_csv(pt.rates_csv(threshold, nolick), index=False)
 
         merged = pt.merge_with_lmi(pt.aggregate_across_days(per_day_df), lmi_df, reward_groups)
-        merged.to_csv(pt.merged_csv(threshold), index=False)
-        print(f"Saved: {pt.rates_csv(threshold)} ({len(per_day_df)} cell-days)")
-        print(f"Saved: {pt.merged_csv(threshold)} ({len(merged)} cells)")
+        merged.to_csv(pt.merged_csv(threshold, nolick), index=False)
+        print(f"Saved: {pt.rates_csv(threshold, nolick)} ({len(per_day_df)} cell-days)")
+        print(f"Saved: {pt.merged_csv(threshold, nolick)} ({len(merged)} cells)")
 
 
-def run_day0(reward_groups):
+def run_day0(reward_groups, nolick=False):
     """Day-0 participation rate, transient frequency and LMI per cell."""
-    part_df = pd.read_csv(pt.rates_csv(pt.PARTICIPATION_THRESHOLD))
+    part_df = pd.read_csv(pt.rates_csv(pt.PARTICIPATION_THRESHOLD, nolick))
     part_df = part_df[part_df['day'] == 0][['mouse_id', 'roi', 'participation_rate']].copy()
     if len(part_df) == 0:
         raise RuntimeError("No day-0 participation data found.")
@@ -102,7 +104,7 @@ def run_day0(reward_groups):
     transient_parts = []
     for mouse_id in part_df['mouse_id'].unique():
         print(f"  Computing transient freq for {mouse_id}...")
-        transient_parts.append(pt.transient_freq_per_cell(mouse_id, day=0))
+        transient_parts.append(pt.transient_freq_per_cell(mouse_id, day=0, window=rx.trial_window(nolick)))
     transient_df = pd.concat([d for d in transient_parts if len(d) > 0], ignore_index=True)
 
     lmi_df = pd.read_csv(LMI_RESULTS_CSV)[['mouse_id', 'roi', 'lmi', 'lmi_p']]
@@ -111,18 +113,19 @@ def run_day0(reward_groups):
     merged['reward_group'] = merged['mouse_id'].map(reward_groups)
     merged = merged.dropna(subset=['reward_group', 'transient_freq', 'participation_rate', 'lmi'])
 
-    merged.to_csv(pt.DAY0_CSV, index=False)
-    print(f"Saved: {pt.DAY0_CSV}  ({len(merged)} cells, {merged['mouse_id'].nunique()} mice)")
+    merged.to_csv(pt.day0_csv(nolick), index=False)
+    print(f"Saved: {pt.day0_csv(nolick)}  ({len(merged)} cells, {merged['mouse_id'].nunique()} mice)")
 
 
-def run_binary(results, reward_groups):
+def run_binary(results, reward_groups, nolick=False):
     """Binary participation per cell-day (circular-shift test), merged with LMI."""
     print(
         f"\nRunning circular-shift test for {len(results)} mice "
         f"({pt.N_SHIFTS} shifts x {len(pt.DAYS)} days each) ..."
     )
     raw = Parallel(n_jobs=N_JOBS, verbose=5)(
-        delayed(pt.process_mouse_circular_shift)(mouse, results[mouse], pt.N_SHIFTS) for mouse in results
+        delayed(pt.process_mouse_circular_shift)(mouse, results[mouse], pt.N_SHIFTS, rx.trial_window(nolick))
+        for mouse in results
     )
     participation_df = pd.concat([df for _, df in raw if df is not None], ignore_index=True)
     participation_df['reward_group'] = participation_df['mouse_id'].map(reward_groups)
@@ -134,8 +137,8 @@ def run_binary(results, reward_groups):
         on=['mouse_id', 'roi'],
         how='inner',
     )
-    merged.to_csv(pt.BINARY_CSV, index=False)
-    print(f"Saved: {pt.BINARY_CSV}")
+    merged.to_csv(pt.binary_csv(nolick), index=False)
+    print(f"Saved: {pt.binary_csv(nolick)}")
 
 
 # ============================================================================
@@ -147,14 +150,17 @@ if __name__ == '__main__':
     parser.add_argument(
         '--only', nargs='+', choices=['rates', 'day0', 'binary'], default=['rates', 'day0', 'binary']
     )
+    parser.add_argument(
+        '--nolick', action='store_true', help='no-lick control (events of step 07 --nolick, -1 to +1 s)'
+    )
     args = parser.parse_args()
 
     results, reward_groups = load_selected_results(
-        os.path.join(rx.RESULTS_DIR, 'reactivation_results_p99.pkl')
+        os.path.join(rx.results_dir(args.nolick), 'reactivation_results_p99.pkl')
     )
     if 'rates' in args.only:
-        run_rates(results, reward_groups)
+        run_rates(results, reward_groups, args.nolick)
     if 'day0' in args.only:
-        run_day0(reward_groups)
+        run_day0(reward_groups, args.nolick)
     if 'binary' in args.only:
-        run_binary(results, reward_groups)
+        run_binary(results, reward_groups, args.nolick)

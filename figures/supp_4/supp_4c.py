@@ -23,6 +23,7 @@ Inputs:  binary participation per cell-day (pipeline/08_participation.py).
 Outputs: <figures_dir>/supp_4/output/supp_4c.pdf, supp_4c_data.csv, supp_4c_stats.csv.
 """
 
+import argparse
 import os
 
 import numpy as np
@@ -211,8 +212,14 @@ def panel_supp4c_proportion_across_days(
 # ============================================================================
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--nolick', action='store_true', help='no-lick control (-1 to +1 s); output names end in _nolick'
+    )
+    nolick = parser.parse_args().nolick
+    sfx = '_nolick' if nolick else ''
     print(f"Output directory: {OUTPUT_DIR}")
-    df = participation.load_binary_participation()
+    df = participation.load_binary_participation(nolick)
 
     print(
         f"\nDataset: {len(df)} cell-day records, "
@@ -220,4 +227,4 @@ if __name__ == '__main__':
         f"{df[['mouse_id', 'roi']].drop_duplicates().shape[0]} unique cells"
     )
 
-    panel_supp4c_proportion_across_days(df, filename='supp_4c')
+    panel_supp4c_proportion_across_days(df, filename=f'supp_4c{sfx}')

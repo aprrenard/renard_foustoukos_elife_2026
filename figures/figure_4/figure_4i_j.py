@@ -22,6 +22,7 @@ Outputs: <figures_dir>/figure_4/output/figure_4i_<sel>_thr<N>.pdf, _stats.csv
          and figure_4j_<sel>_thr<N>.pdf, _data.csv, _stats.csv.
 """
 
+import argparse
 import os
 
 import numpy as np
@@ -265,15 +266,21 @@ def panel_j_participation_across_days(merged_df, per_day_df, output_dir=OUTPUT_D
 # ============================================================================
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--nolick', action='store_true', help='no-lick control (-1 to +1 s); output names end in _nolick'
+    )
+    nolick = parser.parse_args().nolick
+    sfx = '_nolick' if nolick else ''
     print(f"Output directory: {OUTPUT_DIR}")
 
     for threshold in participation.PARTICIPATION_THRESHOLDS:
         tag = participation.thr_tag(threshold)
         print(f"\n--- participation_threshold={threshold} ({tag}) ---")
-        merged_df, per_day_df = participation.load_participation(threshold)
+        merged_df, per_day_df = participation.load_participation(threshold, nolick)
         print(
             f"Dataset: {len(merged_df)} cells, {len(per_day_df)} cell-day records, "
             f"{merged_df['mouse_id'].nunique()} mice"
         )
-        panel_i_participation_vs_lmi(merged_df, filename=f'figure_4i_{tag}')
-        panel_j_participation_across_days(merged_df, per_day_df, filename=f'figure_4j_{tag}')
+        panel_i_participation_vs_lmi(merged_df, filename=f'figure_4i_{tag}{sfx}')
+        panel_j_participation_across_days(merged_df, per_day_df, filename=f'figure_4j_{tag}{sfx}')

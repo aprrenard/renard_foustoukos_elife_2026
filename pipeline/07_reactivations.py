@@ -17,9 +17,13 @@ Outputs: <processed_dir>/reactivation/
              surrogate_thresholds_per_mouse_p<N>.csv
              reactivation_results_p<N>.pkl      (all mice)
              mouse_selection.csv
+         With --nolick (no-lick control: the same trials, -1 to +1 s around
+         no-stim onset), the same files except mouse_selection.csv in
+         reactivation/nolick/.
 
 Usage:
     python pipeline/07_reactivations.py
+    python pipeline/07_reactivations.py --nolick           # no-lick control
     python pipeline/07_reactivations.py --selection-only   # rebuild mouse_selection.csv
 """
 
@@ -88,6 +92,7 @@ def run_surrogates_per_day(
     n_surrogates=N_SURROGATES,
     percentiles=PERCENTILES,
     n_jobs=N_JOBS,
+    window=None,
 ):
     """
     Compute per-day surrogate thresholds for all mice in parallel and save CSVs.
@@ -111,6 +116,7 @@ def run_surrogates_per_day(
             n_surrogates,
             percentiles=percentiles,
             verbose=False,
+            window=window,
         )
         for mouse in mice
     )
@@ -142,6 +148,7 @@ def run_surrogates_per_mouse(
     n_surrogates=N_SURROGATES,
     percentiles=PERCENTILES,
     n_jobs=N_JOBS,
+    window=None,
 ):
     """
     Compute per-mouse surrogate thresholds using pre-learning days, in parallel.
@@ -161,6 +168,7 @@ def run_surrogates_per_mouse(
             n_surrogates,
             percentiles=percentiles,
             verbose=False,
+            window=window,
         )
         for mouse in mice
     )
@@ -193,6 +201,7 @@ def run_reactivation_detection(
     percentile=PERCENTILE_TO_USE,
     threshold_corr=rx.THRESHOLD_CORR,
     n_jobs=N_JOBS,
+    window=None,
 ):
     """
     Detect reactivation events for all mice and save results.
@@ -233,6 +242,7 @@ def run_reactivation_detection(
                 mouse,
                 verbose=False,
                 threshold_dict=threshold_dict,
+                window=window,
             )
             for mouse in mice_list
         )
@@ -246,6 +256,7 @@ def run_reactivation_detection(
         'r_minus_results': r_minus_results,
         'parameters': {
             'trial_type': 'no_stim_correct_rejection',
+            'window': window,
             'use_surrogate_thresholds': use_surrogate_thresholds,
             'percentile': percentile,
             'threshold_corr': threshold_corr,
@@ -293,6 +304,9 @@ if __name__ == '__main__':
         action='store_true',
         help='only rebuild mouse_selection.csv from the existing results file',
     )
+    parser.add_argument(
+        '--nolick', action='store_true', help='no-lick control: trials restricted to -1 to +1 s around onset'
+    )
     args = parser.parse_args()
 
     if args.selection_only:
@@ -304,10 +318,11 @@ if __name__ == '__main__':
             save_mouse_selection(pickle.load(f))
         sys.exit(0)
 
-    output_dir = OUTPUT_DIR
+    window = rx.trial_window(args.nolick)
+    output_dir = rx.results_dir(args.nolick)
 
     print("\n" + "=" * 60)
-    print("REACTIVATION PIPELINE")
+    print("REACTIVATION PIPELINE" + (" - NO-LICK CONTROL (-1 to +1 s)" if args.nolick else ""))
     print("=" * 60)
     print(f"  Output directory: {output_dir}")
     print(f"  Run surrogates: {RUN_SURROGATES}  (mode: {SURROGATE_MODE})")
@@ -321,9 +336,9 @@ if __name__ == '__main__':
     # ------------------------------------------------------------------
     if RUN_SURROGATES:
         if SURROGATE_MODE in ('day', 'both'):
-            run_surrogates_per_day(all_mice_to_process, output_dir=output_dir)
+            run_surrogates_per_day(all_mice_to_process, output_dir=output_dir, window=window)
         if SURROGATE_MODE in ('mouse', 'both'):
-            run_surrogates_per_mouse(all_mice_to_process, output_dir=output_dir)
+            run_surrogates_per_mouse(all_mice_to_process, output_dir=output_dir, window=window)
     else:
         print("\nSkipping surrogate computation (RUN_SURROGATES=False).")
 
@@ -336,10 +351,12 @@ if __name__ == '__main__':
             r_minus_mice,
             output_dir=output_dir,
             percentile=percentile,
+            window=window,
         )
 
         # --------------------------------------------------------------
-        # Part 3: Mouse selection, from the main detection threshold
+        # Part 3: Mouse selection, from the main detection threshold of the
+        # main analysis (the no-lick control uses the same mice)
         # --------------------------------------------------------------
-        if percentile == PERCENTILE_TO_USE:
+        if percentile == PERCENTILE_TO_USE and not args.nolick:
             save_mouse_selection(results_data)

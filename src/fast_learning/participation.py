@@ -59,10 +59,21 @@ SAVGOL_ORDER = 2
 RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 
 
-# Day-0 participation rate, transient frequency and LMI per cell (Supp. 4a-b).
-DAY0_CSV = os.path.join(RESULTS_DIR, 'supp4ab_lmi_data_day0.csv')
-# Binary participation per cell-day from the circular-shift test (Supp. 4c).
-BINARY_CSV = os.path.join(RESULTS_DIR, 'binary_participation_with_lmi.csv')
+# File names: main analysis, or no-lick control (nolick=True, '_nolick' suffix).
+
+
+def _sfx(nolick):
+    return '_nolick' if nolick else ''
+
+
+def day0_csv(nolick=False):
+    """Day-0 participation rate, transient frequency and LMI per cell (Supp. 4a-b)."""
+    return os.path.join(RESULTS_DIR, f'supp4ab_lmi_data_day0{_sfx(nolick)}.csv')
+
+
+def binary_csv(nolick=False):
+    """Binary participation per cell-day from the circular-shift test (Supp. 4c)."""
+    return os.path.join(RESULTS_DIR, f'binary_participation_with_lmi{_sfx(nolick)}.csv')
 
 
 PARTICIPATION_THRESHOLDS = [0.10, 0.20, 0.50]  # main value first, then robustness checks
@@ -72,14 +83,16 @@ def thr_tag(threshold):
     return f'thr{int(round(threshold * 100))}'
 
 
-def rates_csv(threshold=PARTICIPATION_THRESHOLD):
+def rates_csv(threshold=PARTICIPATION_THRESHOLD, nolick=False):
     """Per-cell, per-day participation rates."""
-    return os.path.join(RESULTS_DIR, f'cell_participation_rates_per_day_{thr_tag(threshold)}.csv')
+    return os.path.join(
+        RESULTS_DIR, f'cell_participation_rates_per_day_{thr_tag(threshold)}{_sfx(nolick)}.csv'
+    )
 
 
-def merged_csv(threshold=PARTICIPATION_THRESHOLD):
+def merged_csv(threshold=PARTICIPATION_THRESHOLD, nolick=False):
     """Per-cell baseline / day-0 / post participation rates merged with LMI."""
-    return os.path.join(RESULTS_DIR, f'participation_lmi_merged_{thr_tag(threshold)}.csv')
+    return os.path.join(RESULTS_DIR, f'participation_lmi_merged_{thr_tag(threshold)}{_sfx(nolick)}.csv')
 
 
 def _read(path):
@@ -88,25 +101,25 @@ def _read(path):
     return pd.read_csv(path)
 
 
-def load_participation(threshold=PARTICIPATION_THRESHOLD):
+def load_participation(threshold=PARTICIPATION_THRESHOLD, nolick=False):
     """(merged_df, per_day_df) at one participation threshold, with lmi_category."""
-    merged_df = _read(merged_csv(threshold))
-    per_day_df = _read(rates_csv(threshold))
+    merged_df = _read(merged_csv(threshold, nolick))
+    per_day_df = _read(rates_csv(threshold, nolick))
     if 'lmi_category' not in merged_df.columns:
         merged_df = add_lmi_category(merged_df)
     print(f"Loaded {len(merged_df)} cells and {len(per_day_df)} cell-day records ({thr_tag(threshold)}).")
     return merged_df, per_day_df
 
 
-def load_day0():
+def load_day0(nolick=False):
     """Day-0 participation rate, transient frequency and LMI per cell."""
-    return _read(DAY0_CSV)
+    return _read(day0_csv(nolick))
 
 
-def load_binary_participation():
+def load_binary_participation(nolick=False):
     """Binary participation per cell-day (circular-shift test), with LMI."""
-    df = _read(BINARY_CSV)
-    print(f"Loaded: {BINARY_CSV}  ({len(df)} rows)")
+    df = _read(binary_csv(nolick))
+    print(f"Loaded: {binary_csv(nolick)}  ({len(df)} rows)")
     return df
 
 
@@ -115,7 +128,7 @@ def load_binary_participation():
 # ============================================================================
 
 
-def extract_event_responses(mouse, day, events, participation_threshold=PARTICIPATION_THRESHOLD):
+def extract_event_responses(mouse, day, events, participation_threshold=PARTICIPATION_THRESHOLD, window=None):
     """Per-cell dF/F responses around the reactivation events of one mouse-day.
 
     Uses the trials of reactivations.select_trials_by_type, as the event
@@ -130,7 +143,7 @@ def extract_event_responses(mouse, day, events, participation_threshold=PARTICIP
         mouse, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=True
     )
     xarr_day = xarr.sel(trial=xarr['day'] == day)
-    nostim, _ = reactivations.select_trials_by_type(xarr_day)
+    nostim, _ = reactivations.select_trials_by_type(xarr_day, window)
 
     if len(nostim.trial) < MIN_NOSTIM_TRIALS:
         return None
@@ -183,6 +196,7 @@ def process_mouse_participation(
     mouse,
     mouse_results,
     participation_threshold=PARTICIPATION_THRESHOLD,
+    window=None,
 ):
     """Participation rates across all days for one mouse.
 
@@ -200,6 +214,7 @@ def process_mouse_participation(
                 day,
                 events,
                 participation_threshold=participation_threshold,
+                window=window,
             )
             if resp_df is not None and len(resp_df) > 0:
                 all_responses.append(resp_df)
@@ -322,7 +337,7 @@ def participation_from_3d(
     return rates, len(valid)
 
 
-def participation_with_shifts(mouse, day, events, n_shifts=N_SHIFTS):
+def participation_with_shifts(mouse, day, events, n_shifts=N_SHIFTS, window=None):
     """Binary participation of each cell on one mouse-day.
 
     A cell participates if its participation rate exceeds the
@@ -339,7 +354,7 @@ def participation_with_shifts(mouse, day, events, n_shifts=N_SHIFTS):
             mouse, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=True
         )
         xr_day = xr.sel(trial=xr['day'] == day)
-        nostim, _ = reactivations.select_trials_by_type(xr_day)
+        nostim, _ = reactivations.select_trials_by_type(xr_day, window)
 
         n_cells, n_trials, n_timepoints = nostim.shape
         if n_trials < MIN_NOSTIM_TRIALS:
@@ -391,14 +406,14 @@ def participation_with_shifts(mouse, day, events, n_shifts=N_SHIFTS):
         return None
 
 
-def process_mouse_circular_shift(mouse, mouse_results, n_shifts=N_SHIFTS):
+def process_mouse_circular_shift(mouse, mouse_results, n_shifts=N_SHIFTS, window=None):
     """Binary participation for all days of one mouse. Returns (mouse, DataFrame or None)."""
     dfs = []
     for day in DAYS:
         events = None
         if mouse_results is not None:
             events = mouse_results.get('days', {}).get(day, {}).get('events', None)
-        df = participation_with_shifts(mouse, day, events, n_shifts)
+        df = participation_with_shifts(mouse, day, events, n_shifts, window)
         if df is not None:
             dfs.append(df)
     return mouse, pd.concat(dfs, ignore_index=True) if dfs else None
@@ -426,7 +441,7 @@ def detect_transients(cell_trace):
     return peaks
 
 
-def transient_freq_per_cell(mouse_id, day=0):
+def transient_freq_per_cell(mouse_id, day=0, window=None):
     """Spontaneous transient frequency (events/min) of each cell on one day,
     from correct-rejection no-stim trials (raw dF/F). Returns a DataFrame (mouse_id, roi,
     transient_freq)."""
@@ -438,7 +453,7 @@ def transient_freq_per_cell(mouse_id, day=0):
         print(f"  Warning: Could not load data for {mouse_id}: {e}")
         return pd.DataFrame()
 
-    xarr_day, _ = reactivations.select_trials_by_type(xarr.sel(trial=xarr['day'] == day))
+    xarr_day, _ = reactivations.select_trials_by_type(xarr.sel(trial=xarr['day'] == day), window)
     if len(xarr_day.trial) == 0:
         return pd.DataFrame()
 

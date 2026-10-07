@@ -20,7 +20,8 @@ post-response (1 to 5.6 s). Days are pooled per mouse (each mouse's rate
 averaged over its days).
 
   Left : event rate across the trial, mean across mice with bootstrapped 95% CI.
-  Right: per-mouse rate in the lick-free vs post-response window, paired
+  Right: rate in the lick-free vs post-response window, mean across mice
+         with bootstrapped 95% CI and individual mice (lines); paired
          Wilcoxon signed-rank test per reward group (n = mice).
 Stats file: also R+ vs R- in the lick-free window alone, per day
 (Mann-Whitney U, as Fig. 4h).
@@ -167,14 +168,31 @@ def plot(bin_df, per_mouse, stats, filename):
         g = per_mouse.loc[rg]
         x = np.array([gi * 3, gi * 3 + 1])
         for _, row in g.iterrows():
-            ax.plot(x, [row['lick_free'], row['post_response']], '-', color='grey', linewidth=0.5, alpha=0.6)
-        ax.bar(
-            x,
-            [g['lick_free'].median(), g['post_response'].median()],
-            width=0.7,
+            ax.plot(
+                x,
+                [row['lick_free'], row['post_response']],
+                '-',
+                color='grey',
+                linewidth=0.5,
+                alpha=0.6,
+                zorder=3,
+            )
+        # Bars: mean across mice with bootstrapped 95% CI (seeded); lines: mice.
+        long = g[['lick_free', 'post_response']].melt(var_name='window', value_name='rate')
+        sns.barplot(
+            data=long.assign(x=np.where(long['window'] == 'lick_free', x[0], x[1])),
+            x='x',
+            y='rate',
+            order=list(range(5)),
+            native_scale=True,
             color=GROUP_COLORS[rg],
             alpha=0.7,
             edgecolor='black',
+            errorbar=('ci', 95),
+            seed=0,
+            width=0.7,
+            ax=ax,
+            zorder=1,
         )
         p = stats.query('reward_group == @rg')['p_value'].iloc[0]  # the paired test
         top = np.nanmax(g[['lick_free', 'post_response']].values)
@@ -182,8 +200,9 @@ def plot(bin_df, per_mouse, stats, filename):
             [x[0], x[0], x[1], x[1]], [top * 1.04, top * 1.08, top * 1.08, top * 1.04], 'k-', linewidth=0.8
         )
         ax.text(x.mean(), top * 1.09, format_p(p), ha='center', va='bottom')
-        ax.text(x.mean(), -0.2, rg, transform=ax.get_xaxis_transform(), ha='center', va='top')
+        ax.text(x.mean(), -0.3, rg, transform=ax.get_xaxis_transform(), ha='center', va='top')
     ax.set_xticks([0, 1, 3, 4], ['Lick-\nfree', 'Post', 'Lick-\nfree', 'Post'])
+    ax.set_xlabel('')
     ax.set_xlim(-0.7, 4.7)
     ax.set_ylim(bottom=0, top=15)
     ax.set_ylabel('Reactivation rate (events/min)')

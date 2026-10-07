@@ -26,6 +26,7 @@ Outputs: <figures_dir>/supp_4/output/supp_4a.pdf, supp_4b.pdf and their
          _data.csv / _stats.csv.
 """
 
+import argparse
 import os
 
 import numpy as np
@@ -326,15 +327,21 @@ def panel_supp4b_partial_corr(
 # ============================================================================
 
 if __name__ == '__main__':
-    data_csv = participation.DAY0_CSV
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--nolick', action='store_true', help='no-lick control (-1 to +1 s); output names end in _nolick'
+    )
+    nolick = parser.parse_args().nolick
+    sfx = '_nolick' if nolick else ''
+    data_csv = participation.day0_csv(nolick)
     print(f"Input:            {data_csv}")
     print(f"Output directory: {OUTPUT_DIR}")
-    participation.load_day0()  # fails early if step 08 has not been run
+    participation.load_day0(nolick)  # fails early if step 08 has not been run
 
     print("\nPlotting panel supp_4a...")
-    panel_supp4a_scatter(data_csv, filename='supp_4a')
+    panel_supp4a_scatter(data_csv, filename=f'supp_4a{sfx}')
 
     print("\nPlotting panel supp_4b...")
-    panel_supp4b_partial_corr(data_csv, filename='supp_4b')
+    panel_supp4b_partial_corr(data_csv, filename=f'supp_4b{sfx}')
 
     print(f"\nDone. Figures saved to: {OUTPUT_DIR}")

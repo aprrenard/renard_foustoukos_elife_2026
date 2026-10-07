@@ -71,6 +71,22 @@ MOUSE_SELECTION_CSV = os.path.join(paths.processed_dir, 'reactivation', 'mouse_s
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 
+# No-lick control: the same trials restricted to -1 to +1 s around no-stim
+# onset, the part of the trial in which correct-rejection trials have no lick
+# (no-lick period before onset, response window 0-1 s). Results in
+# RESULTS_DIR/nolick (pipeline steps 07 and 08 with --nolick).
+NOLICK_WINDOW = (-1, 1)
+
+
+def results_dir(nolick=False):
+    """Folder of the reactivation results (main analysis or no-lick control)."""
+    return os.path.join(RESULTS_DIR, 'nolick') if nolick else RESULTS_DIR
+
+
+def trial_window(nolick=False):
+    """Time window (s) of the trials used, None for the whole trial."""
+    return NOLICK_WINDOW if nolick else None
+
 
 # ============================================================================
 # Helpers
@@ -133,27 +149,31 @@ def compute_template_correlation(data, template):
     return correlations
 
 
-def select_trials_by_type(xarray_day):
+def select_trials_by_type(xarray_day, window=None):
     """Correct-rejection trials of one day: no-stim trials without a lick in
     the response window, whole trial (-1 to 6 s around no-stim onset).
 
     Mice do not lick before onset (no-lick period) nor in the 0-1 s response
     window of these trials; licks after 1 s are possible and are checked not
-    to drive events (figures/revisions/figure_4h_event_timing.py).
+    to drive events (figures/revisions/figure_4h_event_timing.py). window
+    (start, stop) in s restricts the frames (no-lick control: NOLICK_WINDOW).
     Returns (trials, number of trials)."""
     selected = xarray_day.sel(trial=(xarray_day['no_stim'] == 1) & (xarray_day['lick_flag'] == 0))
+    if window is not None:
+        selected = imaging.select_time(selected, *window)
     return selected, len(selected.trial)
 
 
-def load_selected_trials(mouse, day, folder=None):
+def load_selected_trials(mouse, day, folder=None, window=None):
     """Correct-rejection trials of one mouse-day (raw dF/F, cells x trials x
     time), as used for reactivation detection. Event indices of a reactivation
-    results file refer to these trials' concatenated trial x time axis."""
+    results file refer to these trials' concatenated trial x time axis, so
+    pass the window of that file (its 'parameters' entry)."""
     xarray_learning = imaging.load_mouse_xarray(
         mouse, folder or paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=False
     )
     xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
-    selected, _ = select_trials_by_type(xarray_day)
+    selected, _ = select_trials_by_type(xarray_day, window)
     return selected
 
 
@@ -363,7 +383,7 @@ def get_threshold_for_mouse_day(threshold_dict, mouse, day, default_threshold=TH
 # ============================================================================
 
 
-def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=None):
+def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=None, window=None):
     """
     Detect reactivation events for a single mouse across all days.
 
@@ -378,7 +398,7 @@ def analyze_mouse_reactivation(mouse, days=DAYS, verbose=False, threshold_dict=N
         try:
             template, cells_mask = create_whisker_template(mouse, day, THRESHOLD_DFF, verbose=verbose)
 
-            selected_trials = load_selected_trials(mouse, day, folder=folder)
+            selected_trials = load_selected_trials(mouse, day, folder=folder, window=window)
             n_selected_trials = len(selected_trials.trial)
             if n_selected_trials == 0:
                 continue
@@ -521,6 +541,7 @@ def analyze_surrogates_per_day(
     n_surrogates=1000,
     percentiles=(99,),
     verbose=False,
+    window=None,
 ):
     """
     Compute per-day surrogate thresholds for one mouse.
@@ -541,7 +562,7 @@ def analyze_surrogates_per_day(
                 mouse, folder, 'tensor_xarray_learning_data.nc', subtracted=False
             )
             xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
-            nostim, n_trials = select_trials_by_type(xarray_day)
+            nostim, n_trials = select_trials_by_type(xarray_day, window)
             if n_trials < 5:
                 continue
 
@@ -593,6 +614,7 @@ def process_mouse_surrogates_per_day(
     n_surrogates,
     percentiles=(99,),
     verbose=False,
+    window=None,
 ):
     """Parallel wrapper for per-day surrogates."""
     results_dfs, surrogate_data = analyze_surrogates_per_day(
@@ -602,6 +624,7 @@ def process_mouse_surrogates_per_day(
         n_surrogates=n_surrogates,
         percentiles=percentiles,
         verbose=verbose,
+        window=window,
     )
     return (mouse, results_dfs, surrogate_data)
 
@@ -612,6 +635,7 @@ def analyze_surrogates_per_mouse(
     n_surrogates=1000,
     percentiles=(99,),
     verbose=False,
+    window=None,
 ):
     """
     Compute single per-mouse surrogate threshold using pre-learning days pooled.
@@ -640,7 +664,7 @@ def analyze_surrogates_per_mouse(
                 continue
 
             xarray_day = xarray_learning.sel(trial=xarray_learning['day'] == day)
-            nostim, n_nostim_trials = select_trials_by_type(xarray_day)
+            nostim, n_nostim_trials = select_trials_by_type(xarray_day, window)
             if n_nostim_trials < 5:
                 continue
 
@@ -706,7 +730,9 @@ def analyze_surrogates_per_mouse(
     return results_dfs, surrogate_data
 
 
-def process_mouse_surrogates_per_mouse(mouse, threshold_dff, n_surrogates, percentiles=(99,), verbose=False):
+def process_mouse_surrogates_per_mouse(
+    mouse, threshold_dff, n_surrogates, percentiles=(99,), verbose=False, window=None
+):
     """Parallel wrapper for per-mouse surrogates."""
     results_dfs, surrogate_data = analyze_surrogates_per_mouse(
         mouse,
@@ -714,6 +740,7 @@ def process_mouse_surrogates_per_mouse(mouse, threshold_dff, n_surrogates, perce
         n_surrogates=n_surrogates,
         percentiles=percentiles,
         verbose=verbose,
+        window=window,
     )
     return (mouse, results_dfs, surrogate_data)
 

@@ -13,6 +13,7 @@ Result files are loaded from data_processed/reactivation/.
 Figures and CSVs are saved to output/.
 """
 
+import argparse
 import os
 import pickle
 
@@ -243,11 +244,17 @@ def _load_and_plot(results_file, filename):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--nolick', action='store_true', help='no-lick control (-1 to +1 s); output names end in _nolick'
+    )
+    nolick = parser.parse_args().nolick
+    sfx = '_nolick' if nolick else ''
     for pstr in PERCENTILES:
-        results_file = os.path.join(rx.RESULTS_DIR, f'reactivation_results_{pstr}.pkl')
+        results_file = os.path.join(rx.results_dir(nolick), f'reactivation_results_{pstr}.pkl')
         if not os.path.exists(results_file) and pstr != 'p99':
             print(f'{results_file} not found, skipped.')
             continue
         # p99 is the main threshold; p995 and p999 are robustness checks.
-        filename = 'figure_4h' if pstr == 'p99' else f'figure_4h_{pstr}'
+        filename = ('figure_4h' if pstr == 'p99' else f'figure_4h_{pstr}') + sfx
         _load_and_plot(results_file, filename=filename)

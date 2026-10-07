@@ -38,7 +38,9 @@ PIPELINE = [
     ('05_lmi', 'pipeline/05_lmi.py', [], True),
     ('06_decoder', 'pipeline/06_decoder.py', [], True),
     ('07_reactivations', 'pipeline/07_reactivations.py', [], True),
+    ('07_reactivations_nolick', 'pipeline/07_reactivations.py', ['--nolick'], True),
     ('08_participation', 'pipeline/08_participation.py', [], True),
+    ('08_participation_nolick', 'pipeline/08_participation.py', ['--nolick'], True),
     ('09_pairwise_correlations', 'pipeline/09_pairwise_correlations.py', [], True),
 ]
 
@@ -53,6 +55,8 @@ FIGURE_DIRS = [
     'supp_4',
     'revisions',
 ]
+# Figure scripts also run for the no-lick reactivation control (-1 to +1 s).
+NOLICK_FIGURES = {'figure_4h', 'figure_4i_j', 'supp_4a_b', 'supp_4c'}
 # Revision analyses with a slow computation of their own; --recompute forces it.
 RECOMPUTE = {'figure_3f_LMIshuffles', 'figure_4h_shuffle_control'}
 
@@ -62,6 +66,8 @@ def figure_steps():
     for d in FIGURE_DIRS:
         for script in sorted((REPO / 'figures' / d).glob('*.py')):
             steps.append((script.stem, str(script.relative_to(REPO)), [], True, d))
+            if script.stem in NOLICK_FIGURES:
+                steps.append((f'{script.stem}_nolick', str(script.relative_to(REPO)), ['--nolick'], True, d))
     return steps
 
 
