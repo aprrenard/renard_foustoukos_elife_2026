@@ -1,35 +1,6 @@
 """
 Figure 3h-i revision: what drives the change in within-day similarity?
 
-Reviewer comment: cosine similarity is scale-invariant, so uniform suppression
-would leave it unchanged; a decrease therefore implies heterogeneous
-suppression, reduced signal-to-noise or increased variability.
-
-Cosine similarity is scale-invariant only for noise-free vectors. A single
-mapping trial is x_i = mu + e_i: the mean evoked pattern mu (signal) plus
-trial-to-trial noise e_i. For two trials of the same day, in high dimension,
-
-    cos(x_i, x_j) ~ ||mu||^2 / (||mu||^2 + E||e||^2) = SNR / (1 + SNR),
-
-so scaling mu down with unchanged noise lowers trial-to-trial similarity.
-For each mouse and day (same response vectors as Fig. 3h-i: last 40 mapping
-trials, mean dF/F over 0-300 ms, every cell) this script computes
-
-    noise power   N = sum over cells of the trial-to-trial variance,
-    signal power  S = ||mean response||^2 - N / n_trials (bias-corrected),
-
-and compares the observed within-day cosine with the predicted S / (S + N).
-Pre (days -2, -1) vs post (days +1, +2) within each reward group: per-mouse
-means, paired Wilcoxon signed-rank test (n = mice).
-
-Uniform vs heterogeneous change: the Pearson correlation across cells
-between a mouse's mean pre and mean post response patterns, divided by the
-noise ceiling sqrt(rel_pre * rel_post), where rel is the split-half
-reliability of each period's mean pattern (Spearman-Brown corrected, mean of
-N_SPLITS random splits). A uniform scaling of the pattern gives a corrected
-correlation of 1; values below 1 mean that cells changed by different
-amounts. Tested against 1 with a Wilcoxon signed-rank test (n = mice).
-
 Outputs: <figures_dir>/revisions/figure_3h_i_signal_noise/output/
     signal_noise.pdf, signal_noise_data.csv (mouse x day),
     signal_noise_stats.csv, pattern_preservation_data.csv.
@@ -223,7 +194,7 @@ def compute_stats(day_df, pattern_df):
 # ============================================================================
 
 
-def paired_panel(ax, pp, metric, ylabel, stats):
+def paired_panel(ax, pp, metric, ylabel, stats, ylim):
     for gi, rg in enumerate(['R+', 'R-']):
         g = pp.loc[rg][metric]
         x = np.array([gi * 3, gi * 3 + 1])
@@ -246,30 +217,17 @@ def paired_panel(ax, pp, metric, ylabel, stats):
         ax.text(x.mean(), -0.2, rg, transform=ax.get_xaxis_transform(), ha='center', va='top')
     ax.set_xticks([0, 1, 3, 4], ['Pre', 'Post', 'Pre', 'Post'])
     ax.set_xlim(-0.7, 4.7)
+    ax.set_ylim(*ylim)
     ax.set_ylabel(ylabel)
 
 
 def plot(day_df, pattern_df, pp, stats, output_dir=OUTPUT_DIR, filename='signal_noise'):
     set_style()
-    fig, axes = plt.subplots(1, 4, figsize=panel_size(4))
-    paired_panel(axes[0], pp, 'signal_power', 'Signal power', stats)
-    paired_panel(axes[1], pp, 'noise_power', 'Noise power', stats)
+    fig, axes = plt.subplots(1, 3, figsize=panel_size(3))
+    paired_panel(axes[0], pp, 'signal_power', 'Signal power', stats, ylim=(0, 15))
+    paired_panel(axes[1], pp, 'noise_power', 'Noise power', stats, ylim=(0, 20))
 
     ax = axes[2]
-    for rg in ['R+', 'R-']:
-        g = day_df[day_df['reward_group'] == rg]
-        ax.scatter(
-            g['cosine_predicted'], g['cosine_observed'], s=4, color=GROUP_COLORS[rg], linewidths=0, label=rg
-        )
-    lim = [0, max(day_df[['cosine_observed', 'cosine_predicted']].max()) * 1.05]
-    ax.plot(lim, lim, '--', color='grey', linewidth=0.6)
-    r = stats.query("measure == 'observed vs predicted within-day cosine'")['statistic'].iloc[0]
-    ax.text(0.05, 0.95, f'r = {r:.2f}', transform=ax.transAxes, va='top')
-    ax.set_xlabel('Predicted cosine, SNR/(1+SNR)')
-    ax.set_ylabel('Within-day cosine (Fig. 3i)')
-    ax.legend(frameon=False, loc='lower right')
-
-    ax = axes[3]
     sns.swarmplot(
         data=pattern_df,
         x='reward_group',
@@ -282,11 +240,12 @@ def plot(day_df, pattern_df, pp, stats, output_dir=OUTPUT_DIR, filename='signal_
         ax=ax,
     )
     ax.axhline(1, color='grey', linestyle='--', linewidth=0.6)
+    ax.set_ylim(0, 1)
     for gi, rg in enumerate(['R+', 'R-']):
         p = stats.query("reward_group == @rg and measure.str.startswith('r_corrected')", engine='python')[
             'p_value'
         ].iloc[0]
-        ax.text(gi, 1.05, format_p(p), ha='center', va='bottom')
+        ax.text(gi, 1.02, format_p(p), ha='center', va='bottom')
     ax.set_xlabel('')
     ax.set_ylabel('Pre-post pattern correlation\n(noise-corrected)')
     sns.despine()
