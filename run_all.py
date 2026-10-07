@@ -58,7 +58,7 @@ FIGURE_DIRS = [
 # Figure scripts also run for the no-lick reactivation control (-1 to +1 s).
 NOLICK_FIGURES = {'figure_4h', 'figure_4i_j', 'supp_4a_b', 'supp_4c'}
 # Revision analyses with a slow computation of their own; --recompute forces it.
-RECOMPUTE = {'figure_3f_LMIshuffles', 'figure_4h_shuffle_control'}
+RECOMPUTE = {'figure_3f_LMIshuffles', 'figure_4h_shuffle_control', 'figure_4i_j_heldout_cells'}
 
 
 def figure_steps():

@@ -139,6 +139,7 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | — | [`figures/revisions/figure_3h_i_signal_noise.py`](figures/revisions/figure_3h_i_signal_noise.py) | What drives the change in within-day similarity? |
 | — | [`figures/revisions/figure_4h_event_timing.py`](figures/revisions/figure_4h_event_timing.py) | Are reactivation events over-represented when mice can lick? |
 | — | [`figures/revisions/figure_4h_shuffle_control.py`](figures/revisions/figure_4h_shuffle_control.py) | Shuffled-template reactivation detection |
+| — | [`figures/revisions/figure_4i_j_heldout_cells.py`](figures/revisions/figure_4i_j_heldout_cells.py) | Participation measured in cells that do not define the events |
 | — | [`figures/revisions/movement_state_summary.py`](figures/revisions/movement_state_summary.py) | Facial/whisker movement during the passive mapping epoch, across days |
 <!-- figure-table:end -->
 
