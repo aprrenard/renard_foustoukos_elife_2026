@@ -42,7 +42,6 @@ from fast_learning import paths, participation as pt, reactivations as rx
 N_JOBS = 35
 
 RESULTS_DIR = pt.RESULTS_DIR
-REACTIVATION_RESULTS_FILE = os.path.join(RESULTS_DIR, 'reactivation_results_p99.pkl')
 LMI_RESULTS_CSV = os.path.join(paths.processed_dir, 'lmi_results.csv')
 
 
@@ -96,9 +95,9 @@ def run_rates(results, reward_groups, selection, no_lick_only, time_window):
         print(f"Saved: {pt.merged_csv(threshold, selection)} ({len(merged)} cells)")
 
 
-def run_day0(reward_groups):
+def run_day0(reward_groups, selection='allnostim'):
     """Day-0 participation rate, transient frequency and LMI per cell."""
-    part_df = pd.read_csv(pt.rates_csv(pt.PARTICIPATION_THRESHOLD))
+    part_df = pd.read_csv(pt.rates_csv(pt.PARTICIPATION_THRESHOLD, selection))
     part_df = part_df[part_df['day'] == 0][['mouse_id', 'roi', 'participation_rate']].copy()
     if len(part_df) == 0:
         raise RuntimeError("No day-0 participation data found.")
@@ -115,18 +114,21 @@ def run_day0(reward_groups):
     merged['reward_group'] = merged['mouse_id'].map(reward_groups)
     merged = merged.dropna(subset=['reward_group', 'transient_freq', 'participation_rate', 'lmi'])
 
-    merged.to_csv(pt.DAY0_CSV, index=False)
-    print(f"Saved: {pt.DAY0_CSV}  ({len(merged)} cells, {merged['mouse_id'].nunique()} mice)")
+    merged.to_csv(pt.day0_csv(selection), index=False)
+    print(f"Saved: {pt.day0_csv(selection)}  ({len(merged)} cells, {merged['mouse_id'].nunique()} mice)")
 
 
-def run_binary(results, reward_groups):
+def run_binary(results, reward_groups, selection='allnostim', no_lick_only=False, time_window=None):
     """Binary participation per cell-day (circular-shift test), merged with LMI."""
     print(
         f"\nRunning circular-shift test for {len(results)} mice "
         f"({pt.N_SHIFTS} shifts x {len(pt.DAYS)} days each) ..."
     )
     raw = Parallel(n_jobs=N_JOBS, verbose=5)(
-        delayed(pt.process_mouse_circular_shift)(mouse, results[mouse], pt.N_SHIFTS) for mouse in results
+        delayed(pt.process_mouse_circular_shift)(
+            mouse, results[mouse], pt.N_SHIFTS, no_lick_only, time_window
+        )
+        for mouse in results
     )
     participation_df = pd.concat([df for _, df in raw if df is not None], ignore_index=True)
     participation_df['reward_group'] = participation_df['mouse_id'].map(reward_groups)
@@ -138,8 +140,8 @@ def run_binary(results, reward_groups):
         on=['mouse_id', 'roi'],
         how='inner',
     )
-    merged.to_csv(pt.BINARY_CSV, index=False)
-    print(f"Saved: {pt.BINARY_CSV}")
+    merged.to_csv(pt.binary_csv(selection), index=False)
+    print(f"Saved: {pt.binary_csv(selection)}")
 
 
 # ============================================================================
@@ -155,23 +157,19 @@ if __name__ == '__main__':
         '--selection',
         choices=list(rx.SELECTIONS),
         default='allnostim',
-        help="trial selection of the reactivation events; other than allnostim, 'rates' only",
+        help='trial selection of the reactivation events',
     )
     parser.add_argument('--nolick', action='store_true', help='same as --selection nolick')
     args = parser.parse_args()
 
     selection = 'nolick' if args.nolick else args.selection
-    if selection != 'allnostim':
-        no_lick_only, time_window = rx.SELECTIONS[selection]
-        results, reward_groups = load_selected_results(
-            os.path.join(rx.selection_dir(selection), 'reactivation_results_p99.pkl')
-        )
+    no_lick_only, time_window = rx.SELECTIONS[selection]
+    results, reward_groups = load_selected_results(
+        os.path.join(rx.selection_dir(selection), 'reactivation_results_p99.pkl')
+    )
+    if 'rates' in args.only:
         run_rates(results, reward_groups, selection, no_lick_only=no_lick_only, time_window=time_window)
-    else:
-        results, reward_groups = load_selected_results(REACTIVATION_RESULTS_FILE)
-        if 'rates' in args.only:
-            run_rates(results, reward_groups, 'allnostim', no_lick_only=False, time_window=None)
-        if 'day0' in args.only:
-            run_day0(reward_groups)
-        if 'binary' in args.only:
-            run_binary(results, reward_groups)
+    if 'day0' in args.only:
+        run_day0(reward_groups, selection)
+    if 'binary' in args.only:
+        run_binary(results, reward_groups, selection, no_lick_only, time_window)

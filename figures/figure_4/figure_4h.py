@@ -38,8 +38,8 @@ DAYS = [-2, -1, 0, 1, 2]
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 
 # Trial selection of the reactivation events (--selection; see
-# fast_learning.reactivations.SELECTIONS). allnostim keeps the original file
-# names (figure_4h, figure_4h_p995, figure_4h_p999); the others are suffixed.
+# fast_learning.reactivations.SELECTIONS); default: correct-rejection no-stim
+# trials, whole trial. Files: figure_4h_<selection>_<percentile>.
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 PERCENTILES = ['p99', 'p995', 'p999']
@@ -250,15 +250,12 @@ def _load_and_plot(results_file, filename):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Figure 4h: reactivation rate across days.')
-    parser.add_argument('--selection', choices=list(rx.SELECTIONS), default='allnostim')
+    parser.add_argument('--selection', choices=list(rx.SELECTIONS), default='nolickfull')
     selection = parser.parse_args().selection
     for pstr in PERCENTILES:
         results_file = os.path.join(rx.selection_dir(selection), f'reactivation_results_{pstr}.pkl')
         if not os.path.exists(results_file) and pstr != 'p99':
             print(f'{results_file} not found, skipped.')
             continue
-        if selection == 'allnostim':
-            filename = 'figure_4h' if pstr == 'p99' else f'figure_4h_{pstr}'
-        else:
-            filename = f'figure_4h_{selection}_{pstr}'
+        filename = f'figure_4h_{selection}_{pstr}'
         _load_and_plot(results_file, filename=filename)

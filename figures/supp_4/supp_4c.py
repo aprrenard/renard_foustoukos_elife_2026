@@ -23,6 +23,7 @@ Inputs:  binary participation per cell-day (pipeline/08_participation.py).
 Outputs: <figures_dir>/supp_4/output/supp_4c.pdf, supp_4c_data.csv, supp_4c_stats.csv.
 """
 
+import argparse
 import os
 
 import numpy as np
@@ -30,12 +31,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from fast_learning import paths, participation
+from fast_learning import paths, participation, reactivations as rx
 from fast_learning.stats import format_p, per_mouse_slope_test, significance_stars
 from fast_learning.plotting import save_figure, set_style, panel_size
 
 
 DAYS = participation.DAYS
+# Trial selection of the reactivation events (--selection; see
+# fast_learning.reactivations.SELECTIONS).
+DEFAULT_SELECTION = 'nolickfull'
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_4', 'output')
 
 
@@ -211,8 +215,11 @@ def panel_supp4c_proportion_across_days(
 # ============================================================================
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--selection', choices=list(rx.SELECTIONS), default=DEFAULT_SELECTION)
+    selection = parser.parse_args().selection
     print(f"Output directory: {OUTPUT_DIR}")
-    df = participation.load_binary_participation()
+    df = participation.load_binary_participation(selection)
 
     print(
         f"\nDataset: {len(df)} cell-day records, "
@@ -220,4 +227,4 @@ if __name__ == '__main__':
         f"{df[['mouse_id', 'roi']].drop_duplicates().shape[0]} unique cells"
     )
 
-    panel_supp4c_proportion_across_days(df, filename='supp_4c')
+    panel_supp4c_proportion_across_days(df, filename=f'supp_4c_{selection}')

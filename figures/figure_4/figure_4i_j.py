@@ -42,7 +42,8 @@ from fast_learning.stats import format_p, lmm_slope, per_mouse_slope_test, signi
 DAYS = [-2, -1, 0, 1, 2]
 
 # Trial selection of the reactivation events: --selection (see
-# fast_learning.reactivations.SELECTIONS), default all no-stim trials.
+# fast_learning.reactivations.SELECTIONS), default correct-rejection no-stim
+# trials over the whole trial.
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 
@@ -269,7 +270,7 @@ def panel_j_participation_across_days(merged_df, per_day_df, output_dir=OUTPUT_D
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Figure 4i-j: participation in reactivations vs LMI.')
-    parser.add_argument('--selection', choices=list(rx.SELECTIONS), default='allnostim')
+    parser.add_argument('--selection', choices=list(rx.SELECTIONS), default='nolickfull')
     SELECTION = parser.parse_args().selection
     print(f"Trial selection:  {SELECTION}")
     print(f"Output directory: {OUTPUT_DIR}")

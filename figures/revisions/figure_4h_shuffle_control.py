@@ -11,9 +11,9 @@ fast_learning/reactivations.py, so it is not feasible without new data
 collection.)
 
 For each mouse and day, this script reuses the already-computed real
-template and detection threshold from reactivation_results_p99.pkl
-(RESULTS_DIR, original all-no-stim-trials variant) and the same no-stim
-trial data (reloaded from the tensors with load_selected_trials), and detects "reactivation" events with N_SHUFFLES=1000
+template and detection threshold from reactivation_results_p99.pkl of the
+chosen trial selection (--selection, default correct-rejection no-stim
+trials over the whole trial) and the same trial data (reloaded from the tensors with load_selected_trials), and detects "reactivation" events with N_SHUFFLES=1000
 cell-identity-shuffled versions of that template instead — same real
 neural data, same fixed detection threshold as the real template (not
 recalibrated per shuffle, which would let every shuffled template earn its
@@ -55,7 +55,7 @@ import seaborn as sns
 from scipy.stats import wilcoxon
 from joblib import Parallel, delayed
 
-from fast_learning import paths
+from fast_learning import paths, reactivations as rx
 from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.reactivations import (
     detect_reactivation_events,
@@ -65,8 +65,6 @@ from fast_learning.reactivations import (
 )
 from fast_learning.stats import significance_stars
 from fast_learning.stats import format_p
-
-REACTIVATION_RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 
 
 # ============================================================================
@@ -79,9 +77,9 @@ GLOBAL_SEED = 42  # fixed for reproducibility of this stochastic control
 PERCENTILE_TAG = 'p99'  # detection threshold variant to use (see plan)
 N_JOBS = 35
 
-REACTIVATION_RESULTS_FILE = os.path.join(
-    REACTIVATION_RESULTS_DIR, f'reactivation_results_{PERCENTILE_TAG}.pkl'
-)
+# Trial selection of the reactivation events (--selection; see
+# fast_learning.reactivations.SELECTIONS).
+DEFAULT_SELECTION = 'nolickfull'
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_4h_shuffle_control', 'output')
 
 
@@ -181,7 +179,7 @@ def _compute_shuffled_rates_for_mouse_day(day_results, selected_trials, n_shuffl
     return shuffled_rates
 
 
-def _process_mouse(mouse, results, n_shuffles):
+def _process_mouse(mouse, results, n_shuffles, no_lick_only=False, time_window=None):
     """Compute shuffled-template event rates for all days of one mouse.
 
     Returns (shuffle_rows, real_rows): long-format lists of dicts.
@@ -192,8 +190,10 @@ def _process_mouse(mouse, results, n_shuffles):
             continue
         seed = _seed_for(mouse, day)
         try:
-            # All no-stim trials, full window: the selection of the p99 results file.
-            selected_trials = load_selected_trials(mouse, day)
+            # Same trial selection as the results file the template comes from.
+            selected_trials = load_selected_trials(
+                mouse, day, no_lick_only=no_lick_only, time_window=time_window
+            )
             shuffled_rates = _compute_shuffled_rates_for_mouse_day(
                 day_results, selected_trials, n_shuffles=n_shuffles, seed=seed
             )
@@ -225,7 +225,14 @@ def _process_mouse(mouse, results, n_shuffles):
 # ============================================================================
 
 
-def compute_shuffle_control(r_plus_results, r_minus_results, n_shuffles=N_SHUFFLES, n_jobs=N_JOBS):
+def compute_shuffle_control(
+    r_plus_results,
+    r_minus_results,
+    n_shuffles=N_SHUFFLES,
+    n_jobs=N_JOBS,
+    no_lick_only=False,
+    time_window=None,
+):
     """Run the shuffle-detection pipeline for all mice in parallel.
 
     Returns (long_df, real_df):
@@ -247,7 +254,8 @@ def compute_shuffle_control(r_plus_results, r_minus_results, n_shuffles=N_SHUFFL
     print(f"\nComputing {n_shuffles} shuffled-template detections for {len(mice)} mice...")
 
     outputs = Parallel(n_jobs=n_jobs, verbose=10)(
-        delayed(_process_mouse)(mouse, all_results[mouse], n_shuffles) for mouse in mice
+        delayed(_process_mouse)(mouse, all_results[mouse], n_shuffles, no_lick_only, time_window)
+        for mouse in mice
     )
 
     shuffle_rows, real_rows = [], []
@@ -424,19 +432,26 @@ if __name__ == '__main__':
     parser.add_argument(
         '--recompute', action='store_true', help='rerun the shuffle detection even if its CSVs are cached'
     )
+    parser.add_argument('--selection', choices=list(rx.SELECTIONS), default=DEFAULT_SELECTION)
     args = parser.parse_args()
+    no_lick_only, time_window = rx.SELECTIONS[args.selection]
+    results_file = os.path.join(
+        rx.selection_dir(args.selection), f'reactivation_results_{PERCENTILE_TAG}.pkl'
+    )
     print(f"Output directory: {OUTPUT_DIR}")
-    print(f"Reactivation results: {REACTIVATION_RESULTS_FILE}")
+    print(f"Reactivation results: {results_file}")
     print(f"N shuffles: {N_SHUFFLES}")
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    long_csv = os.path.join(OUTPUT_DIR, 'shuffle_control_events_long.csv')
-    per_mouse_csv = os.path.join(OUTPUT_DIR, 'shuffle_control_per_mouse.csv')
-    group_csv = os.path.join(OUTPUT_DIR, 'shuffle_control_group_stats.csv')
+    long_csv = os.path.join(OUTPUT_DIR, f'shuffle_control_{args.selection}_events_long.csv')
+    per_mouse_csv = os.path.join(OUTPUT_DIR, f'shuffle_control_{args.selection}_per_mouse.csv')
+    group_csv = os.path.join(OUTPUT_DIR, f'shuffle_control_{args.selection}_group_stats.csv')
 
     if args.recompute or not all(os.path.exists(p) for p in [long_csv, per_mouse_csv, group_csv]):
-        r_plus_results, r_minus_results = _load_reactivation_results(REACTIVATION_RESULTS_FILE)
-        long_df, real_df = compute_shuffle_control(r_plus_results, r_minus_results)
+        r_plus_results, r_minus_results = _load_reactivation_results(results_file)
+        long_df, real_df = compute_shuffle_control(
+            r_plus_results, r_minus_results, no_lick_only=no_lick_only, time_window=time_window
+        )
         long_df.to_csv(long_csv, index=False)
         print(f"Saved: {long_csv} ({len(long_df)} rows)")
 
@@ -454,5 +469,7 @@ if __name__ == '__main__':
         group_stats_df = pd.read_csv(group_csv)
         real_df = per_mouse_df[['mouse_id', 'reward_group', 'day', 'real_event_frequency']]
 
-    panel_4h_shuffle_control(long_df, real_df, group_stats_df)
+    panel_4h_shuffle_control(
+        long_df, real_df, group_stats_df, filename=f'figure_4h_shuffle_control_{args.selection}'
+    )
     print("\nDone.")
