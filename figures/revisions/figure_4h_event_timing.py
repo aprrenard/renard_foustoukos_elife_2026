@@ -8,14 +8,22 @@ response window, but a mouse can lick after 1 s. If lick-related activity
 produced template matches, the reactivation rate would be higher after 1 s
 than in the lick-free part of the trial.
 
+Events are detected within each trial, so a peak cannot be confirmed in the
+first and last frames of a trial: the event rate falls off within ~0.4 s of
+the trial edges (-1 s and 6 s). EDGE_S is left out of both windows so that
+they are compared on equal terms.
+
 For each mouse and day, event times are taken from the reactivation results
-of step 07, and rates (events/min) are computed in time bins across the
-trial and in two windows: lick-free (-1 to 1 s) and post-response (1 to 6 s).
-Days are pooled per mouse (each mouse's rate averaged over its days).
+of step 07, and rates (events/min) are computed in 0.5 s bins across the
+trial (edges excluded) and in two windows: lick-free (-0.6 to 1 s) and
+post-response (1 to 5.6 s). Days are pooled per mouse (each mouse's rate
+averaged over its days).
 
   Left : event rate across the trial, mean across mice with bootstrapped 95% CI.
   Right: per-mouse rate in the lick-free vs post-response window, paired
          Wilcoxon signed-rank test per reward group (n = mice).
+Stats file: also R+ vs R- in the lick-free window alone, per day
+(Mann-Whitney U, as Fig. 4h).
 
 Outputs: <figures_dir>/revisions/figure_4h_event_timing/output/
     event_timing.pdf, _data.csv (mouse x day x window),
@@ -29,23 +37,25 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import wilcoxon
+from scipy.stats import mannwhitneyu, wilcoxon
 
 from fast_learning import paths, reactivations as rx
 from fast_learning.plotting import panel_size, reward_palette, save_figure, set_style
 from fast_learning.stats import format_p, significance_stars
 from fast_learning.tensors import time_axis
 
-LICK_FREE = (-1, 1)  # s: no-lick period before onset and response window
-POST_RESPONSE = (1, 6)  # s: licks possible in correct rejections
+EDGE_S = 0.4  # s at each trial edge where per-trial peak detection is depleted
+LICK_FREE = (-1 + EDGE_S, 1)  # s: no-lick period before onset and response window
+POST_RESPONSE = (1, 6 - EDGE_S)  # s: licks possible in correct rejections
 BIN_S = 0.5
+PROFILE = (-0.5, 5.5)  # s: range of the binned time course, away from the edges
 GROUP_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_4h_event_timing', 'output')
 
 
 def event_rates(results, t):
     """Per mouse x day: event rates per time bin and per window (events/min)."""
-    edges = np.arange(t[0], t[-1] + BIN_S, BIN_S)
+    edges = np.arange(PROFILE[0], PROFILE[1] + 1e-9, BIN_S)
     frame_s = t[1] - t[0]
     window_rows, bin_rows = [], []
     for rg, key in [('R+', 'r_plus_results'), ('R-', 'r_minus_results')]:
@@ -70,7 +80,7 @@ def event_rates(results, t):
                         )
                     )
                 counts, _ = np.histogram(ev_t, bins=edges)
-                frames_per_bin, _ = np.histogram(t, bins=edges)
+                frames_per_bin, _ = np.histogram(t[(t >= edges[0]) & (t < edges[-1])], bins=edges)
                 for i, c in enumerate(counts):
                     minutes = n_trials * frames_per_bin[i] * frame_s / 60
                     bin_rows.append(
@@ -94,11 +104,31 @@ def compute_stats(win_df):
         rows.append(
             dict(
                 reward_group=rg,
-                test='Wilcoxon signed-rank, lick-free (-1 to 1 s) vs post-response (1 to 6 s), days pooled',
+                test=(
+                    f'Wilcoxon signed-rank, lick-free ({LICK_FREE[0]:g} to {LICK_FREE[1]:g} s) vs '
+                    f'post-response ({POST_RESPONSE[0]:g} to {POST_RESPONSE[1]:g} s), days pooled'
+                ),
                 n_mice=len(g),
                 median_lick_free=g['lick_free'].median(),
                 median_post_response=g['post_response'].median(),
                 median_ratio_post_over_free=(g['post_response'] / g['lick_free']).median(),
+                statistic=stat,
+                p_value=p,
+                significance=significance_stars(p),
+            )
+        )
+    # R+ vs R- with the lick-free window alone, per day (as Fig. 4h).
+    free = win_df[win_df['window'] == 'lick_free']
+    for day in sorted(free['day'].unique()):
+        a = free.query('day == @day and reward_group == "R+"')['rate']
+        b = free.query('day == @day and reward_group == "R-"')['rate']
+        stat, p = mannwhitneyu(a, b)
+        rows.append(
+            dict(
+                reward_group='R+ vs R-',
+                test=f'Mann-Whitney U, lick-free window only, day {day:+d}',
+                n_mice=f'{len(a)} / {len(b)}',
+                median_lick_free=f'{a.median():.2f} / {b.median():.2f}',
                 statistic=stat,
                 p_value=p,
                 significance=significance_stars(p),
@@ -146,14 +176,14 @@ def plot(bin_df, per_mouse, stats, filename):
             alpha=0.7,
             edgecolor='black',
         )
-        p = stats.query('reward_group == @rg')['p_value'].iloc[0]
+        p = stats.query('reward_group == @rg')['p_value'].iloc[0]  # the paired test
         top = np.nanmax(g[['lick_free', 'post_response']].values)
         ax.plot(
             [x[0], x[0], x[1], x[1]], [top * 1.04, top * 1.08, top * 1.08, top * 1.04], 'k-', linewidth=0.8
         )
         ax.text(x.mean(), top * 1.09, format_p(p), ha='center', va='bottom')
         ax.text(x.mean(), -0.2, rg, transform=ax.get_xaxis_transform(), ha='center', va='top')
-    ax.set_xticks([0, 1, 3, 4], ['-1–1 s', '1–6 s', '-1–1 s', '1–6 s'])
+    ax.set_xticks([0, 1, 3, 4], ['Lick-\nfree', 'Post', 'Lick-\nfree', 'Post'])
     ax.set_xlim(-0.7, 4.7)
     ax.set_ylim(bottom=0, top=15)
     ax.set_ylabel('Reactivation rate (events/min)')
