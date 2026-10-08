@@ -7,7 +7,8 @@ Layout:
   - Top of heatmap: tick marks at detected reactivation events
 
 Inputs:  reactivation_results_p99.pkl (pipeline/07_reactivations.py),
-         lmi_results.csv, participation rates (pipeline/08_participation.py).
+         lmi_results.csv, participation rates of all cells in these events
+         (pipeline/08_participation.py --cells all).
 Outputs: <figures_dir>/figure_4/output/figure_4f.svg.
 """
 
@@ -108,7 +109,8 @@ def panel_f_reactivation_heatmap(
     mouse_lmi = lmi_df[lmi_df['mouse_id'] == mouse].set_index('roi')
     lmi_orig = np.array([mouse_lmi.loc[r, 'lmi'] if r in mouse_lmi.index else np.nan for r in roi_ids_orig])
 
-    part_df = pd.read_csv(participation.rates_csv())
+    # Participation of all cells in the events shown (those of step 07).
+    part_df = pd.read_csv(participation.rates_csv(cells='all'))
     mouse_part = part_df[(part_df['mouse_id'] == mouse) & (part_df['day'] == day)].set_index('roi')
     part_orig = np.array(
         [mouse_part.loc[r, 'participation_rate'] if r in mouse_part.index else np.nan for r in roi_ids_orig]

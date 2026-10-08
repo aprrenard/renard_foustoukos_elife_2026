@@ -6,6 +6,20 @@ PARTICIPATION_THRESHOLD. A cell's participation rate on a day is the fraction
 of that day's valid events it participates in (events within EVENT_WINDOW_MS
 of a trial edge are skipped).
 
+Held-out cells (main analysis). Events are moments when population activity
+matches the whisker template, and every cell contributes to that match in
+proportion to its template weight, so a cell's participation in the events it
+helped detect is partly circular. Participation is therefore measured in cells
+that took no part in the detection: for each mouse the cells are split at
+random into two halves, events are detected with one half only (its template,
+its activity and a detection threshold recomputed for that half from
+circular-shift surrogates of the pre-learning days, as in step 07), and
+participation is measured in the other half; then the halves swap. Over
+N_SPLITS random splits each cell is held out N_SPLITS times; its participation
+rate on a day is the mean over the splits whose detection had at least
+MIN_EVENTS_FOR_RELIABILITY valid events. Participation of all cells in the
+events of step 07 (cells='all') is kept for comparison.
+
 Also provides the circular-shift test of participation (Supp. 4c) and the
 spontaneous transient frequency used as a covariate (Supp. 4a-b).
 
@@ -43,6 +57,13 @@ SHIFT_SEED = 0  # Base seed; each (mouse, day) gets its own stream
 MIN_SHIFT_FRAMES = 0
 SIGNIFICANCE_PCTILE = 95  # top 5 % -> p < 0.05
 
+# Held-out cells (main analysis): events detected with one random half of the
+# cells, participation measured in the other half (see the Held-out section)
+N_SPLITS = 10
+N_SURROGATES_HALF = 500  # per pre-learning day, for each half's detection threshold
+DETECTION_PERCENTILE = 99  # surrogate percentile of the detection threshold (as step 07, p99)
+HELDOUT_SEED = 0
+
 # Spontaneous transient detection (Supp. 4a-b)
 MIN_DISTANCE_MS = 200
 MIN_DISTANCE_FRAMES = int(MIN_DISTANCE_MS / 1000 * SAMPLING_RATE)
@@ -59,21 +80,38 @@ SAVGOL_ORDER = 2
 RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
 
 
-# File names: main analysis, or no-lick control (nolick=True, '_nolick' suffix).
+# File names. Two independent options:
+#   nolick  no-lick control (events of step 07 --nolick, -1 to +1 s), '_nolick'
+#   cells   which cells' participation is measured:
+#           'heldout'  cells that did not take part in detecting the events
+#                      (main analysis, see Held-out cells below), no suffix
+#           'insample' the cells that detected those same events, '_insample'
+#                      (rates only; comparison)
+#           'all'      all cells, in the events of step 07, '_allcells'
+#                      (participation not cross-validated; comparison)
+
+CELLS = ('heldout', 'insample', 'all')
+_CELLS_SFX = {'heldout': '', 'insample': '_insample', 'all': '_allcells'}
 
 
-def _sfx(nolick):
-    return '_nolick' if nolick else ''
+def suffix(nolick=False, cells='heldout'):
+    """File-name suffix of a participation output."""
+    return _CELLS_SFX[cells] + ('_nolick' if nolick else '')
 
 
-def day0_csv(nolick=False):
+def day0_csv(nolick=False, cells='heldout'):
     """Day-0 participation rate, transient frequency and LMI per cell (Supp. 4a-b)."""
-    return os.path.join(RESULTS_DIR, f'supp4ab_lmi_data_day0{_sfx(nolick)}.csv')
+    return os.path.join(RESULTS_DIR, f'supp4ab_lmi_data_day0{suffix(nolick, cells)}.csv')
 
 
-def binary_csv(nolick=False):
+def binary_csv(nolick=False, cells='heldout'):
     """Binary participation per cell-day from the circular-shift test (Supp. 4c)."""
-    return os.path.join(RESULTS_DIR, f'binary_participation_with_lmi{_sfx(nolick)}.csv')
+    return os.path.join(RESULTS_DIR, f'binary_participation_with_lmi{suffix(nolick, cells)}.csv')
+
+
+def heldout_events_pkl(nolick=False):
+    """Events detected by each half of the cells, per split and day."""
+    return os.path.join(RESULTS_DIR, f'heldout_events{suffix(nolick)}.pkl')
 
 
 PARTICIPATION_THRESHOLDS = [0.10, 0.20, 0.50]  # main value first, then robustness checks
@@ -83,16 +121,18 @@ def thr_tag(threshold):
     return f'thr{int(round(threshold * 100))}'
 
 
-def rates_csv(threshold=PARTICIPATION_THRESHOLD, nolick=False):
+def rates_csv(threshold=PARTICIPATION_THRESHOLD, nolick=False, cells='heldout'):
     """Per-cell, per-day participation rates."""
     return os.path.join(
-        RESULTS_DIR, f'cell_participation_rates_per_day_{thr_tag(threshold)}{_sfx(nolick)}.csv'
+        RESULTS_DIR, f'cell_participation_rates_per_day_{thr_tag(threshold)}{suffix(nolick, cells)}.csv'
     )
 
 
-def merged_csv(threshold=PARTICIPATION_THRESHOLD, nolick=False):
+def merged_csv(threshold=PARTICIPATION_THRESHOLD, nolick=False, cells='heldout'):
     """Per-cell baseline / day-0 / post participation rates merged with LMI."""
-    return os.path.join(RESULTS_DIR, f'participation_lmi_merged_{thr_tag(threshold)}{_sfx(nolick)}.csv')
+    return os.path.join(
+        RESULTS_DIR, f'participation_lmi_merged_{thr_tag(threshold)}{suffix(nolick, cells)}.csv'
+    )
 
 
 def _read(path):
@@ -101,25 +141,28 @@ def _read(path):
     return pd.read_csv(path)
 
 
-def load_participation(threshold=PARTICIPATION_THRESHOLD, nolick=False):
+def load_participation(threshold=PARTICIPATION_THRESHOLD, nolick=False, cells='heldout'):
     """(merged_df, per_day_df) at one participation threshold, with lmi_category."""
-    merged_df = _read(merged_csv(threshold, nolick))
-    per_day_df = _read(rates_csv(threshold, nolick))
+    merged_df = _read(merged_csv(threshold, nolick, cells))
+    per_day_df = _read(rates_csv(threshold, nolick, cells))
     if 'lmi_category' not in merged_df.columns:
         merged_df = add_lmi_category(merged_df)
-    print(f"Loaded {len(merged_df)} cells and {len(per_day_df)} cell-day records ({thr_tag(threshold)}).")
+    print(
+        f"Loaded {len(merged_df)} cells and {len(per_day_df)} cell-day records "
+        f"({thr_tag(threshold)}{suffix(nolick, cells)})."
+    )
     return merged_df, per_day_df
 
 
-def load_day0(nolick=False):
+def load_day0(nolick=False, cells='heldout'):
     """Day-0 participation rate, transient frequency and LMI per cell."""
-    return _read(day0_csv(nolick))
+    return _read(day0_csv(nolick, cells))
 
 
-def load_binary_participation(nolick=False):
+def load_binary_participation(nolick=False, cells='heldout'):
     """Binary participation per cell-day (circular-shift test), with LMI."""
-    df = _read(binary_csv(nolick))
-    print(f"Loaded: {binary_csv(nolick)}  ({len(df)} rows)")
+    df = _read(binary_csv(nolick, cells))
+    print(f"Loaded: {binary_csv(nolick, cells)}  ({len(df)} rows)")
     return df
 
 
@@ -417,6 +460,240 @@ def process_mouse_circular_shift(mouse, mouse_results, n_shifts=N_SHIFTS, window
         if df is not None:
             dfs.append(df)
     return mouse, pd.concat(dfs, ignore_index=True) if dfs else None
+
+
+# ============================================================================
+# Held-out cells (cross-validated participation; main analysis)
+# ============================================================================
+
+
+def _split_rng(mouse, *keys):
+    return np.random.default_rng([HELDOUT_SEED, zlib.crc32(mouse.encode()), *keys])
+
+
+def split_halves(mouse, n_cells, split):
+    """The two halves (sorted cell indices) of one random split of a mouse's cells."""
+    perm = _split_rng(mouse, split).permutation(n_cells)
+    return np.sort(perm[: n_cells // 2]), np.sort(perm[n_cells // 2 :])
+
+
+def load_heldout_data(mouse, window=None):
+    """Data of one mouse for the held-out analysis.
+
+    Returns (rois, days): days maps each day with at least MIN_NOSTIM_TRIALS
+    correct-rejection trials to a dict with
+        raw       cells x frames, raw dF/F of the concatenated trials (detection, as step 07)
+        sub       cells x trials x time, baseline-subtracted dF/F (participation)
+        template  whisker template of the day (one value per cell)
+    """
+    raw_x = imaging.load_mouse_xarray(
+        mouse, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=False
+    )
+    sub_x = imaging.load_mouse_xarray(
+        mouse, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=True
+    )
+    rois = raw_x['roi'].values
+    days = {}
+    for day in DAYS:
+        raw_tr, n_trials = reactivations.select_trials_by_type(raw_x.sel(trial=raw_x['day'] == day), window)
+        if n_trials < MIN_NOSTIM_TRIALS:
+            continue
+        sub_tr, _ = reactivations.select_trials_by_type(sub_x.sel(trial=sub_x['day'] == day), window)
+        template, _ = reactivations.create_whisker_template(mouse, day, reactivations.THRESHOLD_DFF)
+        days[day] = dict(
+            raw=np.nan_to_num(raw_tr.values.reshape(len(rois), -1)),
+            sub=np.nan_to_num(sub_tr.values),
+            template=template,
+        )
+    return rois, days
+
+
+def _half_threshold(mouse, days, cells, split):
+    """Detection threshold for a subset of cells, as step 07: median over
+    circular-shift surrogates of the DETECTION_PERCENTILE-th percentile of the
+    template correlation, pooled over the pre-learning days."""
+    pooled = []
+    for day in reactivations.PRELEARNING_DAYS:
+        if day not in days:
+            continue
+        res = reactivations.compute_surrogate_thresholds(
+            days[day]['raw'][cells],
+            days[day]['template'][cells],
+            N_SURROGATES_HALF,
+            0,
+            (DETECTION_PERCENTILE,),
+            rng=_split_rng(mouse, split, int(cells[0]), day + 10),
+        )
+        pooled.append(res[DETECTION_PERCENTILE]['surrogate_percentiles'])
+    return float(np.median(np.concatenate(pooled))) if pooled else np.nan
+
+
+def detect_heldout_events(mouse, window=None):
+    """Reactivation events detected by each half of a mouse's cells.
+
+    For each of N_SPLITS random splits and each half: the events detected with
+    that half only (its template, its activity, its own surrogate threshold),
+    within each trial as in step 07. Event indices refer to the concatenated
+    trials of load_heldout_data(mouse, window).
+
+    Returns dict(mouse, rois, detections): one detection per split and half,
+    dict(split, half, detect, heldout, threshold, events={day: indices}),
+    detect and heldout being cell indices.
+    """
+    rois, days = load_heldout_data(mouse, window)
+    detections = []
+    for split in range(N_SPLITS):
+        halves = split_halves(mouse, len(rois), split)
+        for h in (0, 1):
+            detect, heldout = halves[h], halves[1 - h]
+            threshold = _half_threshold(mouse, days, detect, split)
+            if np.isnan(threshold):
+                continue
+            events = {}
+            for day, d in days.items():
+                corr = reactivations.compute_template_correlation(d['raw'][detect], d['template'][detect])
+                events[day] = reactivations.detect_reactivation_events(
+                    corr,
+                    threshold,
+                    reactivations.MIN_EVENT_DISTANCE_FRAMES,
+                    reactivations.PROMINENCE,
+                    n_timepoints=d['sub'].shape[2],
+                )
+            detections.append(
+                dict(split=split, half=h, detect=detect, heldout=heldout, threshold=threshold, events=events)
+            )
+    return dict(mouse=mouse, rois=rois, detections=detections)
+
+
+def heldout_split_rates(detection, days, thresholds=PARTICIPATION_THRESHOLDS):
+    """Participation per split, cell and day, at each participation threshold.
+
+    role 'heldout': cells outside the detecting half; role 'insample': the
+    detecting half itself (same events, for comparison). Returns a DataFrame
+    (mouse_id, split, half, role, roi, day, threshold, participation_rate,
+    n_events), n_events being the valid events of that detection.
+    """
+    rois = detection['rois']
+    parts = []
+    for det in detection['detections']:
+        for day, events in det['events'].items():
+            sub = days[day]['sub']
+            _, n_trials, n_t = sub.shape
+            for threshold in thresholds:
+                rates, n_valid = participation_from_3d(sub, events, n_t, n_trials, threshold)
+                if rates is None:
+                    continue
+                for role, idx in (('heldout', det['heldout']), ('insample', det['detect'])):
+                    parts.append(
+                        pd.DataFrame(
+                            dict(
+                                mouse_id=detection['mouse'],
+                                split=det['split'],
+                                half=det['half'],
+                                role=role,
+                                roi=rois[idx],
+                                day=day,
+                                threshold=threshold,
+                                participation_rate=rates[idx],
+                                n_events=n_valid,
+                            )
+                        )
+                    )
+    return pd.concat(parts, ignore_index=True) if parts else None
+
+
+def average_over_splits(split_df):
+    """Per-cell, per-day participation rate: mean over the splits whose
+    detection had at least MIN_EVENTS_FOR_RELIABILITY valid events; cell-days
+    with no such split are left out. Same format as the all-cell rates
+    (rates_csv), plus n_splits."""
+    d = split_df[split_df['n_events'] >= MIN_EVENTS_FOR_RELIABILITY]
+    out = (
+        d.groupby(['mouse_id', 'day', 'roi'])
+        .agg(
+            participation_rate=('participation_rate', 'mean'),
+            n_events=('n_events', 'mean'),
+            n_splits=('split', 'nunique'),
+        )
+        .reset_index()
+    )
+    out['reliable'] = True
+    return out
+
+
+def windowed_participation(data_flat, threshold=PARTICIPATION_THRESHOLD):
+    """cells x frames boolean: dF/F averaged over +/- EVENT_WINDOW_FRAMES
+    around each frame reaches threshold. The frame axis is treated as circular,
+    so that indexing this array at (event - shift) % n_frames gives the
+    participation at the events in data circularly shifted by shift (as
+    np.roll(data_flat, shift) in participation_with_shifts)."""
+    win = EVENT_WINDOW_FRAMES
+    acc = np.zeros(data_flat.shape)
+    for k in range(-win, win + 1):
+        acc += np.roll(data_flat, -k, axis=1)
+    return acc / (2 * win + 1) >= threshold
+
+
+def heldout_circular_shift(detection, days, n_shifts=N_SHIFTS):
+    """Binary participation of each cell on each day, held-out version.
+
+    A cell's statistic is its held-out participation rate averaged over the
+    splits (detections with >= MIN_EVENTS_FOR_RELIABILITY valid events), as in
+    average_over_splits. Null: the same average with the data circularly
+    shifted (one shift for all cells and all splits, which preserves
+    correlations between cells); a cell participates if its statistic exceeds
+    the SIGNIFICANCE_PCTILE-th percentile of n_shifts shifts. Shifts are drawn
+    as in participation_with_shifts.
+
+    Returns a DataFrame (mouse_id, day, roi, participating, n_events, n_splits)
+    or None.
+    """
+    mouse, rois = detection['mouse'], detection['rois']
+    win = EVENT_WINDOW_FRAMES
+    dfs = []
+    for day, d in days.items():
+        n_cells, n_trials, n_t = d['sub'].shape
+        n_frames = n_trials * n_t
+        part = windowed_participation(d['sub'].reshape(n_cells, n_frames))
+
+        sets = []  # (held-out cells, their participation trace, valid events)
+        for det in detection['detections']:
+            events = np.asarray(det['events'].get(day, []), dtype=int)
+            t = events % n_t
+            events = events[(t >= win) & (t < n_t - win)]
+            if len(events) >= MIN_EVENTS_FOR_RELIABILITY:
+                sets.append((det['heldout'], part[det['heldout']], events))
+        if not sets:
+            continue
+
+        count, n_events = np.zeros(n_cells), np.zeros(n_cells)
+        real, null = np.zeros(n_cells), np.zeros((n_shifts, n_cells))
+        for cells, p, events in sets:
+            real[cells] += p[:, events].mean(axis=1)
+            count[cells] += 1
+            n_events[cells] += len(events)
+        rng = np.random.default_rng([SHIFT_SEED, zlib.crc32(mouse.encode()), day + 10])
+        for i_shift in range(n_shifts):
+            shift = rng.integers(MIN_SHIFT_FRAMES + 1 if MIN_SHIFT_FRAMES > 0 else 1, n_frames)
+            for cells, p, events in sets:
+                null[i_shift, cells] += p[:, (events - shift) % n_frames].mean(axis=1)
+
+        ok = count > 0
+        real, null = real[ok] / count[ok], null[:, ok] / count[ok]
+        significant = real > np.percentile(null, SIGNIFICANCE_PCTILE, axis=0)
+        dfs.append(
+            pd.DataFrame(
+                dict(
+                    mouse_id=mouse,
+                    day=day,
+                    roi=rois[ok],
+                    participating=significant,
+                    n_events=n_events[ok] / count[ok],
+                    n_splits=count[ok].astype(int),
+                )
+            )
+        )
+    return pd.concat(dfs, ignore_index=True) if dfs else None
 
 
 # ============================================================================

@@ -78,7 +78,7 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | `05_lmi` | learning modulation index of each neuron, with shuffle significance |
 | `06_decoder` | per-mouse pre/post-learning decoder (weights reused by Fig. 4b–e) |
 | `07_reactivations` | reactivation events (surrogate thresholds, template correlation), mouse selection |
-| `08_participation` | participation of each neuron in reactivations |
+| `08_participation` | participation of each neuron in reactivations, measured in held-out cells (events detected with the other half of the cells); all-cell version for comparison |
 | `09_pairwise_correlations` | pre-stimulus correlations between projection neurons |
 
 ### Figures
@@ -139,7 +139,6 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | — | [`figures/revisions/figure_3h_i_signal_noise.py`](figures/revisions/figure_3h_i_signal_noise.py) | What drives the change in within-day similarity? |
 | — | [`figures/revisions/figure_4h_event_timing.py`](figures/revisions/figure_4h_event_timing.py) | Are reactivation events over-represented when mice can lick? |
 | — | [`figures/revisions/figure_4h_shuffle_control.py`](figures/revisions/figure_4h_shuffle_control.py) | Shuffled-template reactivation detection |
-| — | [`figures/revisions/figure_4i_j_heldout_cells.py`](figures/revisions/figure_4i_j_heldout_cells.py) | Participation measured in cells that do not define the events |
 | — | [`figures/revisions/movement_state_summary.py`](figures/revisions/movement_state_summary.py) | Facial/whisker movement during the passive mapping epoch, across days |
 <!-- figure-table:end -->
 

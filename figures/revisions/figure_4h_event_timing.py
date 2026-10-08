@@ -203,7 +203,7 @@ def plot(bin_df, per_mouse, stats, filename):
         ax.text(x.mean(), -0.3, rg, transform=ax.get_xaxis_transform(), ha='center', va='top')
     ax.set_xticks([0, 1, 3, 4], ['Lick-\nfree', 'Post', 'Lick-\nfree', 'Post'])
     ax.set_xlabel('')
-    ax.set_xlim(-0.7, 4.7)
+    ax.set_xlim(-1, 5)
     ax.set_ylim(bottom=0, top=15)
     ax.set_ylabel('Reactivation rate (events/min)')
     sns.despine()

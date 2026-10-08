@@ -39,7 +39,9 @@ PIPELINE = [
     ('06_decoder', 'pipeline/06_decoder.py', [], True),
     ('07_reactivations', 'pipeline/07_reactivations.py', [], True),
     ('07_reactivations_nolick', 'pipeline/07_reactivations.py', ['--nolick'], True),
+    # Held-out cells (main analysis), all cells (comparison), no-lick control.
     ('08_participation', 'pipeline/08_participation.py', [], True),
+    ('08_participation_allcells', 'pipeline/08_participation.py', ['--cells', 'all'], True),
     ('08_participation_nolick', 'pipeline/08_participation.py', ['--nolick'], True),
     ('09_pairwise_correlations', 'pipeline/09_pairwise_correlations.py', [], True),
 ]
@@ -55,10 +57,19 @@ FIGURE_DIRS = [
     'supp_4',
     'revisions',
 ]
-# Figure scripts also run for the no-lick reactivation control (-1 to +1 s).
-NOLICK_FIGURES = {'figure_4h', 'figure_4i_j', 'supp_4a_b', 'supp_4c'}
+# Figure scripts that also run as variants (name suffix, extra arguments): the
+# no-lick reactivation control (-1 to +1 s) and participation of all cells /
+# in-sample cells, compared with held-out cells (main analysis).
+_NOLICK = ('nolick', ['--nolick'])
+_ALLCELLS = ('allcells', ['--cells', 'all'])
+FIGURE_VARIANTS = {
+    'figure_4h': [_NOLICK],
+    'figure_4i_j': [_ALLCELLS, ('insample', ['--cells', 'insample']), _NOLICK],
+    'supp_4a_b': [_ALLCELLS, _NOLICK],
+    'supp_4c': [_ALLCELLS, _NOLICK],
+}
 # Revision analyses with a slow computation of their own; --recompute forces it.
-RECOMPUTE = {'figure_3f_LMIshuffles', 'figure_4h_shuffle_control', 'figure_4i_j_heldout_cells'}
+RECOMPUTE = {'figure_3f_LMIshuffles', 'figure_4h_shuffle_control'}
 
 
 def figure_steps():
@@ -66,8 +77,8 @@ def figure_steps():
     for d in FIGURE_DIRS:
         for script in sorted((REPO / 'figures' / d).glob('*.py')):
             steps.append((script.stem, str(script.relative_to(REPO)), [], True, d))
-            if script.stem in NOLICK_FIGURES:
-                steps.append((f'{script.stem}_nolick', str(script.relative_to(REPO)), ['--nolick'], True, d))
+            for sfx, extra in FIGURE_VARIANTS.get(script.stem, []):
+                steps.append((f'{script.stem}_{sfx}', str(script.relative_to(REPO)), extra, True, d))
     return steps
 
 

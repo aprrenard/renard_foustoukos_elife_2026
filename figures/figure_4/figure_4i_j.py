@@ -12,14 +12,24 @@ Panel j: Participation rate across days (-2 to +2) for LMI+ vs LMI- cells,
          Wilcoxon signed-rank test of the slopes against zero, for each
          (reward group, LMI category).
 
-Cells: reliable cells only (>= 3 reactivation events in the period, or on
-the day for panel j). Mice: those in the participation mouse selection
+Participation is measured in held-out cells: events are detected with a
+random half of the cells and participation is measured in the other half,
+averaged over 10 random splits, so that no cell is scored on events it helped
+detect (pipeline/08_participation.py, fast_learning.participation).
+--cells all: participation of all cells in the events of step 07 (not
+cross-validated); --cells insample: the detecting half in the same events.
+Both are comparisons showing the effect of the circularity.
+
+Cells: cell-days with >= 3 valid reactivation events (for held-out cells, in
+at least one split). Mice: those in the participation mouse selection
 (>= 3 reactivation events on day 0; see fast_learning.reactivations).
 
 Inputs:  participation rates from pipeline/08_participation.py, at each
          participation threshold (10% main, 20% and 50% robustness checks).
-Outputs: <figures_dir>/figure_4/output/figure_4i_<sel>_thr<N>.pdf, _stats.csv
-         and figure_4j_<sel>_thr<N>.pdf, _data.csv, _stats.csv.
+Outputs: <figures_dir>/figure_4/output/figure_4i_thr<N><sfx>.pdf, _stats.csv
+         and figure_4j_thr<N><sfx>.pdf, _data.csv, _stats.csv; <sfx> is
+         empty for held-out cells, _insample or _allcells, then _nolick for
+         the no-lick control.
 """
 
 import argparse
@@ -268,16 +278,22 @@ def panel_j_participation_across_days(merged_df, per_day_df, output_dir=OUTPUT_D
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        '--cells',
+        choices=participation.CELLS,
+        default='heldout',
+        help='held-out cells (main), in-sample cells of the same detections, or all cells (step 07 events)',
+    )
+    parser.add_argument(
         '--nolick', action='store_true', help='no-lick control (-1 to +1 s); output names end in _nolick'
     )
-    nolick = parser.parse_args().nolick
-    sfx = '_nolick' if nolick else ''
+    args = parser.parse_args()
+    sfx = participation.suffix(args.nolick, args.cells)
     print(f"Output directory: {OUTPUT_DIR}")
 
     for threshold in participation.PARTICIPATION_THRESHOLDS:
         tag = participation.thr_tag(threshold)
-        print(f"\n--- participation_threshold={threshold} ({tag}) ---")
-        merged_df, per_day_df = participation.load_participation(threshold, nolick)
+        print(f"\n--- participation_threshold={threshold} ({tag}{sfx}) ---")
+        merged_df, per_day_df = participation.load_participation(threshold, args.nolick, args.cells)
         print(
             f"Dataset: {len(merged_df)} cells, {len(per_day_df)} cell-day records, "
             f"{merged_df['mouse_id'].nunique()} mice"

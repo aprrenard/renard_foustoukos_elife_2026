@@ -17,13 +17,18 @@ mixed-model analogue of the partial correlation. The right-hand column plots
 residuals after regressing out transient frequency (added-variable plot) for
 illustration; the reported statistics come from the mixed models.
 
+Participation: day-0 rate of held-out cells (events detected with the other
+half of the cells, 10 random splits; as Fig. 4i). --cells all: participation
+of all cells in the events of step 07, for comparison.
+
 Mice: those in the participation mouse selection (>= 3 reactivation events
 on day 0; see fast_learning.reactivations).
 
 Inputs:  day-0 participation, transient frequency and LMI per cell
          (pipeline/08_participation.py).
-Outputs: <figures_dir>/supp_4/output/supp_4a.pdf, supp_4b.pdf and their
-         _data.csv / _stats.csv.
+Outputs: <figures_dir>/supp_4/output/supp_4a<sfx>.pdf, supp_4b<sfx>.pdf and
+         their _data.csv / _stats.csv; <sfx> is empty for held-out cells,
+         _allcells, then _nolick for the no-lick control.
 """
 
 import argparse
@@ -329,14 +334,20 @@ def panel_supp4b_partial_corr(
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        '--cells',
+        choices=['heldout', 'all'],
+        default='heldout',
+        help='held-out cells (main) or all cells in the events of step 07',
+    )
+    parser.add_argument(
         '--nolick', action='store_true', help='no-lick control (-1 to +1 s); output names end in _nolick'
     )
-    nolick = parser.parse_args().nolick
-    sfx = '_nolick' if nolick else ''
-    data_csv = participation.day0_csv(nolick)
+    args = parser.parse_args()
+    sfx = participation.suffix(args.nolick, args.cells)
+    data_csv = participation.day0_csv(args.nolick, args.cells)
     print(f"Input:            {data_csv}")
     print(f"Output directory: {OUTPUT_DIR}")
-    participation.load_day0(nolick)  # fails early if step 08 has not been run
+    participation.load_day0(args.nolick, args.cells)  # fails early if step 08 has not been run
 
     print("\nPlotting panel supp_4a...")
     panel_supp4a_scatter(data_csv, filename=f'supp_4a{sfx}')

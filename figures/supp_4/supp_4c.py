@@ -3,10 +3,15 @@ Supplementary Figure 4c: Proportion of cells participating in reactivation
 across days for LMI+ vs LMI- cells (binary participation).
 
 Binary participation is determined by circular-shift control: a cell x day is
-classified as 'participating' if the cell's real participation rate around
+classified as 'participating' if the cell's participation rate around
 reactivation events exceeds the 95th percentile of a null distribution built
-from N_SHIFTS circular shifts of the neural data (same shift applied to all
+from 1000 circular shifts of the neural data (same shift applied to all
 cells simultaneously, preserving inter-cell correlations).
+
+Participation is measured in held-out cells (events detected with the other
+half of the cells, 10 random splits; as Fig. 4i-j): the statistic is the
+held-out rate averaged over splits, and the null is the same average under
+each shift. --cells all: all cells in the events of step 07, for comparison.
 
 Panel: Proportion of cells participating across days (-2 to +2) separately
        for LMI+ vs LMI- cells. Per-mouse averages with individual
@@ -20,7 +25,9 @@ on day 0; see fast_learning.reactivations). Within those, a mouse x day is
 kept only if it has at least 3 valid events (fast_learning.participation).
 
 Inputs:  binary participation per cell-day (pipeline/08_participation.py).
-Outputs: <figures_dir>/supp_4/output/supp_4c.pdf, supp_4c_data.csv, supp_4c_stats.csv.
+Outputs: <figures_dir>/supp_4/output/supp_4c<sfx>.pdf, _data.csv, _stats.csv;
+         <sfx> is empty for held-out cells, _allcells, then _nolick for the
+         no-lick control.
 """
 
 import argparse
@@ -55,14 +62,14 @@ def panel_supp4c_proportion_across_days(
     """Supp Figure 4c: proportion of cells participating across days for
     LMI+ vs LMI- cells (binary participation).
 
-    Per-mouse averages with individual trajectories. Stats: Kruskal-Wallis
-    test (effect of day) run independently for each of the four groups
-    (R+ positive LMI, R+ negative LMI, R- positive LMI, R- negative LMI).
+    Per-mouse averages with individual trajectories. Stats: per-mouse day
+    slope, Wilcoxon signed-rank test against zero (n = mice), for each of the
+    four groups (R+ / R- x LMI+ / LMI-).
 
     Saves:
         <filename>.svg         -- figure
         <filename>_data.csv    -- per-mouse x day x LMI-category proportions
-        <filename>_stats.csv   -- Kruskal-Wallis results per group
+        <filename>_stats.csv   -- day-slope test per group
     """
     set_style()
 
@@ -161,7 +168,7 @@ def panel_supp4c_proportion_across_days(
                 my = mdata['proportion'].values
                 ax.plot(mx, my, '-', color=cat_colors[cat], linewidth=0.8, alpha=0.4, zorder=5)
 
-        # Annotate Kruskal-Wallis results for each LMI group
+        # Annotate the day-slope test for each LMI group
         for j, cat in enumerate(lmi_categories):
             test = tests.get((rg, cat))
             p = test['p_value'] if test else float('nan')
@@ -214,12 +221,18 @@ def panel_supp4c_proportion_across_days(
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        '--cells',
+        choices=['heldout', 'all'],
+        default='heldout',
+        help='held-out cells (main) or all cells in the events of step 07',
+    )
+    parser.add_argument(
         '--nolick', action='store_true', help='no-lick control (-1 to +1 s); output names end in _nolick'
     )
-    nolick = parser.parse_args().nolick
-    sfx = '_nolick' if nolick else ''
+    args = parser.parse_args()
+    sfx = participation.suffix(args.nolick, args.cells)
     print(f"Output directory: {OUTPUT_DIR}")
-    df = participation.load_binary_participation(nolick)
+    df = participation.load_binary_participation(args.nolick, args.cells)
 
     print(
         f"\nDataset: {len(df)} cell-day records, "
