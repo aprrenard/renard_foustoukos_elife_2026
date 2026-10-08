@@ -105,7 +105,7 @@ import seaborn as sns
 from scipy.stats import norm, mannwhitneyu, wilcoxon, ttest_1samp, pearsonr
 from statsmodels.stats.multitest import multipletests
 
-from fast_learning import paths, database
+from fast_learning import paths, database, decoding
 from fast_learning import imaging
 from fast_learning.plotting import stim_palette, reward_palette, behavior_palette, save_figure
 from fast_learning.stats import format_p
@@ -776,7 +776,7 @@ def panel_4e_dprime_correlation(
         xarr = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')
         xarr = xarr.sel(trial=xarr['day'].isin([0]))
         xarr = xarr.sel(trial=xarr['whisker_stim'] == 1)
-        xarr = imaging.select_time(xarr, win[0], win[1]).mean(dim='time')
+        xarr = imaging.select_time(xarr, *decoding.ACTIVE_WIN).mean(dim='time')
         xarr = xarr.fillna(0)
 
         scaler, clf, sign_flip = w['scaler'], w['clf'], w['sign_flip']

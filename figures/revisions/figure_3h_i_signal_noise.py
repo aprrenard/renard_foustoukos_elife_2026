@@ -200,13 +200,22 @@ def paired_panel(ax, pp, metric, ylabel, stats, ylim):
         x = np.array([gi * 3, gi * 3 + 1])
         for _, row in g.iterrows():
             ax.plot(x, [row['pre'], row['post']], '-', color='grey', linewidth=0.5, alpha=0.6)
-        ax.bar(
-            x,
-            [g['pre'].median(), g['post'].median()],
-            width=0.7,
+        # Bars: mean across mice with bootstrapped 95% CI (seeded); lines: mice.
+        long = g.reset_index().melt(id_vars='mouse_id', value_vars=['pre', 'post'], value_name='v')
+        sns.barplot(
+            data=long.assign(x=np.where(long['period'] == 'pre', x[0], x[1])),
+            x='x',
+            y='v',
+            order=list(range(5)),
+            native_scale=True,
             color=GROUP_COLORS[rg],
             alpha=0.7,
             edgecolor='black',
+            errorbar=('ci', 95),
+            seed=0,
+            width=0.7,
+            ax=ax,
+            zorder=1,
         )
         p = stats.query('reward_group == @rg and measure == @metric')['p_value'].iloc[0]
         top = np.nanmax(g.values)
@@ -219,6 +228,7 @@ def paired_panel(ax, pp, metric, ylabel, stats, ylim):
     ax.set_xlim(-0.7, 4.7)
     ax.set_ylim(*ylim)
     ax.set_ylabel(ylabel)
+    ax.set_xlabel("")
 
 
 def plot(day_df, pattern_df, pp, stats, output_dir=OUTPUT_DIR, filename='signal_noise'):

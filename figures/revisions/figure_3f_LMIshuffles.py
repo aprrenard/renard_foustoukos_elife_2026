@@ -22,6 +22,12 @@ The null distribution (slow) is computed when its cache is missing or with
     python figures/revisions/figure_3f_LMIshuffles.py [--recompute]
 
 Real LMI values are loaded as-is from lmi_results.csv (already computed).
+
+Statistics, with mice as the unit: in each mouse, the fraction of cells
+whose LMI is significant by the shuffle test (lmi_p >= 0.975 or <= 0.025,
+5% expected by chance), tested against 5% with a Wilcoxon signed-rank test
+across mice; LMI+ and LMI- fractions are also tested against 2.5% each
+(stats file only). The histograms pool cells for illustration.
 """
 
 import os
@@ -30,11 +36,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import ks_2samp, levene
+from scipy.stats import wilcoxon
 
 from fast_learning import paths, database
 from fast_learning import imaging
-from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.participation import LMI_NEGATIVE_THRESHOLD as LMI_NEGATIVE_P
+from fast_learning.participation import LMI_POSITIVE_THRESHOLD as LMI_POSITIVE_P
+from fast_learning.plotting import panel_size, reward_palette, save_figure, set_style
 from fast_learning.stats import format_p
 
 
@@ -161,35 +169,72 @@ def load_real_lmi():
 # ============================================================================
 
 
-def plot_lmi_vs_null(
-    lmi_df, null_df, output_dir=OUTPUT_DIR, filename='supp_3_LMI_shuffles', save_format='svg', dpi=300
-):
-    """Real LMI distribution overlaid with pooled shuffled-null LMI
-    distribution, one panel per reward group.
-
-    Saves:
-        <filename>.svg        -- figure
-        <filename>_stats.csv  -- per-group real vs. null spread comparison
-    """
-    sns.set_theme(
-        context='paper',
-        style='ticks',
-        font='sans-serif',
-        font_scale=1,
-        rc={'pdf.fonttype': 42, 'ps.fonttype': 42, 'svg.fonttype': 'none'},
+def significant_fractions(lmi_df):
+    """Per mouse: fraction of cells with a significant LMI (shuffle test,
+    lmi_p >= 0.975 or <= 0.025, i.e. 5% expected by chance), and of LMI+ and
+    LMI- cells (2.5% each expected)."""
+    d = lmi_df.dropna(subset=['lmi_p'])
+    return (
+        d.assign(
+            positive=d['lmi_p'] >= LMI_POSITIVE_P,
+            negative=d['lmi_p'] <= LMI_NEGATIVE_P,
+        )
+        .assign(significant=lambda x: x['positive'] | x['negative'])
+        .groupby(['reward_group', 'mouse_id'])[['significant', 'positive', 'negative']]
+        .mean()
+        .reset_index()
     )
 
+
+def fraction_stats(fractions):
+    """Wilcoxon signed-rank test (n = mice) of each fraction against chance."""
+    rows = []
+    for rg in ['R+', 'R-']:
+        g = fractions[fractions['reward_group'] == rg]
+        for col, chance in [('significant', 0.05), ('positive', 0.025), ('negative', 0.025)]:
+            stat, p = wilcoxon(g[col] - chance)
+            rows.append(
+                {
+                    'reward_group': rg,
+                    'cells': {'significant': 'LMI+ or LMI-', 'positive': 'LMI+', 'negative': 'LMI-'}[col],
+                    'test': f'Wilcoxon signed-rank of per-mouse fraction vs {chance:.1%} expected by chance',
+                    'n_mice': len(g),
+                    'chance': chance,
+                    'mean_fraction': g[col].mean(),
+                    'median_fraction': g[col].median(),
+                    'n_mice_above_chance': int((g[col] > chance).sum()),
+                    'statistic': stat,
+                    'p_value': p,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def plot_lmi_vs_null(lmi_df, null_df, output_dir=OUTPUT_DIR, filename='supp_3_LMI_shuffles'):
+    """Real LMI distribution overlaid with the pooled shuffled-null LMI
+    distribution, one panel per reward group, and the per-mouse fraction of
+    LMI-significant cells against the 5% expected by chance.
+
+    The histograms pool cells for illustration; the statistic is per mouse
+    (fraction_stats).
+
+    Saves:
+        <filename>.pdf
+        <filename>_stats.csv  -- per-group test of the fractions against chance
+        <filename>_data.csv   -- per-mouse fractions
+    """
+    set_style()
     reward_groups = ['R+', 'R-']
     rg_colors = {'R+': reward_palette[1], 'R-': reward_palette[0]}
     bin_edges = np.linspace(-1, 1, 31)
 
-    fig, axes = plt.subplots(1, 2, figsize=(9, 4), sharey=True)
-    stats_rows = []
+    fractions = significant_fractions(lmi_df)
+    stats_df = fraction_stats(fractions)
 
-    for ax, rg in zip(axes, reward_groups):
+    fig, axes = plt.subplots(1, 3, figsize=panel_size(3))
+    for ax, rg in zip(axes[:2], reward_groups):
         real_vals = lmi_df.loc[lmi_df['reward_group'] == rg, 'lmi'].dropna().values
         null_vals = null_df.loc[null_df['reward_group'] == rg, 'null_lmi'].dropna().values
-
         sns.histplot(
             null_vals,
             bins=bin_edges,
@@ -197,7 +242,7 @@ def plot_lmi_vs_null(
             element='step',
             fill=False,
             color='dimgray',
-            linewidth=1.2,
+            linewidth=0.8,
             label='Shuffled null',
             ax=ax,
         )
@@ -205,57 +250,52 @@ def plot_lmi_vs_null(
             real_vals,
             bins=bin_edges,
             stat='probability',
-            kde=True,
             color=rg_colors[rg],
             alpha=0.5,
+            linewidth=0,
             label='Real LMI',
             ax=ax,
         )
-
-        ks_stat, ks_p = ks_2samp(real_vals, null_vals, alternative='two-sided')
-        lev_stat, lev_p = levene(real_vals, null_vals)
-        std_real, std_null = float(np.std(real_vals)), float(np.std(null_vals))
-
-        stats_rows.append(
-            {
-                'reward_group': rg,
-                'n_real': len(real_vals),
-                'n_null': len(null_vals),
-                'std_real': std_real,
-                'std_null': std_null,
-                'ks_statistic': ks_stat,
-                'ks_p_value': ks_p,
-                'levene_statistic': lev_stat,
-                'levene_p_value': lev_p,
-            }
-        )
-
-        ax.text(
-            0.02,
-            0.98,
-            f'std real = {std_real:.3f}\nstd null = {std_null:.3f}\nLevene {format_p(lev_p)}',
-            transform=ax.transAxes,
-            va='top',
-            ha='left',
-            fontsize=8,
-        )
-        ax.set_title(rg, fontsize=10, fontweight='bold')
+        ax.set_title(f'{rg}  ({len(real_vals)} cells)')
         ax.set_xlim(-1, 1)
         ax.set_xlabel('LMI')
-        ax.set_ylabel('Probability' if ax is axes[0] else '')
-        ax.legend(frameon=False, fontsize=8)
+        ax.set_ylabel('Probability' if rg == 'R+' else '')
+        ax.legend(frameon=False)
 
-    sns.despine(trim=True)
+    ax = axes[2]
+    long = fractions.assign(percent=100 * fractions['significant'])
+    sns.barplot(
+        data=long,
+        x='reward_group',
+        y='percent',
+        order=reward_groups,
+        hue='reward_group',
+        palette=rg_colors,
+        legend=False,
+        errorbar=('ci', 95),
+        seed=0,
+        alpha=0.7,
+        edgecolor='black',
+        ax=ax,
+    )
+    sns.stripplot(data=long, x='reward_group', y='percent', order=reward_groups, color='black', size=2, ax=ax)
+    ax.axhline(5, color='grey', linestyle='--', linewidth=0.6)
+    top = long['percent'].max()
+    for i, rg in enumerate(reward_groups):
+        p = stats_df.query('reward_group == @rg and cells == "LMI+ or LMI-"')['p_value'].iloc[0]
+        ax.text(i, top * 1.05, format_p(p), ha='center', va='bottom')
+    ax.set_ylim(0, top * 1.2)
+    ax.set_xlabel('')
+    ax.set_ylabel('LMI-significant cells (% per mouse)')
+    sns.despine()
     plt.tight_layout()
 
     os.makedirs(output_dir, exist_ok=True)
-    save_figure(fig, os.path.join(output_dir, f'{filename}.{save_format}'))
-    print(f"Saved: {os.path.join(output_dir, filename + '.' + save_format)}")
-
-    stats_df = pd.DataFrame(stats_rows)
+    save_figure(fig, os.path.join(output_dir, f'{filename}.pdf'))
+    plt.close(fig)
     stats_df.to_csv(os.path.join(output_dir, f'{filename}_stats.csv'), index=False)
-    print(f"Saved: {os.path.join(output_dir, filename + '_stats.csv')}")
-
+    fractions.to_csv(os.path.join(output_dir, f'{filename}_data.csv'), index=False)
+    print(f"Saved: {os.path.join(output_dir, filename)}.pdf, _stats.csv, _data.csv")
     return stats_df
 
 

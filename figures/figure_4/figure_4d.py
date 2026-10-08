@@ -17,7 +17,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
 
-from fast_learning import imaging
+from fast_learning import imaging, decoding
 from fast_learning import paths, database
 from fast_learning.plotting import reward_palette, save_figure, panel_size
 from fast_learning.stats import format_p
@@ -78,7 +78,7 @@ if __name__ == '__main__':
         xarray_l = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')
         xarray_l = xarray_l.sel(trial=xarray_l['day'].isin([0]))
         xarray_l = xarray_l.sel(trial=xarray_l['whisker_stim'] == 1)
-        xarray_l = imaging.select_time(xarray_l, win[0], win[1]).mean(dim='time')
+        xarray_l = imaging.select_time(xarray_l, *decoding.ACTIVE_WIN).mean(dim='time')
         xarray_l = xarray_l.fillna(0)
 
         if rew_gp == 'R+':

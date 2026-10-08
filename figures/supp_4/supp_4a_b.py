@@ -84,5 +84,5 @@ if __name__ == '__main__':
             output_dir=OUTPUT_DIR,
             filename=f'supp_4b_{tag}{sfx}',
             ylabel='Participation above chance',
-            ylim=(None, 0.12),
+            ylim=(None, 0.16),
         )

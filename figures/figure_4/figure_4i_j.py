@@ -6,7 +6,8 @@ Panel i: Scatter plot of day-0 participation rate vs LMI (one dot per cell),
          participation_rate ~ LMI + (1 | mouse), so that cells recorded in
          the same mouse are not treated as independent.
 
-Panel j: Participation rate across days (-2 to +2) for LMI+ vs LMI- cells,
+Panel j: Participation rate across days (-2 to +2) for LMI+ and LMI- cells,
+         with non-modulated cells as the reference,
          showing per-mouse averages. Stats: linear trend across days with
          mice as the unit: one participation-vs-day slope per mouse, then a
          Wilcoxon signed-rank test of the slopes against zero, for each
@@ -40,6 +41,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.stats import wilcoxon
 
 from fast_learning import paths, participation
 from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
@@ -138,7 +140,7 @@ def panel_i_participation_vs_lmi(
 
 
 # ============================================================================
-# Panel j: participation rate across days (LMI+ vs LMI-)
+# Panel j: participation rate across days (LMI+, LMI-, non-modulated)
 # ============================================================================
 
 
@@ -150,11 +152,13 @@ def panel_j_participation_across_days(
     ylabel='Participation rate',
     ylim=(0, 0.4),
 ):
-    """Figure 4 Panel j: participation rate across days for LMI+ vs LMI- cells.
+    """Figure 4 Panel j: participation rate across days for LMI+, LMI- and
+    non-modulated cells.
 
     Bars are means of per-mouse averages. Stats: per-mouse day slope,
     Wilcoxon signed-rank test against zero (n = mice), for each
-    (reward_group, lmi_category).
+    (reward_group, lmi_category); and LMI+ / LMI- against non-modulated cells:
+    per-mouse slope difference, Wilcoxon signed-rank test against zero.
 
     Saves <filename>.pdf, <filename>_data.csv (per mouse x day x LMI
     category averages) and <filename>_stats.csv.
@@ -162,9 +166,10 @@ def panel_j_participation_across_days(
     set_style()
 
     days_sorted = sorted(DAYS)
-    lmi_categories = ['positive', 'negative']
-    cat_colors = {'positive': '#d62728', 'negative': '#1f77b4'}
-    cat_labels = {'positive': 'Positive LMI', 'negative': 'Negative LMI'}
+    # Non-modulated cells (neither LMI+ nor LMI-) are the reference level.
+    lmi_categories = ['positive', 'negative', 'neutral']
+    cat_colors = {'positive': '#d62728', 'negative': '#1f77b4', 'neutral': '#a0a0a0'}
+    cat_labels = {'positive': 'Positive LMI', 'negative': 'Negative LMI', 'neutral': 'Non-modulated'}
     reward_groups = ['R+', 'R-']
 
     lmi_cells = merged_df.loc[
@@ -213,8 +218,35 @@ def panel_j_participation_across_days(
             print(
                 f"  {rg} {cat} LMI: median slope={test['median_slope']:.4g}, p={test['p_value']:.4g}, n={test['n_mice']}"
             )
+        # LMI+ and LMI- against non-modulated cells of the same mice: paired
+        # difference of per-mouse day slopes, Wilcoxon signed-rank.
+        ref = tests.get((rg, 'neutral'))
+        for cat in ['positive', 'negative']:
+            test = tests.get((rg, cat))
+            if ref is None or test is None:
+                continue
+            mice = sorted(set(test['slopes']) & set(ref['slopes']))
+            diff = np.array([test['slopes'][m] - ref['slopes'][m] for m in mice])
+            w_stat, p = wilcoxon(diff)
+            tests[(rg, cat, 'vs_neutral')] = p
+            stats_rows.append(
+                {
+                    'reward_group': rg,
+                    'lmi_category': f'{cat} - neutral',
+                    'test': 'Per-mouse day slope minus non-modulated slope, Wilcoxon signed-rank (n = mice)',
+                    'mean_day_slope': diff.mean(),
+                    'median_day_slope': np.median(diff),
+                    'sd_day_slope': diff.std(ddof=1),
+                    'w_stat': w_stat,
+                    'p_value': p,
+                    'significance': significance_stars(p),
+                    'n_mice': len(mice),
+                    'n_cells': np.nan,
+                }
+            )
+            print(f"  {rg} {cat} vs non-modulated: median slope difference={np.median(diff):.4g}, p={p:.4g}")
 
-    fig, axes = plt.subplots(1, 2, figsize=panel_size(2), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=panel_size(2, w=1.3), sharey=True)
     for i, rg in enumerate(reward_groups):
         ax = axes[i]
         grp = mouse_day_avg[mouse_day_avg['reward_group'] == rg]
@@ -238,16 +270,16 @@ def panel_j_participation_across_days(
             patch.set_edgecolor('black')
             patch.set_linewidth(0.6)
 
+        short = {'positive': 'LMI+', 'negative': 'LMI−', 'neutral': 'Non-mod.'}
+        ax.text(0.02, 0.99, 'Day slope:', transform=ax.transAxes, va='top', ha='left')
         for j, cat in enumerate(lmi_categories):
             test = tests.get((rg, cat))
-            text = (
-                f'{cat_labels[cat]}: n.a.'
-                if test is None
-                else f"{cat_labels[cat]} day slope: {format_p(test['p_value'])}"
-            )
+            text = f'{short[cat]}: n.a.' if test is None else f"{short[cat]}: {format_p(test['p_value'])}"
+            if (rg, cat, 'vs_neutral') in tests:
+                text += f"; vs non-mod. {format_p(tests[(rg, cat, 'vs_neutral')])}"
             ax.text(
                 0.02,
-                0.97 - j * 0.09,
+                0.89 - j * 0.1,
                 text,
                 transform=ax.transAxes,
                 va='top',
@@ -257,22 +289,24 @@ def panel_j_participation_across_days(
 
         n_pos = cell_counts.get((rg, 'positive'), 0)
         n_neg = cell_counts.get((rg, 'negative'), 0)
-        ax.set_title(f'{rg}\nLMI+: {n_pos} cells, LMI−: {n_neg} cells', fontweight='bold')
+        n_neu = cell_counts.get((rg, 'neutral'), 0)
+        ax.set_title(f'{rg}\nLMI+ {n_pos}, LMI− {n_neg}, non-mod. {n_neu} cells')
         ax.set_xlabel('Day')
         ax.set_ylabel(ylabel if i == 0 else '')
         ax.set_ylim(*ylim)
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(
-            handles,
-            [cat_labels[lab] for lab in labels],
-            loc='upper center',
-            bbox_to_anchor=(0.5, -0.25),
-            ncol=2,
-            frameon=False,
-        )
+        ax.get_legend().remove()
         sns.despine(ax=ax)
 
     plt.tight_layout()
+    fig.legend(
+        handles,
+        [cat_labels[lab] for lab in labels],
+        loc='upper center',
+        bbox_to_anchor=(0.5, 0.0),
+        ncol=3,
+        frameon=False,
+    )
     os.makedirs(output_dir, exist_ok=True)
     save_figure(fig, os.path.join(output_dir, f'{filename}.pdf'))
     plt.close(fig)

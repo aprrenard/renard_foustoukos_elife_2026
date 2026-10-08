@@ -21,7 +21,7 @@ import pandas as pd
 import seaborn as sns
 
 
-from fast_learning import imaging
+from fast_learning import imaging, decoding
 from fast_learning import paths
 from fast_learning.plotting import reward_palette, save_figure, panel_size
 
@@ -80,7 +80,7 @@ if __name__ == '__main__':
         xarr = imaging.load_mouse_xarray(mouse, folder, 'tensor_xarray_learning_data.nc')
         xarr = xarr.sel(trial=xarr['day'].isin([0]))
         xarr = xarr.sel(trial=xarr['whisker_stim'] == 1)
-        xarr = imaging.select_time(xarr, win[0], win[1]).mean(dim='time')
+        xarr = imaging.select_time(xarr, *decoding.ACTIVE_WIN).mean(dim='time')
         xarr = xarr.fillna(0)
         xarrays_learning[mouse] = xarr
 

@@ -3,7 +3,8 @@
 Each mouse's population response to a passive whisker stimulus is the mean
 baseline-subtracted dF/F of every cell over WIN after stimulus onset, for the
 last N_MAP_TRIALS mapping trials of each day. A logistic-regression decoder
-trained on days -2/-1 vs +1/+2 separates pre- from post-learning responses;
+trained on days -2/-1 vs +1/+2 separates pre- from post-learning responses
+(Day-0 active whisker trials are projected onto it with ACTIVE_WIN, 0-180 ms);
 pipeline/06_decoder.py trains it once per mouse and saves the weights, which
 Fig. 4b-c, Supp. 2c, Supp. 3k-l and the d-prime revision reuse.
 """
@@ -24,7 +25,11 @@ from fast_learning import imaging, paths, database
 # ============================================================================
 
 SAMPLING_RATE = 30
-WIN = (0, 0.300)
+WIN = (0, 0.300)  # passive mapping trials: decoder training
+# Day-0 active whisker trials projected onto the decoder axis: a shorter window
+# that ends before most licks (whisker reaction times ~350-500 ms), so that
+# lick-related activity cannot drive the projection.
+ACTIVE_WIN = (0, 0.180)
 BASELINE_WIN = (-1, 0)
 DAYS = [-2, -1, 0, 1, 2]
 N_MAP_TRIALS = 40
