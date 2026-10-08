@@ -14,7 +14,9 @@ Parts (both by default, or one with --only):
     events  held-out only: events detected by each half of the cells, per split
             and day (surrogate threshold per half; the slow part)
     rates   per-cell participation rates per day, at each participation
-            threshold, with the chance rate and the rate above chance
+            threshold (2.5, 5 and 10 x the cell's noise SD; see
+            fast_learning.participation), with the cell's noise SD and
+            threshold, the chance rate and the rate above chance
             (excess_rate), and per-cell baseline / day-0 / post rates merged
             with LMI                                   (Fig. 4i-j, Supp. 4)
             Held-out: also the in-sample rates (cells of the detecting half,
@@ -24,8 +26,8 @@ Inputs:  <processed_dir>/reactivation/reactivation_results_p99.pkl,
          mouse_selection.csv, <processed_dir>/lmi_results.csv, tensors.
 Outputs: <processed_dir>/reactivation/
              heldout_events.pkl                               (held-out)
-             cell_participation_rates_per_day_thr<N><sfx>.csv
-             participation_lmi_merged_thr<N><sfx>.csv
+             cell_participation_rates_per_day_<k>sd<sfx>.csv
+             participation_lmi_merged_<k>sd<sfx>.csv
          <sfx>: none for held-out cells, _insample, _allcells; with --nolick
          (no-lick control) followed by _nolick.
 
@@ -81,7 +83,10 @@ def load_heldout_events(nolick=False):
         return pickle.load(f)
 
 
-def _save_rates(per_day_df, reward_groups, threshold, nolick, cells):
+def _save_rates(per_day_df, noise_df, reward_groups, threshold, nolick, cells):
+    """Add each cell's noise SD and participation threshold, merge with LMI, save."""
+    per_day_df = per_day_df.merge(noise_df, on=['mouse_id', 'roi'], how='inner')
+    per_day_df['threshold_dff'] = threshold * per_day_df['noise_sd']
     lmi_df = pd.read_csv(LMI_RESULTS_CSV)
     merged = pt.merge_with_lmi(pt.aggregate_across_days(per_day_df), lmi_df, reward_groups)
     os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -89,6 +94,14 @@ def _save_rates(per_day_df, reward_groups, threshold, nolick, cells):
     merged.to_csv(pt.merged_csv(threshold, nolick, cells), index=False)
     print(f"Saved: {pt.rates_csv(threshold, nolick, cells)} ({len(per_day_df)} cell-days)")
     print(f"Saved: {pt.merged_csv(threshold, nolick, cells)} ({len(merged)} cells)")
+
+
+def _noise_and_thresholds(mouse, rois, sub_by_day):
+    """Per-cell noise SD (DataFrame) and per-cell thresholds {k: dF/F}.
+    Cells without measurable noise (constant trace) are left out."""
+    noise = pt.noise_sd(sub_by_day)
+    noise_df = pd.DataFrame(dict(mouse_id=mouse, roi=rois, noise_sd=noise))
+    return noise_df[noise_df['noise_sd'] > 0], pt.cell_thresholds(noise)
 
 
 # ============================================================================
@@ -122,14 +135,25 @@ def run_events(results, nolick=False):
 
 
 def _heldout_mouse(detection, window):
-    """Participation per split, and chance rates, for one mouse."""
-    rois, days = pt.load_heldout_data(detection['mouse'], window)
-    chance = pt.chance_rates(detection['mouse'], rois, {d: v['sub'] for d, v in days.items()})
-    return pt.heldout_split_rates(detection, days), chance
+    """Participation per split, chance rates and noise SD of one mouse."""
+    mouse = detection['mouse']
+    rois, days = pt.load_heldout_data(mouse, window)
+    sub_by_day = {d: v['sub'] for d, v in days.items()}
+    noise_df, thresholds = _noise_and_thresholds(mouse, rois, sub_by_day)
+    split = pt.heldout_split_rates(detection, days, thresholds)
+    return split, pt.chance_rates(mouse, rois, sub_by_day, thresholds), noise_df
 
 
-def _chance_mouse(mouse, window):
-    return pt.chance_rates(mouse, *pt.load_subtracted_by_day(mouse, window))
+def _all_mouse(mouse, mouse_results, window):
+    """Participation of all cells, chance rates and noise SD of one mouse."""
+    rois, sub_by_day = pt.load_subtracted_by_day(mouse, window)
+    noise_df, thresholds = _noise_and_thresholds(mouse, rois, sub_by_day)
+    rates = pt.all_cell_rates(mouse, mouse_results, rois, sub_by_day, thresholds)
+    return rates, pt.chance_rates(mouse, rois, sub_by_day, thresholds), noise_df
+
+
+def _concat(out, i):
+    return pd.concat([o[i] for o in out if o[i] is not None], ignore_index=True)
 
 
 def run_rates_heldout(reward_groups, nolick=False):
@@ -138,14 +162,13 @@ def run_rates_heldout(reward_groups, nolick=False):
     out = Parallel(n_jobs=N_JOBS, verbose=5)(
         delayed(_heldout_mouse)(det, rx.trial_window(nolick)) for det in events['mice'].values()
     )
-    split_df = pd.concat([s for s, _ in out if s is not None], ignore_index=True)
-    chance_df = pd.concat([c for _, c in out if c is not None], ignore_index=True)
+    split_df, chance_df, noise_df = _concat(out, 0), _concat(out, 1), _concat(out, 2)
     for threshold in pt.PARTICIPATION_THRESHOLDS:
         for role in ('heldout', 'insample'):
-            print(f"\n--- {role} participation rates, threshold {threshold} ---")
+            print(f"\n--- {role} participation rates, threshold {threshold:g} noise SD ---")
             sel = split_df[(split_df['role'] == role) & (split_df['threshold'] == threshold)]
             per_day = pt.add_excess(pt.average_over_splits(sel), chance_df, threshold)
-            _save_rates(per_day, reward_groups, threshold, nolick, role)
+            _save_rates(per_day, noise_df, reward_groups, threshold, nolick, role)
 
 
 # ============================================================================
@@ -155,23 +178,16 @@ def run_rates_heldout(reward_groups, nolick=False):
 
 def run_rates_all(results, reward_groups, nolick=False):
     """Participation rates of all cells per day and merged with LMI, at each threshold."""
-    chance_dfs = Parallel(n_jobs=N_JOBS, verbose=5)(
-        delayed(_chance_mouse)(mouse, rx.trial_window(nolick)) for mouse in results
+    out = Parallel(n_jobs=N_JOBS, verbose=5)(
+        delayed(_all_mouse)(mouse, results[mouse], rx.trial_window(nolick)) for mouse in results
     )
-    chance_df = pd.concat([c for c in chance_dfs if c is not None], ignore_index=True)
+    rates_df, chance_df, noise_df = _concat(out, 0), _concat(out, 1), _concat(out, 2)
     for threshold in pt.PARTICIPATION_THRESHOLDS:
-        print(f"\n--- participation rates (all cells), threshold {threshold} ---")
-        results_list = Parallel(n_jobs=N_JOBS, verbose=10)(
-            delayed(pt.process_mouse_participation)(
-                mouse,
-                results[mouse],
-                participation_threshold=threshold,
-                window=rx.trial_window(nolick),
-            )
-            for mouse in results
+        print(f"\n--- participation rates (all cells), threshold {threshold:g} noise SD ---")
+        per_day = rates_df[rates_df['threshold'] == threshold].drop(columns='threshold')
+        _save_rates(
+            pt.add_excess(per_day, chance_df, threshold), noise_df, reward_groups, threshold, nolick, 'all'
         )
-        per_day_df = pd.concat([df for _, df in results_list if df is not None], ignore_index=True)
-        _save_rates(pt.add_excess(per_day_df, chance_df, threshold), reward_groups, threshold, nolick, 'all')
 
 
 # ============================================================================

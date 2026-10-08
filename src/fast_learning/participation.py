@@ -1,10 +1,19 @@
 """Participation of individual cells in reactivation events.
 
 For each reactivation event, a cell participates if its baseline-subtracted
-dF/F averaged over +/- EVENT_WINDOW_MS around the event is at least
-PARTICIPATION_THRESHOLD. A cell's participation rate on a day is the fraction
+dF/F averaged over +/- EVENT_WINDOW_MS around the event reaches its
+participation threshold. A cell's participation rate on a day is the fraction
 of that day's valid events it participates in (events within EVENT_WINDOW_MS
 of a trial edge are skipped).
+
+Participation threshold. Each cell's threshold is a multiple k of its noise:
+k = 2.5 (main), 5 and 10 (PARTICIPATION_THRESHOLDS, in noise SD units). The
+noise is the robust SD (median absolute deviation x 1.4826) of the cell's
++/- 150 ms mean dF/F over all time points where events are counted, pooled
+over the days analysed (noise_sd). The median absolute deviation is barely
+affected by the cell's transients, which occupy a small fraction of the time,
+so the threshold reflects the cell's noise rather than its activity; a single
+value per cell keeps the criterion fixed across days.
 
 Held-out cells (main analysis). Events are moments when population activity
 matches the whisker template, and every cell contributes to that match in
@@ -49,7 +58,9 @@ DAYS = [-2, -1, 0, 1, 2]
 SAMPLING_RATE = 30
 EVENT_WINDOW_MS = 150
 EVENT_WINDOW_FRAMES = int(EVENT_WINDOW_MS / 1000 * SAMPLING_RATE)
-PARTICIPATION_THRESHOLD = 0.10
+PARTICIPATION_THRESHOLDS = [2.5, 5, 10]  # noise SD units; main value first, then robustness checks
+PARTICIPATION_THRESHOLD = PARTICIPATION_THRESHOLDS[0]
+MAD_TO_SD = 1.4826  # SD of a Gaussian = 1.4826 x its median absolute deviation
 MIN_EVENTS_FOR_RELIABILITY = reactivations.MIN_EVENTS_PER_DAY
 MIN_NOSTIM_TRIALS = 10
 LMI_POSITIVE_THRESHOLD = 0.975
@@ -93,11 +104,9 @@ def heldout_events_pkl(nolick=False):
     return os.path.join(RESULTS_DIR, f'heldout_events{suffix(nolick)}.pkl')
 
 
-PARTICIPATION_THRESHOLDS = [0.10, 0.20, 0.50]  # main value first, then robustness checks
-
-
 def thr_tag(threshold):
-    return f'thr{int(round(threshold * 100))}'
+    """File-name tag of a participation threshold (noise SD units), e.g. '2.5sd'."""
+    return f'{threshold:g}sd'
 
 
 def rates_csv(threshold=PARTICIPATION_THRESHOLD, nolick=False, cells='heldout'):
@@ -136,104 +145,6 @@ def load_participation(threshold=PARTICIPATION_THRESHOLD, nolick=False, cells='h
 # ============================================================================
 # Participation rates
 # ============================================================================
-
-
-def extract_event_responses(mouse, day, events, participation_threshold=PARTICIPATION_THRESHOLD, window=None):
-    """Per-cell dF/F responses around the reactivation events of one mouse-day.
-
-    Uses the trials of reactivations.select_trials_by_type, as the event
-    detection does: event indices point into their concatenated trial x time
-    axes.
-
-    Returns a DataFrame (mouse_id, day, roi, event_idx, avg_response,
-    participates), or None with fewer than MIN_NOSTIM_TRIALS correct-rejection trials
-    or no valid event.
-    """
-    xarr = imaging.load_mouse_xarray(
-        mouse, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=True
-    )
-    xarr_day = xarr.sel(trial=xarr['day'] == day)
-    nostim, _ = reactivations.select_trials_by_type(xarr_day, window)
-
-    if len(nostim.trial) < MIN_NOSTIM_TRIALS:
-        return None
-
-    n_cells, n_trials, n_timepoints = nostim.shape
-    data_3d = nostim.values
-    roi_list = nostim['roi'].values
-    win = EVENT_WINDOW_FRAMES
-
-    rows = []
-    for event_idx in events:
-        trial_idx = event_idx // n_timepoints
-        time_idx = event_idx % n_timepoints
-        if time_idx < win or time_idx >= n_timepoints - win or trial_idx >= n_trials:
-            continue
-        window_data = data_3d[:, trial_idx, time_idx - win : time_idx + win + 1]
-        avg_response = np.mean(window_data, axis=1)
-        participates = avg_response >= participation_threshold
-        for icell in range(n_cells):
-            rows.append(
-                {
-                    'mouse_id': mouse,
-                    'day': day,
-                    'roi': roi_list[icell],
-                    'event_idx': event_idx,
-                    'avg_response': float(avg_response[icell]),
-                    'participates': bool(participates[icell]),
-                }
-            )
-
-    return pd.DataFrame(rows) if rows else None
-
-
-def compute_participation_rate(responses_df):
-    """Aggregate cell-event responses to per-cell, per-day participation rates."""
-    grouped = (
-        responses_df.groupby(['mouse_id', 'day', 'roi'])
-        .agg(
-            n_participations=('participates', 'sum'),
-            n_events=('participates', 'count'),
-        )
-        .reset_index()
-    )
-    grouped['participation_rate'] = grouped['n_participations'] / grouped['n_events']
-    grouped['reliable'] = grouped['n_events'] >= MIN_EVENTS_FOR_RELIABILITY
-    return grouped
-
-
-def process_mouse_participation(
-    mouse,
-    mouse_results,
-    participation_threshold=PARTICIPATION_THRESHOLD,
-    window=None,
-):
-    """Participation rates across all days for one mouse.
-
-    mouse_results is that mouse's entry of a reactivation results file.
-    Returns (mouse, DataFrame or None).
-    """
-    all_responses = []
-    for day in DAYS:
-        events = mouse_results.get('days', {}).get(day, {}).get('events', None)
-        if events is None or len(events) == 0:
-            continue
-        try:
-            resp_df = extract_event_responses(
-                mouse,
-                day,
-                events,
-                participation_threshold=participation_threshold,
-                window=window,
-            )
-            if resp_df is not None and len(resp_df) > 0:
-                all_responses.append(resp_df)
-        except Exception as e:
-            print(f"  Warning: {mouse} day {day}: {e}")
-    if not all_responses:
-        return mouse, None
-    all_resp_df = pd.concat(all_responses, ignore_index=True)
-    return mouse, compute_participation_rate(all_resp_df)
 
 
 def aggregate_across_days(participation_df_all):
@@ -317,13 +228,12 @@ def merge_with_lmi(participation_df, lmi_df, reward_groups):
 # ============================================================================
 
 
-def participation_from_3d(
-    data_3d, events, n_timepoints, n_trials, participation_threshold=PARTICIPATION_THRESHOLD
-):
+def participation_from_3d(data_3d, events, n_timepoints, n_trials, threshold):
     """Vectorised participation rate per cell.
 
     data_3d is (n_cells, n_trials, n_timepoints); events are frame indices in
-    the flattened trial x time axis. Returns (rates or None, n_valid_events).
+    the flattened trial x time axis; threshold is a dF/F value, per cell
+    (array) or common (scalar). Returns (rates or None, n_valid_events).
     """
     win = EVENT_WINDOW_FRAMES
     valid = [
@@ -343,28 +253,53 @@ def participation_from_3d(
         [data_3d[:, tr_idxs[i], t_idxs[i] - win : t_idxs[i] + win + 1] for i in range(len(valid))]
     )
     avg = np.mean(windows, axis=2)
-    rates = np.mean(avg >= participation_threshold, axis=0)
+    rates = np.mean(avg >= threshold, axis=0)
     return rates, len(valid)
 
 
-def chance_participation(data_3d, threshold=PARTICIPATION_THRESHOLD):
-    """Per cell: fraction of the time points at which events are counted (at
-    least EVENT_WINDOW_FRAMES from a trial edge, as participation_from_3d) at
-    which its dF/F averaged over +/- EVENT_WINDOW_FRAMES reaches threshold, i.e.
-    its participation rate in events placed at random times."""
+def window_means(data_3d):
+    """cells x trials x positions: dF/F averaged over +/- EVENT_WINDOW_FRAMES
+    around each time point at which events are counted (at least
+    EVENT_WINDOW_FRAMES from a trial edge, as participation_from_3d)."""
     win = EVENT_WINDOW_FRAMES
-    means = sliding_window_view(data_3d, 2 * win + 1, axis=2).mean(axis=-1)
-    return (means >= threshold).mean(axis=(1, 2))
+    return sliding_window_view(data_3d, 2 * win + 1, axis=2).mean(axis=-1)
 
 
-def chance_rates(mouse, rois, sub_by_day, thresholds=PARTICIPATION_THRESHOLDS):
+def noise_sd(sub_by_day):
+    """Robust SD of each cell's +/- 150 ms mean dF/F: median absolute deviation
+    x MAD_TO_SD, over all countable time points of all days in sub_by_day
+    ({day: cells x trials x time})."""
+    means = np.concatenate([window_means(sub).reshape(len(sub), -1) for sub in sub_by_day.values()], axis=1)
+    deviation = np.abs(means - np.median(means, axis=1, keepdims=True))
+    return MAD_TO_SD * np.median(deviation, axis=1)
+
+
+def cell_thresholds(noise, ks=PARTICIPATION_THRESHOLDS):
+    """{k: per-cell participation threshold k x noise SD (dF/F)}. Cells without
+    measurable noise (constant trace) get an infinite threshold."""
+    noise = np.where(noise > 0, noise, np.inf)
+    return {k: k * noise for k in ks}
+
+
+def chance_participation(data_3d, threshold):
+    """Per cell: fraction of the time points at which events are counted at
+    which its +/- EVENT_WINDOW_FRAMES mean dF/F reaches threshold (per cell or
+    common), i.e. its participation rate in events placed at random times."""
+    threshold = np.asarray(threshold, dtype=float)
+    if threshold.ndim == 1:
+        threshold = threshold[:, None, None]
+    return (window_means(data_3d) >= threshold).mean(axis=(1, 2))
+
+
+def chance_rates(mouse, rois, sub_by_day, thresholds):
     """Chance participation of each cell on each day, at each threshold.
 
-    sub_by_day maps day to a cells x trials x time baseline-subtracted array.
+    sub_by_day maps day to a cells x trials x time baseline-subtracted array;
+    thresholds maps k to per-cell thresholds (cell_thresholds).
     Returns a DataFrame (mouse_id, day, roi, threshold, chance_rate)."""
     parts = []
     for day, sub in sub_by_day.items():
-        for threshold in thresholds:
+        for threshold, cell_thr in thresholds.items():
             parts.append(
                 pd.DataFrame(
                     dict(
@@ -372,7 +307,7 @@ def chance_rates(mouse, rois, sub_by_day, thresholds=PARTICIPATION_THRESHOLDS):
                         day=day,
                         roi=rois,
                         threshold=threshold,
-                        chance_rate=chance_participation(sub, threshold),
+                        chance_rate=chance_participation(sub, cell_thr),
                     )
                 )
             )
@@ -391,6 +326,40 @@ def load_subtracted_by_day(mouse, window=None):
         if n_trials >= MIN_NOSTIM_TRIALS:
             out[day] = np.nan_to_num(sub_tr.values)
     return sub_x['roi'].values, out
+
+
+def all_cell_rates(mouse, mouse_results, rois, sub_by_day, thresholds):
+    """Participation of all cells in the events of step 07 (cells='all').
+
+    mouse_results is the mouse's entry of a reactivation results file, whose
+    event indices refer to the trials of load_subtracted_by_day. Returns a
+    DataFrame (mouse_id, day, roi, threshold, participation_rate, n_events,
+    reliable) or None.
+    """
+    parts = []
+    for day, sub in sub_by_day.items():
+        events = mouse_results.get('days', {}).get(day, {}).get('events', None)
+        if events is None or len(events) == 0:
+            continue
+        _, n_trials, n_t = sub.shape
+        for threshold, cell_thr in thresholds.items():
+            rates, n_valid = participation_from_3d(sub, events, n_t, n_trials, cell_thr)
+            if rates is None:
+                continue
+            parts.append(
+                pd.DataFrame(
+                    dict(
+                        mouse_id=mouse,
+                        day=day,
+                        roi=rois,
+                        threshold=threshold,
+                        participation_rate=rates,
+                        n_events=n_valid,
+                        reliable=n_valid >= MIN_EVENTS_FOR_RELIABILITY,
+                    )
+                )
+            )
+    return pd.concat(parts, ignore_index=True) if parts else None
 
 
 def add_excess(per_day_df, chance_df, threshold):
@@ -447,10 +416,10 @@ def load_heldout_data(mouse, window=None):
     return rois, days
 
 
-def _half_threshold(mouse, days, cells, split):
+def _half_threshold(mouse, days, cells, split, percentile=DETECTION_PERCENTILE):
     """Detection threshold for a subset of cells, as step 07: median over
-    circular-shift surrogates of the DETECTION_PERCENTILE-th percentile of the
-    template correlation, pooled over the pre-learning days."""
+    circular-shift surrogates of the percentile-th percentile of the template
+    correlation, pooled over the pre-learning days."""
     pooled = []
     for day in reactivations.PRELEARNING_DAYS:
         if day not in days:
@@ -460,20 +429,21 @@ def _half_threshold(mouse, days, cells, split):
             days[day]['template'][cells],
             N_SURROGATES_HALF,
             0,
-            (DETECTION_PERCENTILE,),
+            (percentile,),
             rng=_split_rng(mouse, split, int(cells[0]), day + 10),
         )
-        pooled.append(res[DETECTION_PERCENTILE]['surrogate_percentiles'])
+        pooled.append(res[percentile]['surrogate_percentiles'])
     return float(np.median(np.concatenate(pooled))) if pooled else np.nan
 
 
-def detect_heldout_events(mouse, window=None):
+def detect_heldout_events(mouse, window=None, percentile=DETECTION_PERCENTILE):
     """Reactivation events detected by each half of a mouse's cells.
 
     For each of N_SPLITS random splits and each half: the events detected with
     that half only (its template, its activity, its own surrogate threshold),
-    within each trial as in step 07. Event indices refer to the concatenated
-    trials of load_heldout_data(mouse, window).
+    within each trial as in step 07. percentile: surrogate percentile of the
+    detection threshold (99 main; 99.5 / 99.9 robustness). Event indices refer
+    to the concatenated trials of load_heldout_data(mouse, window).
 
     Returns dict(mouse, rois, detections): one detection per split and half,
     dict(split, half, detect, heldout, threshold, events={day: indices}),
@@ -485,7 +455,7 @@ def detect_heldout_events(mouse, window=None):
         halves = split_halves(mouse, len(rois), split)
         for h in (0, 1):
             detect, heldout = halves[h], halves[1 - h]
-            threshold = _half_threshold(mouse, days, detect, split)
+            threshold = _half_threshold(mouse, days, detect, split, percentile)
             if np.isnan(threshold):
                 continue
             events = {}
@@ -504,8 +474,9 @@ def detect_heldout_events(mouse, window=None):
     return dict(mouse=mouse, rois=rois, detections=detections)
 
 
-def heldout_split_rates(detection, days, thresholds=PARTICIPATION_THRESHOLDS):
-    """Participation per split, cell and day, at each participation threshold.
+def heldout_split_rates(detection, days, thresholds):
+    """Participation per split, cell and day, at each participation threshold
+    (thresholds: {k: per-cell thresholds}, see cell_thresholds).
 
     role 'heldout': cells outside the detecting half; role 'insample': the
     detecting half itself (same events, for comparison). Returns a DataFrame
@@ -518,8 +489,8 @@ def heldout_split_rates(detection, days, thresholds=PARTICIPATION_THRESHOLDS):
         for day, events in det['events'].items():
             sub = days[day]['sub']
             _, n_trials, n_t = sub.shape
-            for threshold in thresholds:
-                rates, n_valid = participation_from_3d(sub, events, n_t, n_trials, threshold)
+            for threshold, cell_thr in thresholds.items():
+                rates, n_valid = participation_from_3d(sub, events, n_t, n_trials, cell_thr)
                 if rates is None:
                     continue
                 for role, idx in (('heldout', det['heldout']), ('insample', det['detect'])):

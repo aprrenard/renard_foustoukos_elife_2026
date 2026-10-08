@@ -21,8 +21,8 @@ half of the cells, 10 random splits; as Fig. 4i-j). --cells all: all cells in
 the events of step 07, for comparison.
 
 Inputs:  participation rates with chance rates (pipeline/08_participation.py).
-Outputs: <figures_dir>/supp_4/output/supp_4a_thr<N><sfx>.pdf, _stats.csv and
-         supp_4b_thr<N><sfx>.pdf, _data.csv, _stats.csv; <sfx> is empty for
+Outputs: <figures_dir>/supp_4/output/supp_4a_<k>sd<sfx>.pdf, _stats.csv and
+         supp_4b_<k>sd<sfx>.pdf, _data.csv, _stats.csv; <sfx> is empty for
          held-out cells, _allcells, then _nolick for the no-lick control.
 """
 
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     for threshold in participation.PARTICIPATION_THRESHOLDS:
         tag = participation.thr_tag(threshold)
-        print(f"\n--- participation_threshold={threshold} ({tag}{sfx}) ---")
+        print(f"\n--- participation threshold {threshold:g} x noise SD ({tag}{sfx}) ---")
         merged, per_day = excess_tables(*participation.load_participation(threshold, args.nolick, args.cells))
         fig4ij.panel_i_participation_vs_lmi(
             merged,

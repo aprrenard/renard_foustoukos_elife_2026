@@ -105,16 +105,18 @@ def per_mouse_slope_test(mouse_day_data, y='participation_rate', x='day'):
     vs x per mouse (on that mouse's per-day means), then a Wilcoxon
     signed-rank test of the slopes against zero.
 
-    Returns None with fewer than 2 mice having at least 2 days.
+    Returns None with fewer than 2 mice having at least 2 days; otherwise
+    the summary statistics and 'slopes' ({mouse: slope}).
     """
     import numpy as np
     from scipy.stats import linregress, wilcoxon
 
-    slopes = []
-    for _, mdata in mouse_day_data.groupby('mouse_id'):
+    slopes, mice = [], []
+    for mouse, mdata in mouse_day_data.groupby('mouse_id'):
         mdata = mdata.dropna(subset=[y])
         if mdata[x].nunique() >= 2:
             slopes.append(linregress(mdata[x], mdata[y]).slope)
+            mice.append(mouse)
     if len(slopes) < 2:
         return None
     slopes = np.array(slopes)
@@ -129,6 +131,7 @@ def per_mouse_slope_test(mouse_day_data, y='participation_rate', x='day'):
         'w_stat': float(w_stat),
         'p_value': float(p_value),
         'n_mice': len(slopes),
+        'slopes': dict(zip(mice, slopes)),
     }
 
 

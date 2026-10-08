@@ -11,24 +11,45 @@ def test_participation_from_3d():
     events = [20, n_t + 30, 2]  # trial 0 t=20, trial 1 t=30, one too close to the edge
     data[0, 0, 20 - win : 20 + win + 1] = 0.5  # cell 0 active at event 1 only
     data[1, :, :] = 0.5  # cell 1 always active
-    rates, n_valid = pt.participation_from_3d(data, events, n_t, n_trials)
+    rates, n_valid = pt.participation_from_3d(data, events, n_t, n_trials, 0.10)
     assert n_valid == 2
     np.testing.assert_allclose(rates, [0.5, 1.0, 0.0])
 
 
 def test_participation_from_3d_no_valid_event():
-    rates, n_valid = pt.participation_from_3d(np.zeros((2, 1, 30)), [0, 29], 30, 1)
+    rates, n_valid = pt.participation_from_3d(np.zeros((2, 1, 30)), [0, 29], 30, 1, 0.10)
     assert rates is None and n_valid == 0
 
 
-def test_participation_rate_and_reliability():
-    responses = pd.DataFrame(
-        {'mouse_id': 'M', 'day': 0, 'roi': [1, 1, 1, 2, 2], 'participates': [True, False, True, True, True]}
-    )
-    rates = pt.compute_participation_rate(responses).set_index('roi')
-    assert rates.loc[1, 'participation_rate'] == 2 / 3
-    assert rates.loc[1, 'reliable'] == (3 >= pt.MIN_EVENTS_FOR_RELIABILITY)
-    assert rates.loc[2, 'n_events'] == 2 and not rates.loc[2, 'reliable']
+def test_per_cell_threshold():
+    # A per-cell threshold array applies to each cell separately.
+    data = np.zeros((2, 1, 60))
+    data[:, 0, 20:31] = [[0.3], [0.3]]
+    rates, _ = pt.participation_from_3d(data, [25], 60, 1, np.array([0.2, 0.4]))
+    np.testing.assert_allclose(rates, [1.0, 0.0])
+    np.testing.assert_allclose(pt.chance_participation(data, np.array([0.2, 0.4]))[1], 0.0)
+
+
+def test_all_cell_rates_reliability():
+    m = pt.MIN_EVENTS_FOR_RELIABILITY
+    n_t = 60
+    sub = {0: np.zeros((2, 4, n_t)), 1: np.zeros((2, 4, n_t))}
+    results = {'days': {0: {'events': [tr * n_t + 30 for tr in range(m)]}, 1: {'events': [30]}}}
+    df = pt.all_cell_rates('M', results, np.array([7, 8]), sub, {2.5: np.array([0.1, 0.1])})
+    assert set(df['roi']) == {7, 8}
+    assert df.loc[df['day'] == 0, 'reliable'].all() and not df.loc[df['day'] == 1, 'reliable'].any()
+
+
+def test_noise_sd_is_robust_to_transients():
+    rng = np.random.default_rng(1)
+    sigma = 0.1  # per-frame noise; the SD of a (2w+1)-frame mean is sigma / sqrt(2w+1)
+    data = rng.normal(0, sigma, (1, 400, 60))
+    expected = sigma / np.sqrt(2 * pt.EVENT_WINDOW_FRAMES + 1)
+    np.testing.assert_allclose(pt.noise_sd({0: data}), expected, rtol=0.05)
+    data[0, :20, 20:40] += 1.0  # transients in 5% of trials
+    np.testing.assert_allclose(pt.noise_sd({0: data}), expected, rtol=0.1)
+    thr = pt.cell_thresholds(np.array([0.04, 0.0]))
+    assert thr[2.5][0] == 0.1 and np.isinf(thr[2.5][1])
 
 
 def test_aggregate_across_days():
@@ -54,13 +75,13 @@ def test_lmi_category():
 
 
 def test_file_names():
-    assert pt.thr_tag(0.1) == 'thr10' and pt.thr_tag(0.5) == 'thr50'
-    assert pt.rates_csv(0.2).endswith('cell_participation_rates_per_day_thr20.csv')
+    assert pt.thr_tag(2.5) == '2.5sd' and pt.thr_tag(10) == '10sd'
+    assert pt.rates_csv(5).endswith('cell_participation_rates_per_day_5sd.csv')
 
 
 def test_file_names_cells():
-    assert pt.rates_csv(0.1, cells='all').endswith('thr10_allcells.csv')
-    assert pt.merged_csv(0.1, nolick=True, cells='insample').endswith('thr10_insample_nolick.csv')
+    assert pt.rates_csv(2.5, cells='all').endswith('2.5sd_allcells.csv')
+    assert pt.merged_csv(2.5, nolick=True, cells='insample').endswith('2.5sd_insample_nolick.csv')
 
 
 def test_split_halves():
@@ -77,9 +98,9 @@ def test_chance_participation_is_participation_at_every_time_point():
     n_cells, n_trials, n_t = 4, 6, 40
     data = rng.normal(0.05, 0.1, (n_cells, n_trials, n_t))
     all_points = np.arange(n_trials * n_t)
-    expected, n_valid = pt.participation_from_3d(data, all_points, n_t, n_trials)
+    expected, n_valid = pt.participation_from_3d(data, all_points, n_t, n_trials, 0.10)
     assert n_valid == n_trials * (n_t - 2 * pt.EVENT_WINDOW_FRAMES)
-    np.testing.assert_allclose(pt.chance_participation(data), expected)
+    np.testing.assert_allclose(pt.chance_participation(data, 0.10), expected)
 
 
 def test_add_excess():

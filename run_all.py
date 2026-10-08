@@ -68,7 +68,7 @@ FIGURE_VARIANTS = {
     'supp_4a_b': [_ALLCELLS, _NOLICK],
 }
 # Revision analyses with a slow computation of their own; --recompute forces it.
-RECOMPUTE = {'figure_3f_LMIshuffles', 'figure_4h_shuffle_control'}
+RECOMPUTE = {'figure_3f_LMIshuffles', 'figure_4h_shuffle_control', 'thresholds_robustness'}
 
 
 def figure_steps():

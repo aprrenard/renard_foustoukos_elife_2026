@@ -25,9 +25,10 @@ at least one split). Mice: those in the participation mouse selection
 (>= 3 reactivation events on day 0; see fast_learning.reactivations).
 
 Inputs:  participation rates from pipeline/08_participation.py, at each
-         participation threshold (10% main, 20% and 50% robustness checks).
-Outputs: <figures_dir>/figure_4/output/figure_4i_thr<N><sfx>.pdf, _stats.csv
-         and figure_4j_thr<N><sfx>.pdf, _data.csv, _stats.csv; <sfx> is
+         participation threshold: 2.5 x each cell's noise SD (main), 5 and 10 x
+         (robustness checks; see fast_learning.participation).
+Outputs: <figures_dir>/figure_4/output/figure_4i_<k>sd<sfx>.pdf, _stats.csv
+         and figure_4j_<k>sd<sfx>.pdf, _data.csv, _stats.csv; <sfx> is
          empty for held-out cells, _insample or _allcells, then _nolick for
          the no-lick control.
 """
@@ -301,7 +302,7 @@ if __name__ == '__main__':
 
     for threshold in participation.PARTICIPATION_THRESHOLDS:
         tag = participation.thr_tag(threshold)
-        print(f"\n--- participation_threshold={threshold} ({tag}{sfx}) ---")
+        print(f"\n--- participation threshold {threshold:g} x noise SD ({tag}{sfx}) ---")
         merged_df, per_day_df = participation.load_participation(threshold, args.nolick, args.cells)
         print(
             f"Dataset: {len(merged_df)} cells, {len(per_day_df)} cell-day records, "

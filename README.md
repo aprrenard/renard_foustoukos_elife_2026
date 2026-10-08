@@ -139,6 +139,7 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | — | [`figures/revisions/figure_4h_event_timing.py`](figures/revisions/figure_4h_event_timing.py) | Are reactivation events over-represented when mice can lick? |
 | — | [`figures/revisions/figure_4h_shuffle_control.py`](figures/revisions/figure_4h_shuffle_control.py) | Shuffled-template reactivation detection |
 | — | [`figures/revisions/movement_state_summary.py`](figures/revisions/movement_state_summary.py) | Facial/whisker movement during the passive mapping epoch, across days |
+| — | [`figures/revisions/thresholds_robustness.py`](figures/revisions/thresholds_robustness.py) | Robustness of the reactivation results to the participation threshold and to the detection threshold |
 <!-- figure-table:end -->
 
 The table is generated from the scripts' docstrings: `python tools/update_figure_table.py`.
