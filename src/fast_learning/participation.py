@@ -20,8 +20,12 @@ rate on a day is the mean over the splits whose detection had at least
 MIN_EVENTS_FOR_RELIABILITY valid events. Participation of all cells in the
 events of step 07 (cells='all') is kept for comparison.
 
-Also provides the circular-shift test of participation (Supp. 4c) and the
-spontaneous transient frequency used as a covariate (Supp. 4a-b).
+Participation above chance (Supp. 4). A cell that is often active crosses the
+participation threshold at many moments, events or not. Its chance rate is
+the participation expected if events occurred at random times: the fraction
+of time points (those where events are counted) at which its +/- 150 ms mean
+dF/F reaches the threshold. excess_rate = participation_rate - chance_rate
+corrects each cell-day for the cell's activity level on that day.
 
 Only the mice in the participation mouse selection are analysed (see
 fast_learning.reactivations); the pipeline step participation.py applies it.
@@ -32,7 +36,7 @@ import zlib
 
 import numpy as np
 import pandas as pd
-from scipy.signal import find_peaks, savgol_filter
+from numpy.lib.stride_tricks import sliding_window_view
 
 from fast_learning import imaging, paths, reactivations
 
@@ -51,27 +55,12 @@ MIN_NOSTIM_TRIALS = 10
 LMI_POSITIVE_THRESHOLD = 0.975
 LMI_NEGATIVE_THRESHOLD = 0.025
 
-# Circular-shift test (Supp. 4c)
-N_SHIFTS = 1000
-SHIFT_SEED = 0  # Base seed; each (mouse, day) gets its own stream
-MIN_SHIFT_FRAMES = 0
-SIGNIFICANCE_PCTILE = 95  # top 5 % -> p < 0.05
-
 # Held-out cells (main analysis): events detected with one random half of the
 # cells, participation measured in the other half (see the Held-out section)
 N_SPLITS = 10
 N_SURROGATES_HALF = 500  # per pre-learning day, for each half's detection threshold
 DETECTION_PERCENTILE = 99  # surrogate percentile of the detection threshold (as step 07, p99)
 HELDOUT_SEED = 0
-
-# Spontaneous transient detection (Supp. 4a-b)
-MIN_DISTANCE_MS = 200
-MIN_DISTANCE_FRAMES = int(MIN_DISTANCE_MS / 1000 * SAMPLING_RATE)
-PROMINENCE_TRANSIENT = 0.2
-N_STD_THRESHOLD = 3  # Per-cell threshold: N_STD_THRESHOLD * std(trace)
-SAVGOL_WINDOW = 10
-SAVGOL_ORDER = 2
-
 
 # ============================================================================
 # Output files (written by the participation pipeline step)
@@ -97,16 +86,6 @@ _CELLS_SFX = {'heldout': '', 'insample': '_insample', 'all': '_allcells'}
 def suffix(nolick=False, cells='heldout'):
     """File-name suffix of a participation output."""
     return _CELLS_SFX[cells] + ('_nolick' if nolick else '')
-
-
-def day0_csv(nolick=False, cells='heldout'):
-    """Day-0 participation rate, transient frequency and LMI per cell (Supp. 4a-b)."""
-    return os.path.join(RESULTS_DIR, f'supp4ab_lmi_data_day0{suffix(nolick, cells)}.csv')
-
-
-def binary_csv(nolick=False, cells='heldout'):
-    """Binary participation per cell-day from the circular-shift test (Supp. 4c)."""
-    return os.path.join(RESULTS_DIR, f'binary_participation_with_lmi{suffix(nolick, cells)}.csv')
 
 
 def heldout_events_pkl(nolick=False):
@@ -152,18 +131,6 @@ def load_participation(threshold=PARTICIPATION_THRESHOLD, nolick=False, cells='h
         f"({thr_tag(threshold)}{suffix(nolick, cells)})."
     )
     return merged_df, per_day_df
-
-
-def load_day0(nolick=False, cells='heldout'):
-    """Day-0 participation rate, transient frequency and LMI per cell."""
-    return _read(day0_csv(nolick, cells))
-
-
-def load_binary_participation(nolick=False, cells='heldout'):
-    """Binary participation per cell-day (circular-shift test), with LMI."""
-    df = _read(binary_csv(nolick, cells))
-    print(f"Loaded: {binary_csv(nolick, cells)}  ({len(df)} rows)")
-    return df
 
 
 # ============================================================================
@@ -346,7 +313,7 @@ def merge_with_lmi(participation_df, lmi_df, reward_groups):
 
 
 # ============================================================================
-# Circular-shift test of participation (Supp. 4c)
+# Participation from a cells x trials x time array
 # ============================================================================
 
 
@@ -380,86 +347,58 @@ def participation_from_3d(
     return rates, len(valid)
 
 
-def participation_with_shifts(mouse, day, events, n_shifts=N_SHIFTS, window=None):
-    """Binary participation of each cell on one mouse-day.
+def chance_participation(data_3d, threshold=PARTICIPATION_THRESHOLD):
+    """Per cell: fraction of the time points at which events are counted (at
+    least EVENT_WINDOW_FRAMES from a trial edge, as participation_from_3d) at
+    which its dF/F averaged over +/- EVENT_WINDOW_FRAMES reaches threshold, i.e.
+    its participation rate in events placed at random times."""
+    win = EVENT_WINDOW_FRAMES
+    means = sliding_window_view(data_3d, 2 * win + 1, axis=2).mean(axis=-1)
+    return (means >= threshold).mean(axis=(1, 2))
 
-    A cell participates if its participation rate exceeds the
-    SIGNIFICANCE_PCTILE-th percentile of a null distribution built from
-    n_shifts circular shifts of the data (the same shift for all cells, which
-    preserves correlations between cells).
 
-    Returns a DataFrame (mouse_id, day, roi, participating, n_events), or None
-    with fewer than MIN_NOSTIM_TRIALS correct-rejection trials or fewer than
-    MIN_EVENTS_FOR_RELIABILITY valid events.
-    """
-    try:
-        xr = imaging.load_mouse_xarray(
-            mouse, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=True
-        )
-        xr_day = xr.sel(trial=xr['day'] == day)
-        nostim, _ = reactivations.select_trials_by_type(xr_day, window)
+def chance_rates(mouse, rois, sub_by_day, thresholds=PARTICIPATION_THRESHOLDS):
+    """Chance participation of each cell on each day, at each threshold.
 
-        n_cells, n_trials, n_timepoints = nostim.shape
-        if n_trials < MIN_NOSTIM_TRIALS:
-            return None
-
-        data_3d = np.nan_to_num(nostim.values, nan=0.0)
-        roi_list = nostim['roi'].values
-        n_frames = n_trials * n_timepoints
-
-        if events is None or len(events) == 0:
-            return None
-
-        real_rates, n_valid = participation_from_3d(data_3d, events, n_timepoints, n_trials)
-        if real_rates is None or n_valid < MIN_EVENTS_FOR_RELIABILITY:
-            return None
-
-        data_flat = data_3d.reshape(n_cells, n_frames)
-        null_rates = np.full((n_shifts, n_cells), np.nan)
-        rng = np.random.default_rng([SHIFT_SEED, zlib.crc32(mouse.encode()), day + 10])
-        for i_shift in range(n_shifts):
-            shift = (
-                rng.integers(MIN_SHIFT_FRAMES + 1, n_frames)
-                if MIN_SHIFT_FRAMES > 0
-                else rng.integers(1, n_frames)
+    sub_by_day maps day to a cells x trials x time baseline-subtracted array.
+    Returns a DataFrame (mouse_id, day, roi, threshold, chance_rate)."""
+    parts = []
+    for day, sub in sub_by_day.items():
+        for threshold in thresholds:
+            parts.append(
+                pd.DataFrame(
+                    dict(
+                        mouse_id=mouse,
+                        day=day,
+                        roi=rois,
+                        threshold=threshold,
+                        chance_rate=chance_participation(sub, threshold),
+                    )
+                )
             )
-            shifted_3d = np.roll(data_flat, shift, axis=1).reshape(n_cells, n_trials, n_timepoints)
-            null_r, _ = participation_from_3d(shifted_3d, events, n_timepoints, n_trials)
-            if null_r is not None:
-                null_rates[i_shift] = null_r
-
-        threshold = np.nanpercentile(null_rates, SIGNIFICANCE_PCTILE, axis=0)
-        significant = real_rates > threshold
-
-        records = [
-            {
-                'mouse_id': mouse,
-                'day': day,
-                'roi': roi_list[icell],
-                'participating': bool(significant[icell]),
-                'n_events': n_valid,
-            }
-            for icell in range(n_cells)
-            if not np.isnan(real_rates[icell])
-        ]
-        return pd.DataFrame(records) if records else None
-
-    except Exception as e:
-        print(f"  circular shift {mouse} day {day}: {e}")
-        return None
+    return pd.concat(parts, ignore_index=True) if parts else None
 
 
-def process_mouse_circular_shift(mouse, mouse_results, n_shifts=N_SHIFTS, window=None):
-    """Binary participation for all days of one mouse. Returns (mouse, DataFrame or None)."""
-    dfs = []
+def load_subtracted_by_day(mouse, window=None):
+    """(rois, {day: cells x trials x time}) baseline-subtracted dF/F of the
+    correct-rejection trials, for days with at least MIN_NOSTIM_TRIALS trials."""
+    sub_x = imaging.load_mouse_xarray(
+        mouse, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=True
+    )
+    out = {}
     for day in DAYS:
-        events = None
-        if mouse_results is not None:
-            events = mouse_results.get('days', {}).get(day, {}).get('events', None)
-        df = participation_with_shifts(mouse, day, events, n_shifts, window)
-        if df is not None:
-            dfs.append(df)
-    return mouse, pd.concat(dfs, ignore_index=True) if dfs else None
+        sub_tr, n_trials = reactivations.select_trials_by_type(sub_x.sel(trial=sub_x['day'] == day), window)
+        if n_trials >= MIN_NOSTIM_TRIALS:
+            out[day] = np.nan_to_num(sub_tr.values)
+    return sub_x['roi'].values, out
+
+
+def add_excess(per_day_df, chance_df, threshold):
+    """Add chance_rate and excess_rate (participation_rate - chance_rate)."""
+    chance = chance_df.loc[chance_df['threshold'] == threshold, ['mouse_id', 'day', 'roi', 'chance_rate']]
+    out = per_day_df.merge(chance, on=['mouse_id', 'day', 'roi'], how='left')
+    out['excess_rate'] = out['participation_rate'] - out['chance_rate']
+    return out
 
 
 # ============================================================================
@@ -619,135 +558,3 @@ def average_over_splits(split_df):
     )
     out['reliable'] = True
     return out
-
-
-def windowed_participation(data_flat, threshold=PARTICIPATION_THRESHOLD):
-    """cells x frames boolean: dF/F averaged over +/- EVENT_WINDOW_FRAMES
-    around each frame reaches threshold. The frame axis is treated as circular,
-    so that indexing this array at (event - shift) % n_frames gives the
-    participation at the events in data circularly shifted by shift (as
-    np.roll(data_flat, shift) in participation_with_shifts)."""
-    win = EVENT_WINDOW_FRAMES
-    acc = np.zeros(data_flat.shape)
-    for k in range(-win, win + 1):
-        acc += np.roll(data_flat, -k, axis=1)
-    return acc / (2 * win + 1) >= threshold
-
-
-def heldout_circular_shift(detection, days, n_shifts=N_SHIFTS):
-    """Binary participation of each cell on each day, held-out version.
-
-    A cell's statistic is its held-out participation rate averaged over the
-    splits (detections with >= MIN_EVENTS_FOR_RELIABILITY valid events), as in
-    average_over_splits. Null: the same average with the data circularly
-    shifted (one shift for all cells and all splits, which preserves
-    correlations between cells); a cell participates if its statistic exceeds
-    the SIGNIFICANCE_PCTILE-th percentile of n_shifts shifts. Shifts are drawn
-    as in participation_with_shifts.
-
-    Returns a DataFrame (mouse_id, day, roi, participating, n_events, n_splits)
-    or None.
-    """
-    mouse, rois = detection['mouse'], detection['rois']
-    win = EVENT_WINDOW_FRAMES
-    dfs = []
-    for day, d in days.items():
-        n_cells, n_trials, n_t = d['sub'].shape
-        n_frames = n_trials * n_t
-        part = windowed_participation(d['sub'].reshape(n_cells, n_frames))
-
-        sets = []  # (held-out cells, their participation trace, valid events)
-        for det in detection['detections']:
-            events = np.asarray(det['events'].get(day, []), dtype=int)
-            t = events % n_t
-            events = events[(t >= win) & (t < n_t - win)]
-            if len(events) >= MIN_EVENTS_FOR_RELIABILITY:
-                sets.append((det['heldout'], part[det['heldout']], events))
-        if not sets:
-            continue
-
-        count, n_events = np.zeros(n_cells), np.zeros(n_cells)
-        real, null = np.zeros(n_cells), np.zeros((n_shifts, n_cells))
-        for cells, p, events in sets:
-            real[cells] += p[:, events].mean(axis=1)
-            count[cells] += 1
-            n_events[cells] += len(events)
-        rng = np.random.default_rng([SHIFT_SEED, zlib.crc32(mouse.encode()), day + 10])
-        for i_shift in range(n_shifts):
-            shift = rng.integers(MIN_SHIFT_FRAMES + 1 if MIN_SHIFT_FRAMES > 0 else 1, n_frames)
-            for cells, p, events in sets:
-                null[i_shift, cells] += p[:, (events - shift) % n_frames].mean(axis=1)
-
-        ok = count > 0
-        real, null = real[ok] / count[ok], null[:, ok] / count[ok]
-        significant = real > np.percentile(null, SIGNIFICANCE_PCTILE, axis=0)
-        dfs.append(
-            pd.DataFrame(
-                dict(
-                    mouse_id=mouse,
-                    day=day,
-                    roi=rois[ok],
-                    participating=significant,
-                    n_events=n_events[ok] / count[ok],
-                    n_splits=count[ok].astype(int),
-                )
-            )
-        )
-    return pd.concat(dfs, ignore_index=True) if dfs else None
-
-
-# ============================================================================
-# Spontaneous transient frequency (Supp. 4a-b)
-# ============================================================================
-
-
-def detect_transients(cell_trace):
-    """Peak indices of calcium transients in one cell trace.
-
-    The height threshold is set per cell as N_STD_THRESHOLD * std(cell_trace),
-    so noisy cells do not get spuriously high transient counts.
-    """
-    smoothed = savgol_filter(cell_trace, SAVGOL_WINDOW, SAVGOL_ORDER)
-    cell_threshold = N_STD_THRESHOLD * np.std(cell_trace)
-    peaks, _ = find_peaks(
-        smoothed,
-        height=cell_threshold,
-        distance=MIN_DISTANCE_FRAMES,
-        prominence=PROMINENCE_TRANSIENT,
-    )
-    return peaks
-
-
-def transient_freq_per_cell(mouse_id, day=0, window=None):
-    """Spontaneous transient frequency (events/min) of each cell on one day,
-    from correct-rejection no-stim trials (raw dF/F). Returns a DataFrame (mouse_id, roi,
-    transient_freq)."""
-    try:
-        xarr = imaging.load_mouse_xarray(
-            mouse_id, paths.tensor_dir, 'tensor_xarray_learning_data.nc', subtracted=False
-        )
-    except Exception as e:
-        print(f"  Warning: Could not load data for {mouse_id}: {e}")
-        return pd.DataFrame()
-
-    xarr_day, _ = reactivations.select_trials_by_type(xarr.sel(trial=xarr['day'] == day), window)
-    if len(xarr_day.trial) == 0:
-        return pd.DataFrame()
-
-    n_cells = len(xarr_day.cell)
-    roi_ids = xarr_day['roi'].values
-    data = xarr_day.values.reshape(n_cells, -1)
-    data = np.nan_to_num(data, nan=0.0)
-    session_duration_min = data.shape[1] / SAMPLING_RATE / 60
-
-    rows = []
-    for c in range(n_cells):
-        n_peaks = len(detect_transients(data[c]))
-        rows.append(
-            {
-                'mouse_id': mouse_id,
-                'roi': roi_ids[c],
-                'transient_freq': n_peaks / session_duration_min,
-            }
-        )
-    return pd.DataFrame(rows)

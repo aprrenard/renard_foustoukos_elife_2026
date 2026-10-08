@@ -60,7 +60,9 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
 # ============================================================================
 
 
-def panel_i_participation_vs_lmi(merged_df, output_dir=OUTPUT_DIR, filename='figure_4i'):
+def panel_i_participation_vs_lmi(
+    merged_df, output_dir=OUTPUT_DIR, filename='figure_4i', ylabel='Participation rate (day 0)'
+):
     """Figure 4 Panel i: scatter of day-0 participation rate vs LMI.
 
     One dot per cell, separate subplots for R+ and R-. The line and the
@@ -123,7 +125,7 @@ def panel_i_participation_vs_lmi(merged_df, output_dir=OUTPUT_DIR, filename='fig
         ax.axvline(x=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
         ax.set_title(f'{rg}\n{len(grp)} cells, {n_mice} mice', fontweight='bold')
         ax.set_xlabel('LMI')
-        ax.set_ylabel('Participation rate (day 0)' if i == 0 else '')
+        ax.set_ylabel(ylabel if i == 0 else '')
         sns.despine(ax=ax)
 
     plt.tight_layout()
@@ -139,7 +141,14 @@ def panel_i_participation_vs_lmi(merged_df, output_dir=OUTPUT_DIR, filename='fig
 # ============================================================================
 
 
-def panel_j_participation_across_days(merged_df, per_day_df, output_dir=OUTPUT_DIR, filename='figure_4j'):
+def panel_j_participation_across_days(
+    merged_df,
+    per_day_df,
+    output_dir=OUTPUT_DIR,
+    filename='figure_4j',
+    ylabel='Participation rate',
+    ylim=(0, 0.4),
+):
     """Figure 4 Panel j: participation rate across days for LMI+ vs LMI- cells.
 
     Bars are means of per-mouse averages. Stats: per-mouse day slope,
@@ -249,8 +258,8 @@ def panel_j_participation_across_days(merged_df, per_day_df, output_dir=OUTPUT_D
         n_neg = cell_counts.get((rg, 'negative'), 0)
         ax.set_title(f'{rg}\nLMI+: {n_pos} cells, LMI−: {n_neg} cells', fontweight='bold')
         ax.set_xlabel('Day')
-        ax.set_ylabel('Participation rate' if i == 0 else '')
-        ax.set_ylim(0, 0.4)
+        ax.set_ylabel(ylabel if i == 0 else '')
+        ax.set_ylim(*ylim)
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(
             handles,
