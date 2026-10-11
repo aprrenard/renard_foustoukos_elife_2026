@@ -26,9 +26,9 @@ fraction (LMI+ minus LMI-); drift without a consistent direction gives as
 many LMI+ as LMI- cells. The step-05 LMI (two days on each side, so twice as
 many trials) is shown for reference; its fractions are not directly
 comparable to the one-day pairs.
-- Change from -2/-1 to -1/0 within mice (Wilcoxon signed-rank): stars above
+- Change from -2/-1 to -1/0 within mice (Wilcoxon signed-rank): p-values above
   -1/0 (R+ bottom, R- top).
-- Net fraction against zero (Wilcoxon signed-rank; stars above -2/-1 and the
+- Net fraction against zero (Wilcoxon signed-rank; p-values above -2/-1 and the
   step-05 LMI) and between groups (Mann-Whitney U; stats file only).
 
 Outputs: <figures_dir>/revisions/figure_3g_i_signal_noise_drift/output/
@@ -457,14 +457,14 @@ def pattern_drift_panel(ax, drift_df, stats):
     ax.legend(frameon=False, loc='lower left')
 
 
-def stars(ax, x, rows):
+def pvalues(ax, x, rows):
     for gi, rg in enumerate(['R+', 'R-']):  # bottom to top
         r = rows[rows['reward_group'] == rg]
         if len(r):
             ax.text(
                 x,
                 1.0 + 0.07 * gi,
-                r['significance'].iloc[0],
+                format_p(r['p_value'].iloc[0]),
                 transform=ax.get_xaxis_transform(),
                 ha='center',
                 va='bottom',
@@ -479,12 +479,12 @@ def lmi_panel(ax, frac, stats, m):
     ax.axvline(len(DAY_PAIRS) - 0.5, color='grey', linewidth=0.4)
     ax.set_xticks(range(len(order)), [*order[:-1], 'LMI\n(2 days)'])
     rows = stats[stats['measure'] == m]
-    stars(ax, order.index(pair_label(*LEARNING_PAIR)), rows[rows['pair'].str.contains('minus')])
+    pvalues(ax, order.index(pair_label(*LEARNING_PAIR)), rows[rows['pair'].str.contains('minus')])
     if m == 'net':
         ax.axhline(0, color='grey', linestyle='--', linewidth=0.6)
         ax.set_ylim(-25, 25)
         for pair in [order[0], REFERENCE]:
-            stars(ax, order.index(pair), rows[rows['pair'] == pair])
+            pvalues(ax, order.index(pair), rows[rows['pair'] == pair])
     else:
         ax.axhline(100 * (1 - LMI_POSITIVE_THRESHOLD), color='grey', linestyle='--', linewidth=0.6)
         ax.set_ylim(0, 30)
