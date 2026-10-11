@@ -1,9 +1,19 @@
 """
 Figure 3h-i revision: what drives the change in within-day similarity?
 
+Signal and noise power of each day's responses, pre vs post learning, and
+day-to-day drift of the response pattern: noise-corrected correlation of the
+mean response vectors of consecutive days. The correlation of the two days'
+mean vectors is divided by the geometric mean of their split-half
+reliabilities (Spearman-Brown corrected), so that 1 means the same pattern
+on both days. Day 0 responses are recorded after the learning session, so
+day -1 -> 0 spans learning, while -2 -> -1 and +1 -> +2 measure drift
+without learning (baseline: their mean). Wilcoxon signed-rank tests of
+each pair against the baseline, n = mice.
+
 Outputs: <figures_dir>/revisions/figure_3h_i_signal_noise/output/
     signal_noise.pdf, signal_noise_data.csv (mouse x day),
-    signal_noise_stats.csv, pattern_preservation_data.csv.
+    signal_noise_stats.csv, drift_data.csv (mouse x day pair).
 """
 
 import os
@@ -27,6 +37,8 @@ from fast_learning.stats import format_p, significance_stars
 
 PRE_DAYS = [-2, -1]
 POST_DAYS = [1, 2]
+DAY_PAIRS = [(-2, -1), (-1, 0), (0, 1), (1, 2)]
+BASELINE_PAIRS = [(-2, -1), (1, 2)]  # one day apart, no learning in between
 N_SPLITS = 100
 SEED = 0
 GROUP_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
@@ -82,8 +94,12 @@ def split_half_reliability(trials, rng, n_splits=N_SPLITS):
     return 2 * r / (1 + r)
 
 
+def pair_label(a, b):
+    return f'{a:+d} → {b:+d}'
+
+
 def compute_metrics(vectors):
-    day_rows, pattern_rows = [], []
+    day_rows, drift_rows = [], []
     rng = np.random.default_rng(SEED)
     for mouse, (rg, d) in vectors.items():
         X, day_of = d.values, d['day'].values
@@ -102,23 +118,22 @@ def compute_metrics(vectors):
                     'cosine_predicted': s / (s + n),
                 }
             )
-        pre, post = X[:, np.isin(day_of, PRE_DAYS)], X[:, np.isin(day_of, POST_DAYS)]
-        r_raw = pearsonr(pre.mean(1), post.mean(1))[0]
-        rel_pre, rel_post = split_half_reliability(pre, rng), split_half_reliability(post, rng)
-        (s_pre, _), (s_post, _) = signal_noise(pre), signal_noise(post)
-        pattern_rows.append(
-            {
-                'mouse_id': mouse,
-                'reward_group': rg,
-                'n_cells': X.shape[0],
-                'r_pre_post': r_raw,
-                'reliability_pre': rel_pre,
-                'reliability_post': rel_post,
-                'r_corrected': r_raw / np.sqrt(rel_pre * rel_post),
-                'signal_amplitude_ratio': np.sqrt(max(s_post, 0) / s_pre),
-            }
-        )
-    return pd.DataFrame(day_rows), pd.DataFrame(pattern_rows)
+        mean = {day: X[:, day_of == day].mean(1) for day in DAYS}
+        rel = {day: split_half_reliability(X[:, day_of == day], rng) for day in DAYS}
+        for a, b in DAY_PAIRS:
+            r = pearsonr(mean[a], mean[b])[0]
+            drift_rows.append(
+                {
+                    'mouse_id': mouse,
+                    'reward_group': rg,
+                    'pair': pair_label(a, b),
+                    'r': r,
+                    'reliability_a': rel[a],
+                    'reliability_b': rel[b],
+                    'r_corrected': r / np.sqrt(rel[a] * rel[b]),
+                }
+            )
+    return pd.DataFrame(day_rows), pd.DataFrame(drift_rows)
 
 
 # ============================================================================
@@ -136,7 +151,7 @@ def pre_post_means(day_df, metrics):
     )
 
 
-def compute_stats(day_df, pattern_df):
+def compute_stats(day_df, drift_df):
     metrics = ['signal_power', 'noise_power', 'snr', 'cosine_observed', 'cosine_predicted']
     pp = pre_post_means(day_df, metrics).unstack('period')
     rows = []
@@ -157,21 +172,28 @@ def compute_stats(day_df, pattern_df):
                     'significance': significance_stars(p),
                 }
             )
-        pg = pattern_df[pattern_df['reward_group'] == rg]
-        stat, p = wilcoxon(pg['r_corrected'] - 1)
-        rows.append(
-            {
-                'reward_group': rg,
-                'measure': 'r_corrected (pre vs post pattern)',
-                'test': 'Wilcoxon signed-rank against 1 (uniform scaling)',
-                'n_mice': len(pg),
-                'median_pre': np.nan,
-                'median_post': pg['r_corrected'].median(),
-                'statistic': stat,
-                'p_value': p,
-                'significance': significance_stars(p),
-            }
+        g = drift_df[drift_df['reward_group'] == rg].pivot(
+            index='mouse_id', columns='pair', values='r_corrected'
         )
+        baseline = g[[pair_label(*p) for p in BASELINE_PAIRS]].mean(axis=1)
+        for a, b in DAY_PAIRS:
+            if (a, b) in BASELINE_PAIRS:
+                continue
+            diff = g[pair_label(a, b)] - baseline
+            stat, p = wilcoxon(diff)
+            rows.append(
+                {
+                    'reward_group': rg,
+                    'measure': f'drift {pair_label(a, b)}',
+                    'test': 'Wilcoxon signed-rank, noise-corrected correlation vs baseline (mean of -2 → -1 and +1 → +2)',
+                    'n_mice': len(diff),
+                    'median_pre': baseline.median(),
+                    'median_post': g[pair_label(a, b)].median(),
+                    'statistic': stat,
+                    'p_value': p,
+                    'significance': significance_stars(p),
+                }
+            )
     r, _ = pearsonr(day_df['cosine_observed'], day_df['cosine_predicted'])
     rows.append(
         {
@@ -231,33 +253,53 @@ def paired_panel(ax, pp, metric, ylabel, stats, ylim):
     ax.set_xlabel("")
 
 
-def plot(day_df, pattern_df, pp, stats, output_dir=OUTPUT_DIR, filename='signal_noise'):
+def drift_panel(ax, drift_df, stats):
+    """Noise-corrected correlation of consecutive days, mean and 95% CI across mice."""
+    order = [pair_label(*p) for p in DAY_PAIRS]
+    sns.pointplot(
+        data=drift_df,
+        x='pair',
+        y='r_corrected',
+        order=order,
+        hue='reward_group',
+        hue_order=['R+', 'R-'],
+        palette=GROUP_COLORS,
+        errorbar=('ci', 95),
+        seed=0,
+        dodge=0.3,
+        markersize=3,
+        linewidth=1,
+        ax=ax,
+    )
+    ax.axhline(1, color='grey', linestyle='--', linewidth=0.6)
+    for gi, rg in enumerate(['R+', 'R-']):
+        for xi, pair in enumerate(order):
+            row = stats[(stats['reward_group'] == rg) & (stats['measure'] == f'drift {pair}')]
+            if len(row):
+                y = 1.04 + 0.06 * gi
+                ax.text(
+                    xi,
+                    y,
+                    format_p(row['p_value'].iloc[0]),
+                    ha='center',
+                    va='bottom',
+                    color=GROUP_COLORS[rg],
+                    fontsize=5,
+                )
+    ax.set_ylim(0.4, 1.2)
+    ax.set_xticks(range(len(order)), [f'{a:+d}/{b:+d}'.replace('+0', '0') for a, b in DAY_PAIRS])
+    ax.set_xlabel('Day pair')
+    ax.set_ylabel('Day-to-day pattern correlation\n(noise-corrected)')
+    ax.legend(frameon=False, loc='lower left')
+
+
+def plot(day_df, drift_df, pp, stats, output_dir=OUTPUT_DIR, filename='signal_noise'):
     set_style()
     fig, axes = plt.subplots(1, 3, figsize=panel_size(3))
     paired_panel(axes[0], pp, 'signal_power', 'Signal power', stats, ylim=(0, 15))
     paired_panel(axes[1], pp, 'noise_power', 'Noise power', stats, ylim=(0, 20))
 
-    ax = axes[2]
-    sns.swarmplot(
-        data=pattern_df,
-        x='reward_group',
-        y='r_corrected',
-        order=['R+', 'R-'],
-        hue='reward_group',
-        palette=GROUP_COLORS,
-        size=3,
-        legend=False,
-        ax=ax,
-    )
-    ax.axhline(1, color='grey', linestyle='--', linewidth=0.6)
-    ax.set_ylim(0, 1)
-    for gi, rg in enumerate(['R+', 'R-']):
-        p = stats.query("reward_group == @rg and measure.str.startswith('r_corrected')", engine='python')[
-            'p_value'
-        ].iloc[0]
-        ax.text(gi, 1.02, format_p(p), ha='center', va='bottom')
-    ax.set_xlabel('')
-    ax.set_ylabel('Pre-post pattern correlation\n(noise-corrected)')
+    drift_panel(axes[2], drift_df, stats)
     sns.despine()
     plt.tight_layout()
 
@@ -271,26 +313,19 @@ if __name__ == '__main__':
     print(
         f"{sum(v[0] == 'R+' for v in vectors.values())} R+ and {sum(v[0] == 'R-' for v in vectors.values())} R- mice"
     )
-    day_df, pattern_df = compute_metrics(vectors)
-    stats, pp = compute_stats(day_df, pattern_df)
+    day_df, drift_df = compute_metrics(vectors)
+    stats, pp = compute_stats(day_df, drift_df)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     day_df.to_csv(os.path.join(OUTPUT_DIR, 'signal_noise_data.csv'), index=False)
-    pattern_df.to_csv(os.path.join(OUTPUT_DIR, 'pattern_preservation_data.csv'), index=False)
+    drift_df.to_csv(os.path.join(OUTPUT_DIR, 'drift_data.csv'), index=False)
     stats.to_csv(os.path.join(OUTPUT_DIR, 'signal_noise_stats.csv'), index=False)
-    plot(day_df, pattern_df, pp, stats)
+    plot(day_df, drift_df, pp, stats)
 
     print(
         stats[['reward_group', 'measure', 'n_mice', 'median_pre', 'median_post', 'p_value']].to_string(
             index=False
         )
     )
-    print(
-        pattern_df.groupby('reward_group')[
-            ['r_pre_post', 'reliability_pre', 'reliability_post', 'r_corrected', 'signal_amplitude_ratio']
-        ]
-        .median()
-        .round(3)
-        .to_string()
-    )
+    print(drift_df.groupby(['reward_group', 'pair'])[['r', 'r_corrected']].median().round(3).to_string())
     print(f'Saved to {OUTPUT_DIR}')
