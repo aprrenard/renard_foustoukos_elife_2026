@@ -6,10 +6,12 @@ day-to-day drift of the response pattern: noise-corrected correlation of the
 mean response vectors of consecutive days. The correlation of the two days'
 mean vectors is divided by the geometric mean of their split-half
 reliabilities (Spearman-Brown corrected), so that 1 means the same pattern
-on both days. Day 0 responses are recorded after the learning session, so
-day -1 -> 0 spans learning, while -2 -> -1 and +1 -> +2 measure drift
-without learning (baseline: their mean). Wilcoxon signed-rank tests of
-each pair against the baseline, n = mice.
+on both days. Days -2 and -1 are the only consecutive days without
+learning (mice are auditory experts; performance keeps improving after
+day 0), so -2 -> -1 measures drift. Day 0 responses are recorded after the
+learning session, so -1 -> 0 spans learning. Wilcoxon signed-rank test of
+-1 -> 0 against -2 -> -1 within mice, and Mann-Whitney U test of drift
+(-2 -> -1) between groups, n = mice.
 
 Outputs: <figures_dir>/revisions/figure_3h_i_signal_noise/output/
     signal_noise.pdf, signal_noise_data.csv (mouse x day),
@@ -22,7 +24,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import pearsonr, wilcoxon
+from scipy.stats import mannwhitneyu, pearsonr, wilcoxon
 
 from fast_learning import database, imaging, paths
 from fast_learning.plotting import panel_size, reward_palette, save_figure, set_style
@@ -37,8 +39,9 @@ from fast_learning.stats import format_p, significance_stars
 
 PRE_DAYS = [-2, -1]
 POST_DAYS = [1, 2]
-DAY_PAIRS = [(-2, -1), (-1, 0), (0, 1), (1, 2)]
-BASELINE_PAIRS = [(-2, -1), (1, 2)]  # one day apart, no learning in between
+BASELINE_PAIR = (-2, -1)  # the only consecutive days without learning
+LEARNING_PAIR = (-1, 0)  # spans the first whisker learning session
+DAY_PAIRS = [BASELINE_PAIR, LEARNING_PAIR]
 N_SPLITS = 100
 SEED = 0
 GROUP_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
@@ -175,25 +178,41 @@ def compute_stats(day_df, drift_df):
         g = drift_df[drift_df['reward_group'] == rg].pivot(
             index='mouse_id', columns='pair', values='r_corrected'
         )
-        baseline = g[[pair_label(*p) for p in BASELINE_PAIRS]].mean(axis=1)
-        for a, b in DAY_PAIRS:
-            if (a, b) in BASELINE_PAIRS:
-                continue
-            diff = g[pair_label(a, b)] - baseline
-            stat, p = wilcoxon(diff)
-            rows.append(
-                {
-                    'reward_group': rg,
-                    'measure': f'drift {pair_label(a, b)}',
-                    'test': 'Wilcoxon signed-rank, noise-corrected correlation vs baseline (mean of -2 → -1 and +1 → +2)',
-                    'n_mice': len(diff),
-                    'median_pre': baseline.median(),
-                    'median_post': g[pair_label(a, b)].median(),
-                    'statistic': stat,
-                    'p_value': p,
-                    'significance': significance_stars(p),
-                }
-            )
+        baseline, learning = g[pair_label(*BASELINE_PAIR)], g[pair_label(*LEARNING_PAIR)]
+        stat, p = wilcoxon(learning - baseline)
+        rows.append(
+            {
+                'reward_group': rg,
+                'measure': f'drift {pair_label(*LEARNING_PAIR)}',
+                'test': f'Wilcoxon signed-rank, noise-corrected correlation {pair_label(*LEARNING_PAIR)} vs {pair_label(*BASELINE_PAIR)}',
+                'n_mice': len(g),
+                'median_pre': baseline.median(),
+                'median_post': learning.median(),
+                'statistic': stat,
+                'p_value': p,
+                'significance': significance_stars(p),
+            }
+        )
+    g = {
+        rg: drift_df[(drift_df['reward_group'] == rg) & (drift_df['pair'] == pair_label(*BASELINE_PAIR))][
+            'r_corrected'
+        ]
+        for rg in ['R+', 'R-']
+    }
+    stat, p = mannwhitneyu(g['R+'], g['R-'])
+    rows.append(
+        {
+            'reward_group': 'R+ vs R-',
+            'measure': f'drift {pair_label(*BASELINE_PAIR)}',
+            'test': 'Mann-Whitney U, noise-corrected correlation (median_pre: R+, median_post: R-)',
+            'n_mice': len(g['R+']) + len(g['R-']),
+            'median_pre': g['R+'].median(),
+            'median_post': g['R-'].median(),
+            'statistic': stat,
+            'p_value': p,
+            'significance': significance_stars(p),
+        }
+    )
     r, _ = pearsonr(day_df['cosine_observed'], day_df['cosine_predicted'])
     rows.append(
         {
@@ -272,7 +291,8 @@ def drift_panel(ax, drift_df, stats):
         ax=ax,
     )
     ax.axhline(1, color='grey', linestyle='--', linewidth=0.6)
-    for gi, rg in enumerate(['R+', 'R-']):
+    # p-values above each pair: -1/0 vs -2/-1 within group (colored), R+ vs R- (black).
+    for gi, rg in enumerate(['R+', 'R-', 'R+ vs R-']):
         for xi, pair in enumerate(order):
             row = stats[(stats['reward_group'] == rg) & (stats['measure'] == f'drift {pair}')]
             if len(row):
@@ -280,10 +300,10 @@ def drift_panel(ax, drift_df, stats):
                 ax.text(
                     xi,
                     y,
-                    format_p(row['p_value'].iloc[0]),
+                    ('' if rg in GROUP_COLORS else 'R+ vs R−: ') + format_p(row['p_value'].iloc[0]),
                     ha='center',
                     va='bottom',
-                    color=GROUP_COLORS[rg],
+                    color=GROUP_COLORS.get(rg, 'black'),
                     fontsize=5,
                 )
     ax.set_ylim(0.4, 1.2)
