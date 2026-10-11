@@ -54,9 +54,9 @@ MAIN = pt.PARTICIPATION_THRESHOLD
 FIXED_SUBMITTED = 0.10  # fixed dF/F0 threshold of the submitted version (noise panel)
 PERCENTILES = [99, 99.5, 99.9]  # 99 main
 N_JOBS = 35
-GROUPS = [(rg, c) for rg in ['R+', 'R-'] for c in ['positive', 'negative', 'neutral']]
-GROUP_LABELS = [f'{rg}\n{c}' for rg in ['R+', 'R−'] for c in ['LMI+', 'LMI−', 'n.m.']]
-LMI_COLORS = {'positive': '#d62728', 'negative': '#1f77b4', 'neutral': '#a0a0a0'}
+GROUPS = [('R+', 'positive'), ('R+', 'negative'), ('R-', 'positive'), ('R-', 'negative')]
+GROUP_LABELS = ['R+\nLMI+', 'R+\nLMI−', 'R−\nLMI+', 'R−\nLMI−']
+LMI_COLORS = {'positive': '#d62728', 'negative': '#1f77b4'}
 RG_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
 MEASURES = {'rate': 'Participation rate', 'excess': 'Participation above chance'}
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'thresholds_robustness', 'output')
@@ -163,7 +163,7 @@ def condition_stats(merged, per_day, labels):
             )
         )
     cells = merged.loc[
-        merged['lmi_category'].isin(['positive', 'negative', 'neutral']),
+        merged['lmi_category'].isin(['positive', 'negative']),
         ['mouse_id', 'roi', 'lmi_category', 'reward_group'],
     ]
     d = per_day.merge(cells, on=['mouse_id', 'roi'])
@@ -280,7 +280,7 @@ def plot_slopes(ax, slopes, stats, title):
 
 def figure_participation_threshold(stats, slopes):
     set_style()
-    fig, axes = plt.subplots(2, 4, figsize=panel_size(4, 2, w=1.3))
+    fig, axes = plt.subplots(2, 4, figsize=panel_size(4, 2))
     for row, measure in enumerate(MEASURES):
         s = stats[(stats['measure'] == measure) & (stats['percentile'] == 99)]
         plot_lmm(axes[row, 0], s, THRESHOLDS, 'participation_threshold', [f'{t:g} SD' for t in THRESHOLDS])
@@ -325,7 +325,7 @@ def figure_noise(noise):
 
 def figure_detection_threshold(stats, slopes, rates):
     set_style()
-    fig, axes = plt.subplots(3, 4, figsize=panel_size(4, 3, w=1.3))
+    fig, axes = plt.subplots(3, 4, figsize=panel_size(4, 3))
     for col, perc in enumerate(PERCENTILES, 1):
         ax = axes[0, col]
         r = rates[rates['percentile'] == perc]
