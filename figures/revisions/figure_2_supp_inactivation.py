@@ -332,6 +332,9 @@ def plot_supp3(execution, stats):
         timecourse(ax, execution, area, labels)
     for ax, y in zip(axes[2:], MEASURES):
         area_bars(ax, execution, stats, labels[EXECUTION_TESTED], y, '', legend=ax is axes[-1])
+    # Execution d' is never below 0 (minimum -0.02): no negative range.
+    axes[-1].set_ylim(-0.2, 4)
+    axes[-1].set_yticks(range(5))
     save(fig, 'figure_2_supp3_execution')
 
 
