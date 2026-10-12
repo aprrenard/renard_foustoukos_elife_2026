@@ -6,9 +6,9 @@ Addresses a reviewer comment asking that behavioral performance be
 quantified with d' rather than raw whisker hit rate, for:
     - Figure 1C (right)
     - Figure 1D
-    - Figure 2C and 2F
     - Figure 4C and E
-    - The execution-inactivation panel (figure_2b_c_execution.py)
+The d' versions of Figure 2C and 2F, and of the execution inactivation, are
+in figure_2_supp1_inactivation.py.
 
 ------------------------------------------------------------------------
 How d' is computed
@@ -29,7 +29,7 @@ already present in the original hit-rate panels:
 
 1. Session-level d' (count-based, log-linear corrected). Panels that
    average outcome_w/outcome_c into one hit-rate/FA-rate value per session
-   (Fig 1C-right, 2C, 2F, execution panel c) instead compute d' directly
+   (Fig 1C-right) instead compute d' directly
    from that session's trial counts:
        hits = sum(outcome_w),  n_hit = # whisker trials
        fas  = sum(outcome_c),  n_fa  = # catch trials
@@ -41,7 +41,7 @@ already present in the original hit-rate panels:
        d' = Z(hit_rate') - Z(fa_rate')
    This is the standard, minimal-bias correction used throughout the
    signal-detection literature for exactly this small-N/extreme-rate
-   problem. See `_dprime_from_counts`.
+   problem. See `fast_learning.stats.dprime`.
 
 2. Trial-resolved d' (from the existing Bayesian learning curves). Panels
    that plot a per-trial trajectory across Day-0 whisker trials (Fig 1D,
@@ -89,9 +89,6 @@ Panel-specific notes / scope decisions
   via the same sliding window -- keeping one decoder consistent across
   Figure 4 instead of two subtly different ones. Still needs
   NWB/network-drive access to load the Day-0 imaging tensors.
-
-- Execution panel c: reuses the trial-level table of the execution sessions
-  (behavior_muscimol_execution.csv, built by 03_behavior_tables.py).
 """
 
 import os
@@ -105,15 +102,10 @@ import seaborn as sns
 from scipy.stats import norm, mannwhitneyu, wilcoxon, ttest_1samp, pearsonr
 from statsmodels.stats.multitest import multipletests
 
-from fast_learning import paths, database, decoding
+from fast_learning import paths, decoding
 from fast_learning import imaging
-from fast_learning.plotting import stim_palette, reward_palette, behavior_palette, save_figure
-from fast_learning.stats import format_p
-
-# Muscimol execution sessions, as in figure_2b_c_execution.py (keep in sync).
-EXECUTION_TABLE_PATH = os.path.join(paths.processed_dir, 'behavior', 'behavior_muscimol_execution.csv')
-EXECUTION_DAYS_OF_INTEREST = ['muscimol_1', 'ringer_1', 'muscimol_2']
-EXECUTION_DAY_LABELS = ['M1', 'Ringer', 'M2']
+from fast_learning.plotting import reward_palette, behavior_palette, save_figure
+from fast_learning.stats import dprime, format_p
 
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'behavior_dprime', 'output')
@@ -123,15 +115,6 @@ EPS = 1e-3  # clipping epsilon for already-smoothed probability curves
 # ============================================================================
 # Shared d' helpers
 # ============================================================================
-
-
-def _dprime_from_counts(hits, n_hit, fas, n_fa):
-    """d' from raw trial counts, with the log-linear correction (Hautus,
-    1995) that avoids +/-inf when a session's hit or FA rate is exactly 0
-    or 1 (common with the ~10-30 trial/session counts here)."""
-    hit_rate = (hits + 0.5) / (n_hit + 1)
-    fa_rate = (fas + 0.5) / (n_fa + 1)
-    return norm.ppf(hit_rate) - norm.ppf(fa_rate)
 
 
 def _dprime_from_rates(p_hit, p_fa, eps=EPS):
@@ -157,7 +140,7 @@ def _session_dprime(table, group_cols):
         )
         .reset_index()
     )
-    counts['dprime_w'] = _dprime_from_counts(counts['hits'], counts['n_hit'], counts['fas'], counts['n_fa'])
+    counts['dprime_w'] = dprime(counts['hits'], counts['n_hit'], counts['fas'], counts['n_fa'])
     return counts
 
 
@@ -187,8 +170,7 @@ def _load_trial_resolved_dprime(
 
 
 # ============================================================================
-# Shared bar+swarm+Mann-Whitney plotting helper
-# (Figure 1C-right, 2C, 2F, execution panel c)
+# Bar+swarm+Mann-Whitney plotting helper (Figure 1C-right)
 # ============================================================================
 
 
@@ -211,9 +193,8 @@ def _dprime_barplot_by_group(
 ):
     """Bar + swarm plot of dprime_w across days_of_interest, split into the
     two levels of group_col, with a Mann-Whitney U test between them for
-    each day. Mirrors the bar+swarm+MWU scaffold shared by the original
-    whisker-hit-rate panels (figure_1c.py right, figure_2b_c.py panel c,
-    figure_2e_f.py panel f, figure_2b_c_execution.py panel c), with
+    each day. Mirrors the bar+swarm+MWU scaffold of the original
+    whisker-hit-rate panel (figure_1c.py right), with
     dprime_w substituted for outcome_w, and an unbounded y-axis instead of
     the original's [0, 100] percentage range."""
 
@@ -438,248 +419,6 @@ def panel_1d_dprime(
 
 
 # ============================================================================
-# Figure 2C: session-level d', wS1 vs fpS1 (muscimol, learning)
-# ============================================================================
-
-
-def panel_2c_dprime(
-    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_muscimol.csv'),
-    days_of_interest=['muscimol_1', 'muscimol_2', 'muscimol_3'],
-    day_labels=['D0', 'D+1', 'D+2'],
-    save_path=OUTPUT_DIR,
-    save_format='svg',
-    dpi=300,
-):
-    """Figure 2 Panel c revision: session-level d' bar plot, wS1 vs fpS1
-    (muscimol inactivation during learning). Mirrors
-    figure_2b_c.py:panel_c_muscimol_barplot, with dprime_w substituted for
-    outcome_w."""
-
-    table_path = paths.adjust_path_to_host(table_path)
-    table = pd.read_csv(table_path)
-
-    db_path = paths.db_path
-    nwb_dir = paths.nwb_dir
-
-    fpS1_mice = database.select_mice_from_db(
-        db_path,
-        nwb_dir,
-        experimenters=None,
-        exclude_cols=['exclude'],
-        pharmacology='yes',
-        pharma_inactivation_type='learning',
-        pharma_area='fpS1',
-    )
-    wS1_mice = database.select_mice_from_db(
-        db_path,
-        nwb_dir,
-        experimenters=None,
-        exclude_cols=['exclude'],
-        pharmacology='yes',
-        pharma_inactivation_type='learning',
-        pharma_area='wS1',
-    )
-    table.loc[table.mouse_id.isin(fpS1_mice), 'area'] = 'fpS1'
-    table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
-
-    _, _, _, db = database.select_sessions_from_db(
-        db_path,
-        nwb_dir,
-        experimenters=None,
-        exclude_cols=['exclude'],
-        pharma_inactivation_type=['learning'],
-        pharma_day=[
-            "pre_-2",
-            "pre_-1",
-            "muscimol_1",
-            "muscimol_2",
-            "muscimol_3",
-            "recovery_1",
-            "recovery_2",
-            "recovery_3",
-        ],
-    )
-    table = pd.merge(
-        table, db[['mouse_id', 'session_id', 'pharma_day']], on=['mouse_id', 'session_id'], how='left'
-    )
-
-    data = _session_dprime(table, ['mouse_id', 'session_id', 'pharma_day', 'area'])
-
-    _dprime_barplot_by_group(
-        data,
-        day_col='pharma_day',
-        days_of_interest=days_of_interest,
-        day_labels=day_labels,
-        group_col='area',
-        group_order=['wS1', 'fpS1'],
-        bar_palette=[reward_palette[1]],
-        filename='figure_2c_dprime',
-        output_dir=save_path,
-        save_format=save_format,
-        dpi=dpi,
-        xlabel='Day',
-        legend_title='Area',
-        swarm_color=stim_palette[2],
-    )
-
-
-# ============================================================================
-# Figure 2F: session-level d', wS1 vs fpS1 (optogenetics, learning)
-# ============================================================================
-
-
-def panel_2f_dprime(
-    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_opto_learning.csv'),
-    days_of_interest=['opto', 'recovery_1'],
-    day_labels=['D0', 'D+1'],
-    save_path=OUTPUT_DIR,
-    save_format='svg',
-    dpi=300,
-):
-    """Figure 2 Panel f revision: session-level d' bar plot, wS1 vs fpS1
-    (optogenetic inactivation during learning). Mirrors
-    figure_2e_f.py:panel_f_opto_barplot, with dprime_w substituted for
-    outcome_w."""
-
-    table_path = paths.adjust_path_to_host(table_path)
-    table = pd.read_csv(table_path)
-
-    db_path = paths.db_path
-    nwb_dir = paths.nwb_dir
-
-    fpS1_mice = database.select_mice_from_db(
-        db_path,
-        nwb_dir,
-        experimenters=None,
-        exclude_cols=['exclude', 'opto_exclude'],
-        optogenetic='yes',
-        opto_inactivation_type='learning',
-        opto_area='fpS1',
-    )
-    wS1_mice = database.select_mice_from_db(
-        db_path,
-        nwb_dir,
-        experimenters=None,
-        exclude_cols=['exclude', 'opto_exclude'],
-        optogenetic='yes',
-        opto_inactivation_type='learning',
-        opto_area='wS1',
-    )
-    table.loc[table.mouse_id.isin(fpS1_mice), 'area'] = 'fpS1'
-    table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
-
-    _, _, _, db = database.select_sessions_from_db(
-        db_path,
-        nwb_dir,
-        experimenters=None,
-        exclude_cols=['exclude', 'opto_exclude'],
-        opto_inactivation_type=['learning'],
-        opto_day=["pre_-2", "pre_-1", "opto", "recovery_1"],
-    )
-    table = pd.merge(
-        table, db[['mouse_id', 'session_id', 'opto_day']], on=['mouse_id', 'session_id'], how='left'
-    )
-
-    data = _session_dprime(table, ['mouse_id', 'session_id', 'opto_day', 'area'])
-
-    _dprime_barplot_by_group(
-        data,
-        day_col='opto_day',
-        days_of_interest=days_of_interest,
-        day_labels=day_labels,
-        group_col='area',
-        group_order=['wS1', 'fpS1'],
-        bar_palette=[reward_palette[1]],
-        filename='figure_2f_dprime',
-        output_dir=save_path,
-        save_format=save_format,
-        dpi=dpi,
-        xlabel='Day',
-        legend_title='Area',
-        swarm_color='black',
-    )
-
-
-# ============================================================================
-# Execution panel c: session-level d', wS1 vs fpS1 (muscimol, execution)
-# ============================================================================
-
-
-def panel_2c_execution_dprime(
-    table_path=EXECUTION_TABLE_PATH,
-    days_of_interest=EXECUTION_DAYS_OF_INTEREST,
-    day_labels=EXECUTION_DAY_LABELS,
-    save_path=OUTPUT_DIR,
-    save_format='svg',
-    dpi=300,
-):
-    """Execution-inactivation Panel c revision: session-level d' bar plot,
-    wS1 vs fpS1 (muscimol inactivation during execution). Mirrors
-    figure_2b_c_execution.py:panel_c_muscimol_barplot_execution, with
-    dprime_w substituted for outcome_w. Requires
-    behavior_muscimol_execution.csv (03_behavior_tables.py
-    --tables muscimol_execution)."""
-
-    table_path = paths.adjust_path_to_host(table_path)
-    table = pd.read_csv(table_path)
-
-    db_path = paths.db_path
-    nwb_dir = paths.nwb_dir
-
-    fpS1_mice = database.select_mice_from_db(
-        db_path,
-        nwb_dir,
-        experimenters=None,
-        exclude_cols=['exclude'],
-        pharmacology='yes',
-        pharma_inactivation_type='execution',
-        pharma_area='fpS1',
-    )
-    wS1_mice = database.select_mice_from_db(
-        db_path,
-        nwb_dir,
-        experimenters=None,
-        exclude_cols=['exclude'],
-        pharmacology='yes',
-        pharma_inactivation_type='execution',
-        pharma_area='wS1',
-    )
-    table.loc[table.mouse_id.isin(fpS1_mice), 'area'] = 'fpS1'
-    table.loc[table.mouse_id.isin(wS1_mice), 'area'] = 'wS1'
-
-    _, _, _, db = database.select_sessions_from_db(
-        db_path,
-        nwb_dir,
-        experimenters=None,
-        exclude_cols=['exclude'],
-        pharma_inactivation_type=['execution'],
-        pharma_day=["pre_-2", "pre_-1", "muscimol_1", "ringer_1", "muscimol_2"],
-    )
-    table = pd.merge(
-        table, db[['mouse_id', 'session_id', 'pharma_day']], on=['mouse_id', 'session_id'], how='left'
-    )
-
-    data = _session_dprime(table, ['mouse_id', 'session_id', 'pharma_day', 'area'])
-
-    _dprime_barplot_by_group(
-        data,
-        day_col='pharma_day',
-        days_of_interest=days_of_interest,
-        day_labels=day_labels,
-        group_col='area',
-        group_order=['wS1', 'fpS1'],
-        bar_palette=[reward_palette[1]],
-        filename='figure_2c_execution_dprime',
-        output_dir=save_path,
-        save_format=save_format,
-        dpi=dpi,
-        xlabel='Day',
-        legend_title='Area',
-        swarm_color=stim_palette[2],
-    )
-
-
-# ============================================================================
 # Figure 4C (behavior row only): trial-resolved d', R+ vs R-
 # ============================================================================
 
@@ -895,8 +634,5 @@ def panel_4e_dprime_correlation(
 if __name__ == '__main__':
     panel_1c_right_dprime()
     panel_1d_dprime()
-    panel_2c_dprime()
-    panel_2f_dprime()
-    panel_2c_execution_dprime()
     panel_4c_dprime()
     panel_4e_dprime_correlation()

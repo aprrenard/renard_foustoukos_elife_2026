@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 
 from fast_learning import similarity
-from fast_learning.stats import significance_stars
+from fast_learning.stats import dprime, significance_stars
 
 
 def test_significance_stars():
@@ -11,6 +11,13 @@ def test_significance_stars():
     assert significance_stars(0.2, ns='ns') == 'ns'
     assert significance_stars(float('nan'), na='n.a.') == 'n.a.'
     assert significance_stars(float('nan')) == 'n.s.'
+
+
+def test_dprime():
+    assert dprime(5, 10, 5, 10) == 0
+    assert dprime(10, 10, 0, 10) > 0 and np.isfinite(dprime(10, 10, 0, 10))
+    assert np.isclose(dprime(10, 10, 0, 10), -dprime(0, 10, 10, 10))
+    assert (np.sign(dprime(np.array([8, 5, 2]), 10, 5, 10)) == [1, 0, -1]).all()
 
 
 def _vectors(n_cells=10):

@@ -36,6 +36,17 @@ def significance_stars(p, ns='n.s.', na=None):
     return ns
 
 
+def dprime(hits, n_hit, false_alarms, n_fa):
+    """d' = Z(hit rate) - Z(false-alarm rate) from trial counts, with the
+    log-linear correction (Hautus, 1995): rates are (count + 0.5) / (n + 1),
+    so that 0% and 100% rates stay finite. Works on scalars and arrays."""
+    from scipy.stats import norm
+
+    hit_rate = (hits + 0.5) / (n_hit + 1)
+    fa_rate = (false_alarms + 0.5) / (n_fa + 1)
+    return norm.ppf(hit_rate) - norm.ppf(fa_rate)
+
+
 def _mixed_fit(formula, df, group):
     """Fit a random-intercept mixed model. When the mouse variance is
     estimated at zero (boundary) its standard errors are undefined; the model
