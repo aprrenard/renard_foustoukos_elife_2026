@@ -8,7 +8,7 @@ quantified with d' rather than raw whisker hit rate, for:
     - Figure 1D
     - Figure 4C and E
 The d' versions of Figure 2C and 2F, and of the execution inactivation, are
-in figure_2_supp1_inactivation.py.
+in figure_2_supp_inactivation.py.
 
 ------------------------------------------------------------------------
 How d' is computed
