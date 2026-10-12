@@ -23,7 +23,8 @@ threshold 2.5 x noise SD. Mice: the participation mouse selection (at p99)
 throughout.
 
 Panels per condition:
-    4i: LMM slope of day-0 participation vs LMI, 95% CI, per reward group.
+    4i: LMM slope of day-0 participation vs LMI (random intercept and slope
+        per mouse), 95% CI, per reward group.
     4j: per-mouse slopes of participation vs day, for R+ / R- x LMI+ / LMI-
         (dots: mice; bar: mean, bootstrapped 95% CI, seed 0; p: Wilcoxon
         signed-rank against zero, n = mice).

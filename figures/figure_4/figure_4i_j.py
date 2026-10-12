@@ -3,8 +3,12 @@ Figure 4i_j: Reactivation participation rate vs LMI.
 
 Panel i: Scatter plot of day-0 participation rate vs LMI (one dot per cell),
          separately for R+ and R- mice. Stats: linear mixed-effects model
-         participation_rate ~ LMI + (1 | mouse), so that cells recorded in
-         the same mouse are not treated as independent.
+         participation_rate ~ LMI + (1 + LMI | mouse), with an intercept and
+         a slope per mouse, so that the test of the slope takes the mouse,
+         not the cell, as the unit. Stats file also: per-mouse Spearman
+         correlation of LMI and participation, Wilcoxon signed-rank test
+         against zero (n = mice), insensitive to the tails of the LMI
+         distribution.
 
 Panel j: Participation rate across days (-2 to +2) for LMI+ vs LMI- cells,
          showing per-mouse averages. Stats: linear trend across days with
@@ -43,7 +47,13 @@ import seaborn as sns
 
 from fast_learning import paths, participation
 from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
-from fast_learning.stats import format_p, lmm_slope, per_mouse_slope_test, significance_stars
+from fast_learning.stats import (
+    format_p,
+    lmm_slope,
+    per_mouse_rank_correlation,
+    per_mouse_slope_test,
+    significance_stars,
+)
 
 
 # ============================================================================
@@ -68,10 +78,11 @@ def panel_i_participation_vs_lmi(
 
     One dot per cell, separate subplots for R+ and R-. The line and the
     annotated statistic are the fixed-effect slope of
-    learning_rate ~ lmi + (1 | mouse_id).
+    learning_rate ~ lmi + (1 + lmi | mouse_id).
 
     Saves <filename>.pdf and <filename>_stats.csv (per reward group: slope,
-    CI, p-value, intraclass correlation of the mouse term).
+    CI, p-value, share of variance of the mouse intercept, SD of the slope
+    across mice, and the per-mouse Spearman correlation test).
     """
     set_style()
 
@@ -95,6 +106,7 @@ def panel_i_participation_vs_lmi(
 
         if len(grp) >= 3 and n_mice >= 2:
             fit = lmm_slope(grp, 'learning_rate', 'lmi')
+            rank, _ = per_mouse_rank_correlation(grp, 'learning_rate', 'lmi')
             x_line = np.linspace(x.min(), x.max(), 200)
             ax.plot(x_line, fit['slope'] * x_line + fit['intercept'], color='black', linewidth=1, zorder=5)
             ax.text(
@@ -108,7 +120,7 @@ def panel_i_participation_vs_lmi(
             stats_rows.append(
                 {
                     'reward_group': rg,
-                    'test': 'LMM learning_rate ~ lmi + (1 | mouse)',
+                    'test': 'LMM learning_rate ~ lmi + (1 + lmi | mouse)',
                     'n_cells': len(grp),
                     'n_mice': n_mice,
                     'lmm_slope': fit['slope'],
@@ -118,10 +130,17 @@ def panel_i_participation_vs_lmi(
                     'p_value': fit['p_value'],
                     'significance': significance_stars(fit['p_value']),
                     'icc_mouse': fit['icc_mouse'],
+                    'slope_sd_mouse': fit['slope_sd_mouse'],
                     'method': fit['method'],
+                    'spearman_median_rho': rank['median_rho'],
+                    'spearman_n_positive': rank['n_positive'],
+                    'spearman_p_wilcoxon': rank['p_value'],
                 }
             )
-            print(f"  LMM {rg}: slope={fit['slope']:.4g}, p={fit['p_value']:.4g}, ICC={fit['icc_mouse']:.3f}")
+            print(
+                f"  LMM {rg}: slope={fit['slope']:.4g}, p={fit['p_value']:.4g} ({fit['method']}); "
+                f"Spearman {rank['n_positive']}/{rank['n_mice']} mice > 0, p={rank['p_value']:.4g}"
+            )
 
         ax.axvline(x=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
         ax.set_title(f'{rg}\n{len(grp)} cells, {n_mice} mice', fontweight='bold')

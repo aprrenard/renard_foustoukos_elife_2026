@@ -11,7 +11,7 @@ same day and trials. Participation above chance = participation rate -
 chance rate, per cell-day (fast_learning.participation).
 
 Panel a: day-0 participation above chance vs LMI, as Fig. 4i. Stats: linear
-         mixed-effects model excess ~ LMI + (1 | mouse), per reward group.
+         mixed-effects model excess ~ LMI + (1 + LMI | mouse), per reward group.
 Panel b: participation above chance across days for LMI+ vs LMI- cells, as
          Fig. 4j. Stats: per-mouse day slope, Wilcoxon signed-rank test
          against zero (n = mice).

@@ -47,41 +47,64 @@ def dprime(hits, n_hit, false_alarms, n_fa):
     return norm.ppf(hit_rate) - norm.ppf(fa_rate)
 
 
-def _mixed_fit(formula, df, group):
-    """Fit a random-intercept mixed model. When the mouse variance is
-    estimated at zero (boundary) its standard errors are undefined; the model
-    then reduces to ordinary least squares, which is refitted with standard
-    errors clustered by mouse. Returns (result, mouse variance, method)."""
+OPTIMIZERS = ['bfgs', 'lbfgs', 'powell', 'cg']
+
+
+def _mixed_fit(formula, df, group, re_formula=None):
+    """Fit a mixed model with a random intercept per group, and the random
+    slopes of re_formula (e.g. '~x') when given.
+
+    Optimizers can stop at different likelihoods on random-slope models, so
+    the model is fitted with each of OPTIMIZERS and the converged fit with
+    finite standard errors and the highest likelihood is kept. When there is
+    none (typically a variance estimated at zero, where standard errors are
+    undefined), the fit falls back to ordinary least squares with standard
+    errors clustered by mouse, which still takes the mouse as the unit.
+    Returns (result, mouse intercept variance, residual variance, method)."""
     import warnings
 
     import numpy as np
     import statsmodels.formula.api as smf
     from statsmodels.regression.mixed_linear_model import MixedLM
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        result = MixedLM.from_formula(formula, groups=group, data=df).fit()
-    re_var = float(result.cov_re.iloc[0, 0])
-    if np.all(np.isfinite(result.bse)):
-        return result, re_var, result.scale, 'LMM (1 | mouse)'
+    model = MixedLM.from_formula(formula, groups=group, re_formula=re_formula, data=df)
+    best = None
+    for optimizer in OPTIMIZERS:
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            try:
+                result = model.fit(method=optimizer)
+            except (ValueError, np.linalg.LinAlgError):
+                continue
+        if result.converged and np.all(np.isfinite(result.bse)) and (best is None or result.llf > best.llf):
+            best = result
+    if best is not None:
+        terms = '1 + ' + re_formula.lstrip('~').replace(' ', '') if re_formula else '1'
+        return best, float(best.cov_re.iloc[0, 0]), best.scale, f'LMM ({terms} | mouse)'
     groups = df[group].astype('category').cat.codes
     ols = smf.ols(formula, data=df).fit(cov_type='cluster', cov_kwds={'groups': groups})
-    return ols, 0.0, ols.scale, 'OLS, mouse-clustered SE (mouse variance estimated at 0)'
+    return ols, 0.0, ols.scale, 'OLS, mouse-clustered SE (mixed model at the boundary)'
 
 
-def lmm_slope(df, y, x, group='mouse_id', covariates=()):
-    """Mixed model y ~ x [+ covariates] + (1 | group): the fixed-effect slope
-    of x with cells (or cell pairs) grouped by mouse, so that cells recorded in
-    the same mouse are not treated as independent. With covariates, the slope
-    of x is the one holding them fixed (the mixed-model analogue of a partial
-    correlation).
+def lmm_slope(df, y, x, group='mouse_id', covariates=(), random_slope=True):
+    """Mixed model y ~ x [+ covariates] + (1 + x | group): the fixed-effect
+    slope of x with cells (or cell pairs) grouped by mouse. Each mouse has its
+    own intercept and its own slope of x (random_slope=False: intercept
+    only), so that the test of the slope takes the mouse, not the cell, as the
+    unit. With covariates, the slope of x is the one holding them fixed (the
+    mixed-model analogue of a partial correlation).
 
-    Returns a dict with slope, se, CI, p-value (Wald), intercept, the
-    intraclass correlation of the mouse term and the method used.
+    Returns a dict with slope, se, CI, p-value (Wald), intercept, the share of
+    variance of the mouse intercept (at x = 0), the SD of the slope across
+    mice and the method used.
     """
+    import numpy as np
+
     formula = ' + '.join([f'{y} ~ {x}', *covariates])
-    result, re_var, resid_var, method = _mixed_fit(formula, df, group)
+    result, re_var, resid_var, method = _mixed_fit(formula, df, group, f'~{x}' if random_slope else None)
     ci_low, ci_high = result.conf_int().loc[x]
+    cov_re = getattr(result, 'cov_re', None)
+    slope_sd = float(np.sqrt(cov_re.loc[x, x])) if cov_re is not None and x in cov_re.index else 0.0
     return {
         'slope': result.params[x],
         'se': result.bse[x],
@@ -90,8 +113,26 @@ def lmm_slope(df, y, x, group='mouse_id', covariates=()):
         'p_value': result.pvalues[x],
         'intercept': result.params['Intercept'],
         'icc_mouse': re_var / (re_var + resid_var),
+        'slope_sd_mouse': slope_sd,
         'method': method,
     }
+
+
+def per_mouse_rank_correlation(df, y, x, group='mouse_id'):
+    """Spearman correlation of x and y within each mouse, then a Wilcoxon
+    signed-rank test of the per-mouse correlations against zero (n = mice).
+    Ranks make the test insensitive to the magnitude of extreme values.
+    Returns (dict of summary statistics, per-mouse correlations)."""
+    import numpy as np
+    from scipy.stats import spearmanr, wilcoxon
+
+    rho = df.groupby(group).apply(lambda m: spearmanr(m[x], m[y])[0], include_groups=False).dropna()
+    return {
+        'median_rho': float(np.median(rho)),
+        'n_positive': int((rho > 0).sum()),
+        'n_mice': len(rho),
+        'p_value': float(wilcoxon(rho).pvalue) if len(rho) >= 3 else np.nan,
+    }, rho
 
 
 def lmm_mean(df, y, group='mouse_id'):

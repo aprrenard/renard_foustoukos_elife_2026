@@ -75,11 +75,29 @@ def test_lmm_accounts_for_mouse_clustering():
         for _ in range(200)
     ]
     df = pd.DataFrame(rows, columns=['mouse_id', 'x', 'y'])
-    fit = lmm_slope(df, 'y', 'x')
+    assert lmm_slope(df, 'y', 'x')['p_value'] > 0.01
+    fit = lmm_slope(df, 'y', 'x', random_slope=False)
     assert fit['p_value'] > 0.01 and fit['icc_mouse'] > 0.9
     # Pooled pairs would make the mean change look highly significant; by mouse it is not.
     df['change'] = df['y']
     assert lmm_mean(df, 'change')['p_value'] > 0.01
+
+
+def test_lmm_random_slope_takes_mouse_as_unit():
+    import pandas as pd
+    from fast_learning.stats import lmm_slope, per_mouse_rank_correlation
+
+    rng = np.random.default_rng(2)
+    # 8 mice with strong slopes of random sign (mean about 0): every mouse is
+    # significant on its own, so pooled cells or a random intercept only make
+    # the average slope look significant; mice as the unit do not.
+    slopes = np.array([1, -1, 1, -1, 1, -1, 1, -1]) * rng.uniform(0.5, 1, 8)
+    rows = [(m, xi, b * xi + rng.normal(0, 0.3)) for m, b in enumerate(slopes) for xi in rng.normal(size=200)]
+    df = pd.DataFrame(rows, columns=['mouse_id', 'x', 'y'])
+    assert lmm_slope(df, 'y', 'x')['p_value'] > 0.05
+    assert lmm_slope(df, 'y', 'x')['slope_sd_mouse'] > 0.4
+    summary, rho = per_mouse_rank_correlation(df, 'y', 'x')
+    assert summary['n_mice'] == 8 and summary['n_positive'] == 4 and summary['p_value'] > 0.05
 
 
 def test_ks_permutation_respects_mice():
