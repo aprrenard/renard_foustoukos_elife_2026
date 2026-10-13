@@ -135,23 +135,6 @@ def per_mouse_rank_correlation(df, y, x, group='mouse_id'):
     }, rho
 
 
-def lmm_mean(df, y, group='mouse_id'):
-    """Mixed model y ~ 1 + (1 | group): tests whether the mean of y differs
-    from zero with observations grouped by mouse (e.g. post - pre changes of
-    cell pairs). Returns a dict like lmm_slope, for the intercept."""
-    result, re_var, resid_var, method = _mixed_fit(f'{y} ~ 1', df, group)
-    ci_low, ci_high = result.conf_int().loc['Intercept']
-    return {
-        'mean': result.params['Intercept'],
-        'se': result.bse['Intercept'],
-        'ci_low': ci_low,
-        'ci_high': ci_high,
-        'p_value': result.pvalues['Intercept'],
-        'icc_mouse': re_var / (re_var + resid_var),
-        'method': method,
-    }
-
-
 def per_mouse_slope_test(mouse_day_data, y='participation_rate', x='day'):
     """Linear trend across days tested with mice as the unit: one slope of y
     vs x per mouse (on that mouse's per-day means), then a Wilcoxon

@@ -3,9 +3,10 @@ Supplementary Figure 3m: Pairwise correlations between projection neurons
 (wS2-wS2 and wM1-wM1 pairs) during a 2 s pre-stimulus quiet window,
 compared pre vs post learning. Mapping trials only.
 
-Stats: change of each pair's correlation (post - pre), tested with a linear
-mixed-effects model change ~ 1 + (1 | mouse), so that pairs recorded in the
-same mouse are not treated as independent.
+Stats: change of each pair's correlation (post - pre), averaged over the
+pairs of each mouse; the per-mouse mean changes are tested against zero with a
+Wilcoxon signed-rank test (n = mice). Pairs share neurons and their number
+per mouse varies widely, so pairs are not independent and are not the unit.
 
 Inputs:  pair-level correlations (pipeline/09_pairwise_correlations.py).
 Outputs: <figures_dir>/supp_3/output/supp_3m_<group>.pdf, _data.csv (pairs),
@@ -24,7 +25,9 @@ import seaborn as sns
 
 from fast_learning import paths, correlations
 from fast_learning.plotting import save_figure, set_style, panel_size
-from fast_learning.stats import format_p, lmm_mean
+from scipy.stats import wilcoxon
+
+from fast_learning.stats import format_p, significance_stars
 
 
 # ============================================================================
@@ -65,7 +68,7 @@ if __name__ == '__main__':
 
         print(f"Pairs: {corr_df['pair_type'].value_counts().to_dict()}")
 
-        # ── Stats: per-pair change, mixed model with mouse as random intercept ─
+        # ── Stats: per-mouse mean change of its pairs, Wilcoxon across mice ─
         key = ['mouse_id', 'pair_type', 'roi_i', 'roi_j']
         paired = (
             corr_df.pivot_table(index=key, columns='period', values='correlation')
@@ -73,32 +76,46 @@ if __name__ == '__main__':
             .reset_index()
         )
         paired['change'] = paired['post'] - paired['pre']
+        mouse_means = (
+            paired.groupby(['mouse_id', 'pair_type'])
+            .agg(
+                pre=('pre', 'mean'),
+                post=('post', 'mean'),
+                change=('change', 'mean'),
+                n_pairs=('change', 'size'),
+            )
+            .reset_index()
+        )
         stats_pair = []
         for pt in PAIR_TYPES:
-            sub = paired[paired['pair_type'] == pt]
-            if sub['mouse_id'].nunique() < 2:
+            mm = mouse_means[mouse_means['pair_type'] == pt]
+            if len(mm) < 2:
                 continue
-            fit = lmm_mean(sub, 'change')
+            res = wilcoxon(mm['change'])
+            n = len(mm)
             stats_pair.append(
                 {
                     'pair_type': pt,
-                    'test': 'LMM change ~ 1 + (1 | mouse)',
-                    'mean_pre': sub['pre'].mean(),
-                    'sem_pre': sub['pre'].std() / np.sqrt(len(sub)),
-                    'mean_post': sub['post'].mean(),
-                    'sem_post': sub['post'].std() / np.sqrt(len(sub)),
-                    'n_pairs': len(sub),
-                    'n_mice': sub['mouse_id'].nunique(),
-                    'lmm_change': fit['mean'],
-                    'lmm_ci_low': fit['ci_low'],
-                    'lmm_ci_high': fit['ci_high'],
-                    'p_value': fit['p_value'],
-                    'icc_mouse': fit['icc_mouse'],
-                    'method': fit['method'],
+                    'test': 'Per-mouse mean change (post - pre), Wilcoxon signed-rank (n = mice)',
+                    'n_mice': n,
+                    'n_pairs': int(mm['n_pairs'].sum()),
+                    'n_pairs_per_mouse_min': int(mm['n_pairs'].min()),
+                    'n_pairs_per_mouse_max': int(mm['n_pairs'].max()),
+                    'mean_pre': mm['pre'].mean(),
+                    'sem_pre': mm['pre'].std() / np.sqrt(n),
+                    'mean_post': mm['post'].mean(),
+                    'sem_post': mm['post'].std() / np.sqrt(n),
+                    'mean_change': mm['change'].mean(),
+                    'median_change': mm['change'].median(),
+                    'n_mice_increase': int((mm['change'] > 0).sum()),
+                    'w_stat': res.statistic,
+                    'p_value': res.pvalue,
+                    'significance': significance_stars(res.pvalue),
                 }
             )
             print(
-                f"  {reward_group} {pt}: change={fit['mean']:.4g}, p={fit['p_value']:.3g}, n={len(sub)} pairs"
+                f"  {reward_group} {pt}: median change={mm['change'].median():.4g}, "
+                f"{int((mm['change'] > 0).sum())}/{n} mice up, p={res.pvalue:.3g}"
             )
         stats_pair_df = pd.DataFrame(stats_pair)
 
@@ -106,7 +123,6 @@ if __name__ == '__main__':
         corr_df.to_csv(os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}_data.csv'), index=False)
 
         # ── Figure: one value per mouse (mean over its pairs), the unit of the test ─
-        mouse_means = paired.groupby(['mouse_id', 'pair_type'])[['pre', 'post']].mean().reset_index()
         mouse_means.to_csv(os.path.join(OUTPUT_DIR, f'supp_3m_{reward_group}_mouse_means.csv'), index=False)
 
         fig, axes = plt.subplots(1, 2, figsize=panel_size(2, w=0.7), sharey=True)
