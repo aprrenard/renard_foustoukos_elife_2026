@@ -18,7 +18,6 @@ mice with bootstrapped 95% CI (seeded).
 import os
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -27,7 +26,7 @@ from fast_learning import paths, correlations
 from fast_learning.plotting import save_figure, set_style, panel_size
 from scipy.stats import wilcoxon
 
-from fast_learning.stats import format_p, significance_stars
+from fast_learning.stats import bootstrap_ci, format_p, significance_stars
 
 
 # ============================================================================
@@ -102,10 +101,11 @@ if __name__ == '__main__':
                     'n_pairs_per_mouse_min': int(mm['n_pairs'].min()),
                     'n_pairs_per_mouse_max': int(mm['n_pairs'].max()),
                     'mean_pre': mm['pre'].mean(),
-                    'sem_pre': mm['pre'].std() / np.sqrt(n),
+                    **dict(zip(['ci95_low_pre', 'ci95_high_pre'], bootstrap_ci(mm['pre']))),
                     'mean_post': mm['post'].mean(),
-                    'sem_post': mm['post'].std() / np.sqrt(n),
+                    **dict(zip(['ci95_low_post', 'ci95_high_post'], bootstrap_ci(mm['post']))),
                     'mean_change': mm['change'].mean(),
+                    **dict(zip(['ci95_low_change', 'ci95_high_change'], bootstrap_ci(mm['change']))),
                     'median_change': mm['change'].median(),
                     'n_mice_increase': int((mm['change'] > 0).sum()),
                     'w_stat': res.statistic,

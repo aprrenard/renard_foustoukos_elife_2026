@@ -20,6 +20,20 @@ def format_p(p, prefix='p='):
     return f'{prefix}{mantissa}×10$^{{{int(exponent)}}}$'
 
 
+def bootstrap_ci(values, ci=95, n_boot=1000, seed=0):
+    """Bootstrapped CI of the mean, computed as seaborn computes the error
+    bars of the bar plots (errorbar=('ci', 95), seed=0), so that stats files
+    and plotted bars agree. Returns (low, high)."""
+    import numpy as np
+    from seaborn.algorithms import bootstrap
+    from seaborn.utils import ci as percentile_interval
+
+    values = np.asarray(values, float)
+    values = values[np.isfinite(values)]
+    low, high = percentile_interval(bootstrap(values, func='mean', n_boot=n_boot, seed=seed), ci)
+    return float(low), float(high)
+
+
 def significance_stars(p, ns='n.s.', na=None):
     """'***' (p < 0.001), '**' (p < 0.01), '*' (p < 0.05), else `ns`.
 
