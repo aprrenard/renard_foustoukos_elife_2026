@@ -239,8 +239,9 @@ def plot(means, stats, filename='previous_outcome'):
     paired_panel(axes[0], means, stats, 'previous_trial', 'Previous trial')
     paired_panel(axes[1], means, stats, 'last_whisker_trial', 'Last whisker trial')
     group_panel(axes[2], means, stats)
-    for ax in axes:
-        ax.set_ylim(bottom=0)
+    axes[0].set_ylim(0, 30)
+    axes[1].set_ylim(0, 25)
+    axes[2].set_ylim(bottom=0)
     sns.despine()
     plt.tight_layout()
     os.makedirs(OUTPUT_DIR, exist_ok=True)

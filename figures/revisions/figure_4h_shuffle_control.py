@@ -361,7 +361,8 @@ def panel_4h_shuffle_control(
     days_sorted = sorted(DAYS)
     reward_groups = ['R+', 'R-']
     colors = {'R+': reward_palette[1], 'R-': reward_palette[0]}
-    xlim = (0, 20)
+    binrange = (0, 20)  # histogram range; the axes show xlim
+    xlim = (0, 12)
     binwidth = 1
 
     fig, axes = plt.subplots(2, len(days_sorted), figsize=(3.2 * len(days_sorted), 6))
@@ -380,7 +381,7 @@ def panel_4h_shuffle_control(
             sns.histplot(
                 pooled,
                 binwidth=binwidth,
-                binrange=xlim,
+                binrange=binrange,
                 color=colors[rg],
                 stat='probability',
                 alpha=0.6,
