@@ -126,6 +126,9 @@ METRICS = [
     ('session_duration_min', 'Session duration (min)'),
     ('total_reward_uL', 'Total water reward (uL)'),
 ]
+# Y-axis limits per metric: across the five days, and pre vs post.
+YLIMS_DAYS = {'n_trials': (0, 600), 'session_duration_min': (0, 120), 'total_reward_uL': (0, 1000)}
+YLIMS_PRE_POST = {'n_trials': (0, 600), 'session_duration_min': (0, 150), 'total_reward_uL': (0, 1000)}
 
 
 def plot_session_summary(
@@ -212,6 +215,7 @@ def plot_session_summary(
 
         ax.set_xlabel('Day', fontsize=10)
         ax.set_ylabel(ylabel, fontsize=10)
+        ax.set_ylim(*YLIMS_DAYS[metric])
         ax.legend(title='', fontsize=9)
 
     sns.despine()
@@ -309,6 +313,7 @@ def plot_pre_post_within_group(df, output_dir=OUTPUT_DIR, filename='session_stat
             ax.text(gi * 3 + 0.5, -0.2, rg, transform=ax.get_xaxis_transform(), ha='center', va='top')
         ax.set_xlabel('')
         ax.set_ylabel(ylabel)
+        ax.set_ylim(*YLIMS_PRE_POST[metric])
     sns.despine()
     plt.tight_layout()
 
