@@ -6,7 +6,10 @@ The 50 passive whisker trials are delivered at the end of each session. If
 responses adapted within the block, or if the mice's state changed along it,
 the early and late trials could give different results. Response of a trial:
 dF/F (baseline-subtracted tensors) averaged over 0-300 ms after the stimulus
-and over all cells of the mouse. Mice: imaging mice, as Fig. 3c.
+and over all cells of the mouse. Only the last N_TRIALS passive trials of each
+day are used (all of them if fewer), as in the population analyses (templates,
+decoders, similarity), so first / last N_SPLIT are trials 11-30 / 31-50 of a
+50-trial block. Mice: imaging mice, as Fig. 3c.
 
 a: response across the block, in bins of BIN trials, per day; mean across
    mice with bootstrapped 95% CI.
@@ -41,6 +44,7 @@ from fast_learning.stats import format_p
 DAYS = [-2, -1, 0, 1, 2]
 PRE, POST = [-2, -1], [1, 2]
 WIN = (0, 0.300)
+N_TRIALS = 40  # last trials of the block, as the population analyses
 BIN = 10  # trials per bin along the block
 N_SPLIT = 20  # first / last trials of the block
 GROUP_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
@@ -54,10 +58,11 @@ OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_3_pa
 
 
 def mouse_responses(mouse):
-    """Per day: responses (cells x trials, block order) averaged over WIN."""
+    """Per day: responses (cells x trials, block order) averaged over WIN,
+    for the last N_TRIALS trials of the block."""
     x = imaging.load_mouse_xarray(mouse, paths.tensor_dir, 'tensor_xarray_mapping_data.nc')
     x = imaging.select_time(x, *WIN).mean(dim='time')
-    return {d: x.sel(trial=x['day'] == d).values for d in DAYS if (x['day'] == d).sum() > 0}
+    return {d: x.sel(trial=x['day'] == d).values[:, -N_TRIALS:] for d in DAYS if (x['day'] == d).sum() > 0}
 
 
 def summarize(mouse, rg, resp):
@@ -257,8 +262,9 @@ def plot(bins, parts, rhos, stats, filename='passive_adaptation'):
             err_kws=dict(alpha=0.15),
         )
         ax.set_title(rg, color=GROUP_COLORS[rg])
-        ax.set_xticks(range(1, 6), [f'{(b - 1) * BIN + 1}–{b * BIN}' for b in range(1, 6)])
-        ax.set_xlabel('Passive trial')
+        n_bins = N_TRIALS // BIN
+        ax.set_xticks(range(1, n_bins + 1), [f'{(b - 1) * BIN + 1}–{b * BIN}' for b in range(1, n_bins + 1)])
+        ax.set_xlabel(f'Passive trial (last {N_TRIALS})')
         ax.set_ylabel('Response (% ΔF/F0)')
         ax.set_ylim(0, 8)
     axes[0, 1].legend(frameon=False, title='Day', loc='upper right', ncol=2)
