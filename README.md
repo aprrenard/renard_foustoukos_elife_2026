@@ -131,6 +131,7 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | **Figure 4 – supplement** | | |
 | S4a, b | [`figures/supp_4/supp_4a_b.py`](figures/supp_4/supp_4a_b.py) | Participation above chance, controlling for each cell's activity level |
 | **Revision analyses (in progress)** | | |
+| — | [`figures/revisions/behavior_day0_initial_licking.py`](figures/revisions/behavior_day0_initial_licking.py) | Licking to the whisker stimulus at the start of Day 0 (R2 public 1, R1 recommendation 1, R3 public 1) |
 | — | [`figures/revisions/behavior_dprime.py`](figures/revisions/behavior_dprime.py) | Behavior quantified via d' (signal detection theory) instead of whisker hit rate |
 | — | [`figures/revisions/behavior_state_summary.py`](figures/revisions/behavior_state_summary.py) | Session-level behavioral state summary (total water reward, session duration, total trial count) per mouse x session, across days and reward groups |
 | — | [`figures/revisions/figure_2_supp_inactivation.py`](figures/revisions/figure_2_supp_inactivation.py) | Inactivation of wS1 during learning in d', learning on the day after optogenetic inactivation, and inactivation during execution |
