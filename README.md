@@ -135,6 +135,7 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | — | [`figures/revisions/behavior_dprime.py`](figures/revisions/behavior_dprime.py) | Behavior quantified via d' (signal detection theory) instead of whisker hit rate |
 | — | [`figures/revisions/behavior_state_summary.py`](figures/revisions/behavior_state_summary.py) | Session-level behavioral state summary (total water reward, session duration, total trial count) per mouse x session, across days and reward groups |
 | — | [`figures/revisions/figure_2_supp_inactivation.py`](figures/revisions/figure_2_supp_inactivation.py) | Inactivation of wS1 during learning in d', learning on the day after optogenetic inactivation, and inactivation during execution |
+| — | [`figures/revisions/figure_3_passive_adaptation.py`](figures/revisions/figure_3_passive_adaptation.py) | Adaptation within the passive block, and the learning-related response changes in early vs late passive trials (R3 public 3) |
 | — | [`figures/revisions/figure_3f_LMIshuffles.py`](figures/revisions/figure_3f_LMIshuffles.py) | LMI distribution vs. shuffled null |
 | — | [`figures/revisions/figure_3g_i_signal_noise_drift.py`](figures/revisions/figure_3g_i_signal_noise_drift.py) | Response strength, trial-to-trial noise and day-to-day drift of whisker responses |
 | — | [`figures/revisions/figure_4h_event_timing.py`](figures/revisions/figure_4h_event_timing.py) | Are reactivation events over-represented when mice can lick? |
