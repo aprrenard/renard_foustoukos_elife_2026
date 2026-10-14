@@ -15,7 +15,9 @@ speeds, (n_trials, 3, 700) at 100 Hz with the stimulus at 0 s (-2 to 5 s):
     tongue_speed           speed of the tongue, pixels/s
     jaw_speed              speed of the jaw, pixels/s
 
-Per mouse and day, trials are averaged. Figures:
+Per mouse and day, the last N_TRIALS trials (in session order; all of them if
+there are fewer) are averaged, as in the analyses of the passive responses.
+Figures:
     movement_traces.pdf    mean speed across the trial (rows: speeds,
                            columns: days); mean and 95% CI across mice.
     movement_summary.pdf   mean speed in the post-stimulus window WINDOW, per
@@ -46,6 +48,7 @@ from fast_learning.stats import format_p
 DLC_DIR = os.path.join(paths.dlc_dir, 'Speeds', 'DLCTrialMatrices')
 DAYS = [-2, -1, 0, 1, 2]
 WINDOW = (0.0, 1.0)  # s after stimulus onset
+N_TRIALS = 40  # last trials of each day, as the passive-trial analyses (fewer if fewer)
 MIN_TRIALS = 5  # per mouse and day
 SPEEDS = {
     'whisker_angular_speed': 'Whisker angular speed',
@@ -74,11 +77,18 @@ def load_mouse(path):
         units = _text(h['feature_units'][...])
         time = h['time'][...]
         days = h['trials/day_offset'][...]
+        order = h['trials/trial_number'][...]
     # Edge artefact of the speed traces: first and last samples take their
     # neighbour's value.
     traces[:, :, 0] = traces[:, :, 1]
     traces[:, :, -1] = traces[:, :, -2]
-    return {d: traces[days == d] for d in DAYS if (days == d).sum() >= MIN_TRIALS}, names, units, time
+    by_day = {}
+    for d in DAYS:
+        idx = np.flatnonzero(days == d)
+        idx = idx[np.argsort(order[idx], kind='stable')][-N_TRIALS:]  # last N_TRIALS of the session
+        if len(idx) >= MIN_TRIALS:
+            by_day[d] = traces[idx]
+    return by_day, names, units, time
 
 
 def build_datasets():
