@@ -243,7 +243,7 @@ def plot_lmi_vs_null(lmi_df, null_df, output_dir=OUTPUT_DIR, filename='supp_3_LM
             fill=False,
             color='dimgray',
             linewidth=0.8,
-            label='Shuffled null',
+            label='Shuffled',
             ax=ax,
         )
         sns.histplot(
@@ -253,14 +253,15 @@ def plot_lmi_vs_null(lmi_df, null_df, output_dir=OUTPUT_DIR, filename='supp_3_LM
             color=rg_colors[rg],
             alpha=0.5,
             linewidth=0,
-            label='Real LMI',
+            label='Data',
             ax=ax,
         )
         ax.set_title(f'{rg}  ({len(real_vals)} cells)')
         ax.set_xlim(-1, 1)
         ax.set_xlabel('LMI')
         ax.set_ylabel('Probability' if rg == 'R+' else '')
-        ax.legend(frameon=False)
+        ax.set_ylim(0, 0.35)
+        ax.legend(frameon=False, loc='upper left', handlelength=1)
 
     ax = axes[2]
     long = fractions.assign(percent=100 * fractions['significant'])
@@ -278,15 +279,15 @@ def plot_lmi_vs_null(lmi_df, null_df, output_dir=OUTPUT_DIR, filename='supp_3_LM
         edgecolor='black',
         ax=ax,
     )
-    sns.stripplot(data=long, x='reward_group', y='percent', order=reward_groups, color='black', size=2, ax=ax)
+    sns.swarmplot(data=long, x='reward_group', y='percent', order=reward_groups, color='black', size=2, ax=ax)
     ax.axhline(5, color='grey', linestyle='--', linewidth=0.6)
     top = long['percent'].max()
     for i, rg in enumerate(reward_groups):
         p = stats_df.query('reward_group == @rg and cells == "LMI+ or LMI-"')['p_value'].iloc[0]
-        ax.text(i, top * 1.05, format_p(p), ha='center', va='bottom')
+        ax.text(i, top * 1.05, format_p(p), ha='center', va='bottom', fontsize=5)
     ax.set_ylim(0, top * 1.2)
     ax.set_xlabel('')
-    ax.set_ylabel('LMI-significant cells (% per mouse)')
+    ax.set_ylabel('LMI-significant cells\n(% per mouse)')
     sns.despine()
     plt.tight_layout()
 

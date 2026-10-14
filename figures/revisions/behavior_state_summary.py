@@ -124,7 +124,7 @@ def compute_session_summary(table):
 METRICS = [
     ('n_trials', 'Number of trials'),
     ('session_duration_min', 'Session duration (min)'),
-    ('total_reward_uL', 'Total water reward (uL)'),
+    ('total_reward_uL', 'Total water reward (µL)'),
 ]
 # Y-axis limits per metric: across the five days, and pre vs post.
 YLIMS_DAYS = {'n_trials': (0, 600), 'session_duration_min': (0, 120), 'total_reward_uL': (0, 1000)}
@@ -132,20 +132,20 @@ YLIMS_PRE_POST = {'n_trials': (0, 600), 'session_duration_min': (0, 150), 'total
 
 
 def plot_session_summary(
-    df, days=DAYS, output_dir=OUTPUT_DIR, filename='session_state_summary', save_format='svg', dpi=300
+    df, days=DAYS, output_dir=OUTPUT_DIR, filename='session_state_summary', save_format='pdf', dpi=300
 ):
     """Bar plot of each metric across days, R+ vs R-, with Mann-Whitney U
     per day (mirrors figure_4h.py's panel_h_reactivation_rate pattern).
 
     Saves:
-        <filename>.svg        -- figure (3 panels)
+        <filename>.pdf        -- figure (3 panels)
         <filename>_data.csv   -- per-session summary table
         <filename>_stats.csv  -- Mann-Whitney U results per day per metric
     """
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
+    set_style()
 
     days_sorted = sorted(days)
-    fig, axes = plt.subplots(1, len(METRICS), figsize=(5 * len(METRICS), 4))
+    fig, axes = plt.subplots(1, len(METRICS), figsize=panel_size(len(METRICS), w=1.2))
     all_stats_rows = []
 
     for ax, (metric, ylabel) in zip(axes, METRICS):
@@ -186,37 +186,26 @@ def plot_session_summary(
             hue_order=['R+', 'R-'],
             alpha=0.7,
             edgecolor='black',
+            width=0.7,
+            legend=ax is axes[-1],
             ax=ax,
             seed=0,
         )
-
-        y_max = df[metric].max()
-        y_range = y_max * 0.05
-        width = 0.35
-        for day_idx, (day, p) in enumerate(zip(days_sorted, p_values)):
-            if not np.isnan(p):
-                r_plus_vals = df[(df['day'] == day) & (df['reward_group'] == 'R+')][metric].dropna()
-                r_minus_vals = df[(df['day'] == day) & (df['reward_group'] == 'R-')][metric].dropna()
-                ci_plus = (
-                    r_plus_vals.mean() + 1.96 * r_plus_vals.std() / np.sqrt(len(r_plus_vals))
-                    if len(r_plus_vals) > 0
-                    else 0
-                )
-                ci_minus = (
-                    r_minus_vals.mean() + 1.96 * r_minus_vals.std() / np.sqrt(len(r_minus_vals))
-                    if len(r_minus_vals) > 0
-                    else 0
-                )
-                y1 = max(ci_plus, ci_minus)
-                y2 = y1 + y_range
-                x1, x2 = day_idx - width / 2, day_idx + width / 2
-                ax.plot([x1, x1, x2, x2], [y1, y2, y2, y1], 'k-', linewidth=1)
-                ax.text((x1 + x2) / 2, y2, format_p(p), ha='center', va='bottom', fontsize=8)
-
-        ax.set_xlabel('Day', fontsize=10)
-        ax.set_ylabel(ylabel, fontsize=10)
+        for day_idx, p in enumerate(p_values):
+            ax.text(
+                day_idx,
+                1.0 + 0.08 * (day_idx % 2),  # staggered so that neighbours do not overlap
+                format_p(p),
+                transform=ax.get_xaxis_transform(),
+                ha='center',
+                va='bottom',
+                fontsize=5,
+            )
+        ax.set_xticks(range(len(days_sorted)), [f'{d:+d}'.replace('+0', '0') for d in days_sorted])
+        ax.set_xlabel('Day')
+        ax.set_ylabel(ylabel)
         ax.set_ylim(*YLIMS_DAYS[metric])
-        ax.legend(title='', fontsize=9)
+    axes[-1].legend(frameon=False, title='', loc='upper left', bbox_to_anchor=(1.0, 1.0))
 
     sns.despine()
     plt.tight_layout()
