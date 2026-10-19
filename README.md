@@ -91,9 +91,21 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 1b | [`figures/figure_1/figure_1b.py`](figures/figure_1/figure_1b.py) | Example behavioral performance across learning days |
 | 1c | [`figures/figure_1/figure_1c.py`](figures/figure_1/figure_1c.py) | Behavioral performance of the imaging mice across days |
 | 1d | [`figures/figure_1/figure_1d.py`](figures/figure_1/figure_1d.py) | Day 0 performance across whisker trials, R+ vs R- |
+| **Figure 1 – figure supplement 1** | | |
+| 1-S1a | [`figures/figure1_supfig1/figure1_supfig1_a.py`](figures/figure1_supfig1/figure1_supfig1_a.py) | First hit trial on Day 0 for R+ vs R- |
+| 1-S1b | [`figures/figure1_supfig1/figure1_supfig1_b.py`](figures/figure1_supfig1/figure1_supfig1_b.py) | Whisker lick probability on Days 0, +1, +2 for R+ vs R- |
+| 1-S1c | [`figures/figure1_supfig1/figure1_supfig1_c.py`](figures/figure1_supfig1/figure1_supfig1_c.py) | Particle test — whisker hit rate and false alarm rate across ON / OFF / ON periods (R+ mice only) |
+| 1-S1d | [`figures/figure1_supfig1/figure1_supfig1_d.py`](figures/figure1_supfig1/figure1_supfig1_d.py) | Single-trial whisker hit rate across Day 0 trials, R+ vs R- (non-realigned) |
+| 1-S1e | [`figures/figure1_supfig1/figure1_supfig1_e.py`](figures/figure1_supfig1/figure1_supfig1_e.py) | Fitted learning curve across Day 0 trials, R+ vs R-, realigned to each mouse's first hit trial |
+| 1-S1f | [`figures/figure1_supfig1/figure1_supfig1_f.py`](figures/figure1_supfig1/figure1_supfig1_f.py) | Day 0 lick probability for whisker, auditory, and no-stim trial types on a common time axis (minutes from session start) |
+| 1-S1g, h | [`figures/figure1_supfig1/figure1_supfig1_g_h.py`](figures/figure1_supfig1/figure1_supfig1_g_h.py) | Reaction times for auditory, whisker, and no-stim hit trials |
 | **Figure 2** | | |
-| 2b, c | [`figures/figure_2/figure_2b_c.py`](figures/figure_2/figure_2b_c.py) | Muscimol inactivation during learning |
-| 2e, f | [`figures/figure_2/figure_2e_f.py`](figures/figure_2/figure_2e_f.py) | Optogenetic inactivation during learning |
+| 2b–d | [`figures/figure_2/figure_2b_d.py`](figures/figure_2/figure_2b_d.py) | Muscimol inactivation of wS1 or fpS1 during learning |
+| 2e–g | [`figures/figure_2/figure_2e_g.py`](figures/figure_2/figure_2e_g.py) | Optogenetic inactivation of wS1 or fpS1 during learning |
+| **Figure 2 – figure supplement 1** | | |
+| 2-S1a–d | [`figures/figure2_supfig1/figure2_supfig1_a_d.py`](figures/figure2_supfig1/figure2_supfig1_a_d.py) | Muscimol inactivation of wS1 or fpS1 during task execution, in expert mice |
+| **Figure 2 – figure supplement 2** | | |
+| 2-S2a–l | [`figures/figure2_supfig2/figure2_supfig2_a_l.py`](figures/figure2_supfig2/figure2_supfig2_a_l.py) | Learning on the first day without inactivation, compared with naive mice learning on Day 0 |
 | **Figure 3** | | |
 | 3a | [`figures/figure_3/figure_3a.py`](figures/figure_3/figure_3a.py) | FOV with LMI overlay + calcium transient illustration for the same mouse |
 | 3b | [`figures/figure_3/figure_3b.py`](figures/figure_3/figure_3b.py) | Raster plot of single-cell PSTH activity across learning days for GF314 |
@@ -111,14 +123,6 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 4g | [`figures/figure_4/figure_4g.py`](figures/figure_4/figure_4g.py) | Example correlation traces across days (mouse AR127) |
 | 4h | [`figures/figure_4/figure_4h.py`](figures/figure_4/figure_4h.py) | Reactivation rate across days, R+ vs R- |
 | 4i, j | [`figures/figure_4/figure_4i_j.py`](figures/figure_4/figure_4i_j.py) | Reactivation participation rate vs LMI |
-| **Figure 1 – figure supplement 1** | | |
-| 1-S1a | [`figures/figure1_supfig1/figure1_supfig1_a.py`](figures/figure1_supfig1/figure1_supfig1_a.py) | First hit trial on Day 0 for R+ vs R- |
-| 1-S1b | [`figures/figure1_supfig1/figure1_supfig1_b.py`](figures/figure1_supfig1/figure1_supfig1_b.py) | Whisker lick probability on Days 0, +1, +2 for R+ vs R- |
-| 1-S1c | [`figures/figure1_supfig1/figure1_supfig1_c.py`](figures/figure1_supfig1/figure1_supfig1_c.py) | Particle test — whisker hit rate and false alarm rate across ON / OFF / ON periods (R+ mice only) |
-| 1-S1d | [`figures/figure1_supfig1/figure1_supfig1_d.py`](figures/figure1_supfig1/figure1_supfig1_d.py) | Single-trial whisker hit rate across Day 0 trials, R+ vs R- (non-realigned) |
-| 1-S1e | [`figures/figure1_supfig1/figure1_supfig1_e.py`](figures/figure1_supfig1/figure1_supfig1_e.py) | Fitted learning curve across Day 0 trials, R+ vs R-, realigned to each mouse's first hit trial |
-| 1-S1f | [`figures/figure1_supfig1/figure1_supfig1_f.py`](figures/figure1_supfig1/figure1_supfig1_f.py) | Day 0 lick probability for whisker, auditory, and no-stim trial types on a common time axis (minutes from session start) |
-| 1-S1g, h | [`figures/figure1_supfig1/figure1_supfig1_g_h.py`](figures/figure1_supfig1/figure1_supfig1_g_h.py) | Reaction times for auditory, whisker, and no-stim hit trials |
 | **Figure 2 – supplement** | | |
 | S2b | [`figures/supp_2/supp_2b.py`](figures/supp_2/supp_2b.py) | Example mapping-trial PSTHs for three illustrative cells across learning days |
 | S2c | [`figures/supp_2/supp_2c.py`](figures/supp_2/supp_2c.py) | Relationship between classifier weights and the Learning Modulation Index (LMI) |
@@ -135,7 +139,6 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | — | [`figures/revisions/behavior_day0_initial_licking.py`](figures/revisions/behavior_day0_initial_licking.py) | Licking to the whisker stimulus at the start of Day 0 (R2 public 1, R1 recommendation 1, R3 public 1) |
 | — | [`figures/revisions/behavior_dprime.py`](figures/revisions/behavior_dprime.py) | Behavior quantified via d' (signal detection theory) instead of whisker hit rate |
 | — | [`figures/revisions/behavior_state_summary.py`](figures/revisions/behavior_state_summary.py) | Session-level behavioral state summary (total water reward, session duration, total trial count) per mouse x session, across days and reward groups |
-| — | [`figures/revisions/figure_2_supp_inactivation.py`](figures/revisions/figure_2_supp_inactivation.py) | Inactivation of wS1 during learning in d', learning on the day after optogenetic inactivation, and inactivation during execution |
 | — | [`figures/revisions/figure_3_passive_adaptation.py`](figures/revisions/figure_3_passive_adaptation.py) | Adaptation within the passive block, and the learning-related response changes in early vs late passive trials (R3 public 3) |
 | — | [`figures/revisions/figure_3f_LMIshuffles.py`](figures/revisions/figure_3f_LMIshuffles.py) | LMI distribution vs. shuffled null |
 | — | [`figures/revisions/figure_3g_i_signal_noise_drift.py`](figures/revisions/figure_3g_i_signal_noise_drift.py) | Response strength, trial-to-trial noise and day-to-day drift of whisker responses |

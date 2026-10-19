@@ -6,7 +6,7 @@ Addresses a reviewer comment asking that behavioral performance be
 quantified with d' rather than raw whisker hit rate, for Figure 4C and E.
 The d' versions of Figure 1C and 1D are in figure_1c.py and figure_1d.py, and
 those of Figure 2C and 2F and of the execution inactivation in
-figure_2_supp_inactivation.py.
+figures/figure_2 and figures/figure2_supfig1 (execution).
 
 ------------------------------------------------------------------------
 How d' is computed
