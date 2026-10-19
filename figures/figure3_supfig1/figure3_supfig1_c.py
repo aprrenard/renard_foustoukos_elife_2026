@@ -1,5 +1,5 @@
 """
-Supplementary Figure 2c: Relationship between classifier weights and the
+Figure 3—figure supplement 1c: Relationship between classifier weights and the
 Learning Modulation Index (LMI).
 
 Scatter plot (one dot per cell, all mice pooled) with the pooled linear
@@ -31,7 +31,7 @@ from fast_learning.stats import format_p, per_mouse_slope_test
 N_BOOT = 1000
 SEED = 42
 RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_2')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3_SupFig1')
 
 
 if __name__ == '__main__':
@@ -123,13 +123,13 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_2c.svg'))
-    print("Saved: supp_2c.svg")
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure3_supfig1_c.svg'))
+    print("Saved: figure3_supfig1_c.svg")
 
     merged[['mouse_id', 'roi', 'reward_group', 'lmi', 'classifier_weight']].to_csv(
-        os.path.join(OUTPUT_DIR, 'supp_2c_data.csv'), index=False
+        os.path.join(OUTPUT_DIR, 'figure3_supfig1_c_data.csv'), index=False
     )
-    print("Saved: supp_2c_data.csv")
+    print("Saved: figure3_supfig1_c_data.csv")
 
     pd.DataFrame(
         [
@@ -151,7 +151,7 @@ if __name__ == '__main__':
                 'n_boot': N_BOOT,
             }
         ]
-    ).to_csv(os.path.join(OUTPUT_DIR, 'supp_2c_stats.csv'), index=False)
-    print("Saved: supp_2c_stats.csv")
+    ).to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig1_c_stats.csv'), index=False)
+    print("Saved: figure3_supfig1_c_stats.csv")
 
     plt.close()

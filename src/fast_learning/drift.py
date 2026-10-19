@@ -1,55 +1,32 @@
-"""
-Figure 3g-i revision: response strength, trial-to-trial noise and day-to-day
-drift of whisker responses.
+"""Response strength, trial-to-trial noise and day-to-day drift of passive
+whisker responses (Figure 3—figure supplements 3 and 4).
 
-Days -2 and -1 are the only consecutive days without learning (mice are
-auditory experts; performance keeps improving after day 0), so -2/-1
-measures drift. Day 0 responses are recorded after the learning session, so
--1/0 spans learning. n = mice throughout.
+Response vectors: all cells, last N_MAP_TRIALS passive trials per day, mean
+over WIN (as Fig. 3h-i). Days -2 and -1 are the only consecutive days without
+learning, so -2/-1 measures drift; Day-0 passive responses are recorded after
+the learning session, so -1/0 spans learning. n = mice throughout.
 
-Top row, the response vectors of Fig. 3h-i (last 40 passive trials per day):
-- Signal power (squared norm of the trial-averaged response, corrected for
-  noise) and noise power (summed trial-to-trial variance), pre (days -2, -1)
-  vs post (days +1, +2): Wilcoxon signed-rank test.
+- Signal power: squared norm of the trial-averaged response vector, corrected
+  for noise (sum of squared means minus noise / n trials). Noise power: summed
+  trial-to-trial variance over cells.
 - Day-to-day pattern drift: correlation of the mean response vectors of two
   consecutive days, divided by the geometric mean of their split-half
   reliabilities (Spearman-Brown corrected), so that 1 means the same pattern
-  on both days. -1/0 vs -2/-1 within mice (Wilcoxon signed-rank), and
-  -2/-1 between groups (Mann-Whitney U).
-
-Bottom row, the LMI of pipeline step 05 (ROC of each cell's response, trial-
-label shuffles) computed between consecutive days, one day on each side.
-Same response window (0-300 ms), baseline (-1-0 s), all passive whisker
-trials of each day, 1000 shuffles, LMI+ at p >= 0.975 and LMI- at
-p <= 0.025. Per mouse and pair: fraction of LMI+ and LMI- cells and the net
-fraction (LMI+ minus LMI-); drift without a consistent direction gives as
-many LMI+ as LMI- cells. The step-05 LMI (two days on each side, so twice as
-many trials) is shown for reference; its fractions are not directly
-comparable to the one-day pairs.
-- Change from -2/-1 to -1/0 within mice (Wilcoxon signed-rank): p-values above
-  -1/0 (R+ bottom, R- top).
-- Net fraction against zero (Wilcoxon signed-rank; p-values above -2/-1 and the
-  step-05 LMI) and between groups (Mann-Whitney U; stats file only).
-
-Outputs: <figures_dir>/revisions/figure_3g_i_signal_noise_drift/output/
-    signal_noise_drift.pdf,
-    signal_noise_data.csv (mouse x day), drift_data.csv (mouse x day pair),
-    signal_noise_stats.csv,
-    drift_lmi_data.csv (mouse x day pair), drift_lmi_cells.csv (cell x day
-    pair: LMI, p), drift_lmi_stats.csv.
+  on both days.
+- LMI between two consecutive days: as pipeline step 05 (ROC of each cell's
+  response, 0-300 ms after a -1-0 s baseline, all passive trials, 1000
+  label shuffles; LMI+ at p >= 0.975, LMI- at p <= 0.025), one day on each
+  side. Fractions of LMI+ and LMI- cells per mouse and pair, and the net
+  fraction (LMI+ minus LMI-).
 """
 
-import os
-
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from scipy.stats import mannwhitneyu, pearsonr, rankdata, wilcoxon
 
 from fast_learning import database, imaging, paths
 from fast_learning.participation import LMI_NEGATIVE_THRESHOLD, LMI_POSITIVE_THRESHOLD
-from fast_learning.plotting import panel_size, reward_palette, save_figure, set_style
+from fast_learning.plotting import reward_palette
 from fast_learning.similarity import (
     DAYS,
     N_MAP_TRIALS,
@@ -57,7 +34,7 @@ from fast_learning.similarity import (
     compute_similarity_matrix,
     compute_within_day_metrics,
 )
-from fast_learning.stats import format_p, significance_stars
+from fast_learning.stats import significance_stars
 
 PRE_DAYS = [-2, -1]
 POST_DAYS = [1, 2]
@@ -77,17 +54,13 @@ FRACTIONS = {
 }
 GROUP_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
 
-OUTPUT_DIR = os.path.join(
-    paths.manuscript_output_dir, 'revisions', 'figure_3g_i_signal_noise_drift', 'output'
-)
-
 
 def pair_label(a, b):
     return f'{a:+d}/{b:+d}'.replace('+0', '0')
 
 
 # ============================================================================
-# Signal, noise and pattern drift: the response vectors of Fig. 3h-i
+# Signal, noise and pattern drift
 # ============================================================================
 
 
@@ -368,184 +341,3 @@ def drift_lmi_stats(frac):
             )
         )
     return pd.DataFrame(rows)
-
-
-# ============================================================================
-# Figure
-# ============================================================================
-
-
-def paired_panel(ax, pp, metric, ylabel, stats, ylim):
-    for gi, rg in enumerate(['R+', 'R-']):
-        g = pp.loc[rg][metric]
-        x = np.array([gi * 3, gi * 3 + 1])
-        for _, row in g.iterrows():
-            ax.plot(x, [row['pre'], row['post']], '-', color='grey', linewidth=0.5, alpha=0.6)
-        # Bars: mean across mice with bootstrapped 95% CI (seeded); lines: mice.
-        long = g.reset_index().melt(id_vars='mouse_id', value_vars=['pre', 'post'], value_name='v')
-        sns.barplot(
-            data=long.assign(x=np.where(long['period'] == 'pre', x[0], x[1])),
-            x='x',
-            y='v',
-            order=list(range(5)),
-            native_scale=True,
-            color=GROUP_COLORS[rg],
-            alpha=0.7,
-            edgecolor='black',
-            errorbar=('ci', 95),
-            seed=0,
-            width=0.7,
-            ax=ax,
-            zorder=1,
-        )
-        p = stats.query('reward_group == @rg and measure == @metric')['p_value'].iloc[0]
-        top = np.nanmax(g.values)
-        ax.plot(
-            [x[0], x[0], x[1], x[1]], [top * 1.04, top * 1.08, top * 1.08, top * 1.04], 'k-', linewidth=0.8
-        )
-        ax.text(x.mean(), top * 1.09, format_p(p), ha='center', va='bottom')
-        ax.text(x.mean(), -0.2, rg, transform=ax.get_xaxis_transform(), ha='center', va='top')
-    ax.set_xticks([0, 1, 3, 4], ['Pre', 'Post', 'Pre', 'Post'])
-    ax.set_xlim(-0.7, 4.7)
-    ax.set_ylim(*ylim)
-    ax.set_ylabel(ylabel)
-    ax.set_xlabel('')
-
-
-def pair_points(ax, data, y, order, legend=False):
-    """Mean and bootstrapped 95% CI across mice for each day pair."""
-    sns.pointplot(
-        data=data,
-        x='pair',
-        y=y,
-        order=order,
-        hue='reward_group',
-        hue_order=['R+', 'R-'],
-        palette=GROUP_COLORS,
-        errorbar=('ci', 95),
-        seed=0,
-        dodge=0.3,
-        markersize=3,
-        linewidth=1,
-        legend=legend,
-        ax=ax,
-    )
-    ax.set_xlabel('Day pair')
-
-
-def pattern_drift_panel(ax, drift_df, stats):
-    """Noise-corrected correlation of consecutive days."""
-    order = [pair_label(*p) for p in DAY_PAIRS]
-    pair_points(ax, drift_df, 'r_corrected', order, legend=True)
-    ax.axhline(1, color='grey', linestyle='--', linewidth=0.6)
-    # p-values above each pair: -1/0 vs -2/-1 within group (colored), R+ vs R- (black).
-    for gi, rg in enumerate(['R+', 'R-', 'R+ vs R-']):
-        for xi, pair in enumerate(order):
-            row = stats[(stats['reward_group'] == rg) & (stats['measure'] == f'drift {pair}')]
-            if len(row):
-                ax.text(
-                    xi,
-                    1.04 + 0.06 * gi if rg in GROUP_COLORS else 1.04,
-                    ('' if rg in GROUP_COLORS else 'R+ vs R−\n') + format_p(row['p_value'].iloc[0]),
-                    ha='center',
-                    va='bottom',
-                    color=GROUP_COLORS.get(rg, 'black'),
-                    fontsize=5,
-                )
-    ax.set_ylim(0.4, 1.2)
-    ax.set_ylabel('Day-to-day pattern correlation\n(noise-corrected)')
-    ax.legend(frameon=False, loc='lower left')
-
-
-def pvalues(ax, x, rows):
-    for gi, rg in enumerate(['R+', 'R-']):  # bottom to top
-        r = rows[rows['reward_group'] == rg]
-        if len(r):
-            ax.text(
-                x,
-                1.0 + 0.07 * gi,
-                format_p(r['p_value'].iloc[0]),
-                transform=ax.get_xaxis_transform(),
-                ha='center',
-                va='bottom',
-                color=GROUP_COLORS[rg],
-                fontsize=5,
-            )
-
-
-def lmi_panel(ax, frac, stats, m):
-    order = [pair_label(*p) for p in DAY_PAIRS] + [REFERENCE]
-    pair_points(ax, frac.assign(pct=100 * frac[m]), 'pct', order)
-    ax.axvline(len(DAY_PAIRS) - 0.5, color='grey', linewidth=0.4)
-    ax.set_xticks(range(len(order)), [*order[:-1], 'LMI\n(2 days)'])
-    rows = stats[stats['measure'] == m]
-    pvalues(ax, order.index(pair_label(*LEARNING_PAIR)), rows[rows['pair'].str.contains('minus')])
-    if m == 'net':
-        ax.axhline(0, color='grey', linestyle='--', linewidth=0.6)
-        ax.set_ylim(-25, 25)
-        for pair in [order[0], REFERENCE]:
-            pvalues(ax, order.index(pair), rows[rows['pair'] == pair])
-    else:
-        ax.axhline(100 * (1 - LMI_POSITIVE_THRESHOLD), color='grey', linestyle='--', linewidth=0.6)
-        ax.set_ylim(0, 30)
-    ax.set_ylabel(FRACTIONS[m])
-
-
-def plot(pp, sn_stats, drift_df, frac, lmi_stats, output_dir=OUTPUT_DIR, filename='signal_noise_drift'):
-    set_style()
-    fig, axes = plt.subplots(2, 3, figsize=panel_size(3, 2))
-    paired_panel(axes[0, 0], pp, 'signal_power', 'Signal power', sn_stats, ylim=(0, 15))
-    paired_panel(axes[0, 1], pp, 'noise_power', 'Noise power', sn_stats, ylim=(0, 20))
-    pattern_drift_panel(axes[0, 2], drift_df, sn_stats)
-    for ax, m in zip(axes[1], FRACTIONS):
-        lmi_panel(ax, frac, lmi_stats, m)
-    sns.despine()
-    plt.tight_layout()
-    os.makedirs(output_dir, exist_ok=True)
-    save_figure(fig, os.path.join(output_dir, f'{filename}.pdf'))
-    plt.close(fig)
-
-
-# ============================================================================
-# Main
-# ============================================================================
-
-if __name__ == '__main__':
-    vectors = load_response_vectors()
-    print(
-        f"{sum(v[0] == 'R+' for v in vectors.values())} R+ and {sum(v[0] == 'R-' for v in vectors.values())} R- mice"
-    )
-    day_df, drift_df = compute_metrics(vectors)
-    sn_stats, pp = signal_noise_stats(day_df, drift_df)
-
-    lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
-    _, _, _, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir, two_p_imaging='yes')
-    groups = {
-        m: database.get_mouse_reward_group_from_db(paths.db_path, m, db) for m in lmi_df['mouse_id'].unique()
-    }
-    cells = drift_lmi(groups, lmi_df)
-    reference = lmi_df.assign(pair=REFERENCE, reward_group=lmi_df['mouse_id'].map(groups))
-    frac = fractions(pd.concat([cells, reference[cells.columns.intersection(reference.columns)]]))
-    lmi_stats = drift_lmi_stats(frac)
-
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-    day_df.to_csv(os.path.join(OUTPUT_DIR, 'signal_noise_data.csv'), index=False)
-    drift_df.to_csv(os.path.join(OUTPUT_DIR, 'drift_data.csv'), index=False)
-    sn_stats.to_csv(os.path.join(OUTPUT_DIR, 'signal_noise_stats.csv'), index=False)
-    cells.to_csv(os.path.join(OUTPUT_DIR, 'drift_lmi_cells.csv'), index=False)
-    frac.to_csv(os.path.join(OUTPUT_DIR, 'drift_lmi_data.csv'), index=False)
-    lmi_stats.to_csv(os.path.join(OUTPUT_DIR, 'drift_lmi_stats.csv'), index=False)
-    plot(pp, sn_stats, drift_df, frac, lmi_stats)
-
-    print(
-        sn_stats[['reward_group', 'measure', 'n_mice', 'median_pre', 'median_post', 'p_value']].to_string(
-            index=False
-        )
-    )
-    print(frac.groupby(['reward_group', 'pair'])[list(FRACTIONS)].median().mul(100).round(1).to_string())
-    print(
-        lmi_stats[['pair', 'measure', 'reward_group', 'median_r_plus', 'median_r_minus', 'p_value']]
-        .round(4)
-        .to_string(index=False)
-    )
-    print(f'Saved to {OUTPUT_DIR}')

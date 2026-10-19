@@ -113,6 +113,16 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 3d, e | [`figures/figure_3/figure_3d_e.py`](figures/figure_3/figure_3d_e.py) | Pre vs post learning response comparison (all cells) |
 | 3f, g | [`figures/figure_3/figure_3f_g.py`](figures/figure_3/figure_3f_g.py) | Learning Modulation Index (LMI) for all cells |
 | 3h–j | [`figures/figure_3/figure_3h_j.py`](figures/figure_3/figure_3h_j.py) | Trial-by-trial correlation matrices and network reorganization metrics |
+| **Figure 3 – figure supplement 1** | | |
+| 3-S1b | [`figures/figure3_supfig1/figure3_supfig1_b.py`](figures/figure3_supfig1/figure3_supfig1_b.py) | Example mapping-trial PSTHs for three illustrative cells across learning days |
+| 3-S1c | [`figures/figure3_supfig1/figure3_supfig1_c.py`](figures/figure3_supfig1/figure3_supfig1_c.py) | Relationship between classifier weights and the Learning Modulation Index (LMI) |
+| 3-S1d | [`figures/figure3_supfig1/figure3_supfig1_d.py`](figures/figure3_supfig1/figure3_supfig1_d.py) | Decoding accuracy vs percentage of most-modulated cells retained |
+| **Figure 3 – figure supplement 2** | | |
+| 3-S2a–f | [`figures/figure3_supfig2/figure3_supfig2_a_f.py`](figures/figure3_supfig2/figure3_supfig2_a_f.py) | Behavioural state of the imaging mice across days |
+| **Figure 3 – figure supplement 3** | | |
+| 3-S3a, b | [`figures/figure3_supfig3/figure3_supfig3_a_b.py`](figures/figure3_supfig3/figure3_supfig3_a_b.py) | Signal and noise power of the passive whisker responses, before vs after learning |
+| **Figure 3 – figure supplement 4** | | |
+| 3-S4a–d | [`figures/figure3_supfig4/figure3_supfig4_a_d.py`](figures/figure3_supfig4/figure3_supfig4_a_d.py) | Day-to-day drift of the passive whisker responses, between the baseline days (-2/-1) and across learning (-1/0) |
 | **Figure 5** | | |
 | 5b–d | [`figures/figure_5/figure_5b_d.py`](figures/figure_5/figure_5b_d.py) | Decoding analyses (Figure 3l-n of the submitted version; 5a is a schematic) |
 | 5f | [`figures/figure_5/figure_5f.py`](figures/figure_5/figure_5f.py) | Example mice — behaviour and decoder decision value during Day 0 |
@@ -124,10 +134,6 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 6b | [`figures/figure_6/figure_6b.py`](figures/figure_6/figure_6b.py) | Example correlation traces across days (mouse AR127) |
 | 6c | [`figures/figure_6/figure_6c.py`](figures/figure_6/figure_6c.py) | Reactivation rate across days, R+ vs R- |
 | 6d, e | [`figures/figure_6/figure_6d_e.py`](figures/figure_6/figure_6d_e.py) | Reactivation participation rate vs LMI |
-| **Figure 2 – supplement** | | |
-| S2b | [`figures/supp_2/supp_2b.py`](figures/supp_2/supp_2b.py) | Example mapping-trial PSTHs for three illustrative cells across learning days |
-| S2c | [`figures/supp_2/supp_2c.py`](figures/supp_2/supp_2c.py) | Relationship between classifier weights and the Learning Modulation Index (LMI) |
-| S2d | [`figures/supp_2/supp_2d.py`](figures/supp_2/supp_2d.py) | Decoding accuracy vs percentage of most-modulated cells retained |
 | **Figure 3 – supplement** | | |
 | S3b | [`figures/supp_3/supp_3b.py`](figures/supp_3/supp_3b.py) | Grand-average mapping-trial PSTHs for projection neurons (wS2 and wM1) across learning days, R+ vs R- |
 | S3c, d, g, h | [`figures/supp_3/supp_3c_d_g_h.py`](figures/supp_3/supp_3c_d_g_h.py) | Pre vs post learning responses for projection neurons |
@@ -139,14 +145,11 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | **Revision analyses (in progress)** | | |
 | — | [`figures/revisions/behavior_day0_initial_licking.py`](figures/revisions/behavior_day0_initial_licking.py) | Licking to the whisker stimulus at the start of Day 0 (R2 public 1, R1 recommendation 1, R3 public 1) |
 | — | [`figures/revisions/behavior_dprime.py`](figures/revisions/behavior_dprime.py) | Behavior quantified via d' (signal detection theory) instead of whisker hit rate |
-| — | [`figures/revisions/behavior_state_summary.py`](figures/revisions/behavior_state_summary.py) | Session-level behavioral state summary (total water reward, session duration, total trial count) per mouse x session, across days and reward groups |
 | — | [`figures/revisions/figure_3_passive_adaptation.py`](figures/revisions/figure_3_passive_adaptation.py) | Adaptation within the passive block, and the learning-related response changes in early vs late passive trials (R3 public 3) |
 | — | [`figures/revisions/figure_3f_LMIshuffles.py`](figures/revisions/figure_3f_LMIshuffles.py) | LMI distribution vs. shuffled null |
-| — | [`figures/revisions/figure_3g_i_signal_noise_drift.py`](figures/revisions/figure_3g_i_signal_noise_drift.py) | Response strength, trial-to-trial noise and day-to-day drift of whisker responses |
 | — | [`figures/revisions/figure_6c_event_timing.py`](figures/revisions/figure_6c_event_timing.py) | Are reactivation events over-represented when mice can lick? |
 | — | [`figures/revisions/figure_6c_previous_outcome.py`](figures/revisions/figure_6c_previous_outcome.py) | Does the reactivation rate depend on the outcome of the previous trial? |
 | — | [`figures/revisions/figure_6c_shuffle_control.py`](figures/revisions/figure_6c_shuffle_control.py) | Shuffled-template reactivation detection |
-| — | [`figures/revisions/movement_state_summary.py`](figures/revisions/movement_state_summary.py) | Whisker, tongue and jaw movement during the passive whisker trials, across days (R2 public 6) |
 | — | [`figures/revisions/thresholds_robustness.py`](figures/revisions/thresholds_robustness.py) | Robustness of the reactivation results to the participation threshold and to the detection threshold |
 <!-- figure-table:end -->
 

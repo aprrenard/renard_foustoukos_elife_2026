@@ -1,5 +1,5 @@
 """
-Supplementary Figure 2b: Example mapping-trial PSTHs for three illustrative
+Figure 3—figure supplement 1b: Example mapping-trial PSTHs for three illustrative
 cells across learning days.
 
 3 rows × 5 days:
@@ -44,7 +44,7 @@ YLIMS = {
 WIN_SEC = (-0.5, 1.5)
 DAYS = [-2, -1, 0, 1, 2]
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_2')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3_SupFig1')
 
 
 if __name__ == '__main__':
@@ -123,8 +123,8 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_2b.svg'))
-    print("\nSaved: supp_2b.svg")
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure3_supfig1_b.svg'))
+    print("\nSaved: figure3_supfig1_b.svg")
 
     # Data: LMI values for the selected example cells
     pd.DataFrame(
@@ -138,7 +138,7 @@ if __name__ == '__main__':
             }
             for cell, label in cells
         ]
-    ).to_csv(os.path.join(OUTPUT_DIR, 'supp_2b_data.csv'), index=False)
-    print("Saved: supp_2b_data.csv")
+    ).to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig1_b_data.csv'), index=False)
+    print("Saved: figure3_supfig1_b_data.csv")
 
     plt.close()
