@@ -1,5 +1,5 @@
 """
-Figure 4b: Example mice — behaviour and decoder decision value during Day 0.
+Figure 5f: Example mice — behaviour and decoder decision value during Day 0.
 
 Two-column layout (one example R+ mouse, one example R- mouse):
   Row 1: Behavioural learning curve across Day 0 whisker trials.
@@ -8,7 +8,7 @@ Two-column layout (one example R+ mouse, one example R- mouse):
 Decoder weights (trained on Days -2/-1 vs +1/+2 mapping trials) are loaded
 from RESULTS_DIR/decoder_weights.pkl, produced by pipeline/06_decoder.py.
 
-Example mice: EXAMPLE_MOUSE_RPLUS and EXAMPLE_MOUSE_RMINUS (figure_4c.pdf
+Example mice: EXAMPLE_MOUSE_RPLUS and EXAMPLE_MOUSE_RMINUS (figure_5g.pdf
 shows all mice).
 """
 
@@ -40,7 +40,7 @@ EXAMPLE_MOUSE_RPLUS = 'GF306'
 EXAMPLE_MOUSE_RMINUS = 'AR179'
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure5')
 
 
 # ============================================================================
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     # ============================================================================
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    out_path = os.path.join(OUTPUT_DIR, 'figure_4b.svg')
+    out_path = os.path.join(OUTPUT_DIR, 'figure_5f.svg')
     save_figure(fig, out_path)
     print(f"\nSaved: {out_path}")
 

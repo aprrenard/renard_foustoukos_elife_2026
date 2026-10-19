@@ -1,5 +1,5 @@
 """
-Figure 4g: Example correlation traces across days (mouse AR127)
+Figure 6b: Example correlation traces across days (mouse AR127)
 
 Generates a 5-row panel showing reactivation correlation traces across
 days for an example mouse. Each row is one day; reactivation events are
@@ -26,7 +26,7 @@ SAMPLING_RATE = 30
 TIME_WINDOW_PER_DAY = 180  # seconds; None = full trace
 
 RESULTS_FILE = os.path.join(paths.processed_dir, 'reactivation', 'reactivation_results_p99.pkl')
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure6')
 
 
 # ============================================================================
@@ -42,13 +42,13 @@ def panel_g_correlation_traces(
     sampling_rate=SAMPLING_RATE,
     time_window=TIME_WINDOW_PER_DAY,
     nan_gap=0,
-    filename='figure_4g',
+    filename='figure_6b',
     output_dir=OUTPUT_DIR,
     save_format='svg',
     dpi=300,
 ):
     """
-    Generate Figure 4 Panel g: correlation traces across days for an example mouse.
+    Generate Figure 6 Panel b: correlation traces across days for an example mouse.
 
     Args:
         nan_gap: Number of frames inserted as NaN between trials (0 = seamless).
@@ -205,5 +205,5 @@ if __name__ == '__main__':
     r_minus_results = results_data['r_minus_results']
     print(f"Loaded results for {len(r_plus_results)} R+ mice and {len(r_minus_results)} R- mice")
 
-    panel_g_correlation_traces(r_plus_results, r_minus_results, nan_gap=0, filename='figure_4g_no_gaps')
-    panel_g_correlation_traces(r_plus_results, r_minus_results, nan_gap=45, filename='figure_4g_with_gaps')
+    panel_g_correlation_traces(r_plus_results, r_minus_results, nan_gap=0, filename='figure_6b_no_gaps')
+    panel_g_correlation_traces(r_plus_results, r_minus_results, nan_gap=45, filename='figure_6b_with_gaps')

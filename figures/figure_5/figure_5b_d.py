@@ -7,7 +7,7 @@ a schematic)
 - Panel d: Does day 0 activity resemble pre or post learning? (pre vs day0 / day0 vs post)
 
 Population responses come from fast_learning.decoding. The per-mouse decoder
-reused by the Day-0 projection figure (Fig. 4b-c of the submitted version) is trained separately (pipeline/06_decoder.py).
+reused by the Day-0 projection panels (Fig. 5f-g; 4b-c of the submitted version) is trained separately (pipeline/06_decoder.py).
 
 Outputs: <figures_dir>/Figure5/figure_5{b,c,d}.pdf, with
          figure_5X_data.csv (plotted data) and figure_5X_stats.csv (tests).

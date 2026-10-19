@@ -3,7 +3,7 @@ Behavior quantified via d' (signal detection theory) instead of whisker hit
 rate.
 
 Addresses a reviewer comment asking that behavioral performance be
-quantified with d' rather than raw whisker hit rate, for Figure 4C and E.
+quantified with d' rather than raw whisker hit rate, for Figure 5G and E.
 The d' versions of Figure 1C and 1D are in figure_1c.py and figure_1d.py, and
 those of Figure 2C and 2F and of the execution inactivation in
 figures/figure_2 and figures/figure2_supfig1 (execution).
@@ -39,22 +39,22 @@ panel -- only the plotted/tested quantity changes.
 ------------------------------------------------------------------------
 Panel-specific notes / scope decisions
 ------------------------------------------------------------------------
-- Figure 4C: only the behavioral row (row 1: learning_curve_w vs trial) is
+- Figure 5G: only the behavioral row (row 1: learning_curve_w vs trial) is
   reproduced. Row 2 (decoder decision value) is not a hit-rate-based
   quantity and is unchanged/out of scope.
 
-- Figure 4D is out of scope: the original figure_4d.py doesn't plot a
+- Figure 5H is out of scope: the original figure_5h.py doesn't plot a
   hit-rate-based quantity at all -- it plots the slope of a neural
   decoder's decision value (the behavior table it loads is unused, dead
   code), so there's no whisker-hit-rate metric there for d' to replace.
 
-- Figure 4E: correlates a neural decoder's decision value against
+- Figure 5I: correlates a neural decoder's decision value against
   behavior. Only the behavioral variable correlated against it changes,
   from learning_curve_w to the trial-resolved d' -- the decoder itself
   isn't a hit-rate-based quantity, so the reviewer's request doesn't apply
-  to it. Rather than duplicating figure_4e.py's inline decoder retraining,
+  to it. Rather than duplicating figure_5i.py's inline decoder retraining,
   this reuses the pre-trained decoder cached in decoder_weights.pkl (built
-  by pipeline/06_decoder.py) that figure_4b.py/figure_4c.py already reuse, applied
+  by pipeline/06_decoder.py) that figure_5f.py/figure_5g.py already reuse, applied
   via the same sliding window -- keeping one decoder consistent across
   Figure 4 instead of two subtly different ones. Still needs
   NWB/network-drive access to load the Day-0 imaging tensors.
@@ -91,7 +91,7 @@ def _load_trial_resolved_dprime(
     n_trials=120,
 ):
     """Load the Day-0 whisker-trial table (as figure_1d.py and
-    figure_4c/d/e.py) and add a trial-resolved d' column, computed from the
+    figure_5g/d/e.py) and add a trial-resolved d' column, computed from the
     existing Bayesian learning-curve fits:
         dprime_w(trial) = Z(learning_curve_w) - Z(learning_curve_chance)
     where learning_curve_w is the smoothed whisker hit-probability curve
@@ -110,7 +110,7 @@ def _load_trial_resolved_dprime(
 
 
 # ============================================================================
-# Figure 4C (behavior row only): trial-resolved d', R+ vs R-
+# Figure 5G (behavior row only): trial-resolved d', R+ vs R-
 # ============================================================================
 
 
@@ -123,7 +123,7 @@ def panel_4c_dprime(
     save_format='svg',
     dpi=300,
 ):
-    """Figure 4 Panel c revision (behavior row only): trial-resolved d'
+    """Figure 5 Panel g revision (behavior row only): trial-resolved d'
     across Day-0 whisker trials, R+ vs R- (in place of learning_curve_w).
     The decoder row of the original figure is unchanged/not reproduced --
     it isn't a hit-rate-based quantity."""
@@ -151,17 +151,17 @@ def panel_4c_dprime(
     plt.tight_layout()
 
     os.makedirs(save_path, exist_ok=True)
-    out_path = os.path.join(save_path, f'figure_4c_dprime.{save_format}')
+    out_path = os.path.join(save_path, f'figure_5g_dprime.{save_format}')
     save_figure(fig, out_path)
     plt.close()
 
-    df.to_csv(os.path.join(save_path, 'figure_4c_dprime_data.csv'), index=False)
+    df.to_csv(os.path.join(save_path, 'figure_5g_dprime_data.csv'), index=False)
 
-    print(f"Figure 4c (d', behavior row) saved to: {out_path}")
+    print(f"Figure 5g (d', behavior row) saved to: {out_path}")
 
 
 # ============================================================================
-# Figure 4E: per-mouse correlation between decoder value and d'
+# Figure 5I: per-mouse correlation between decoder value and d'
 # ============================================================================
 
 
@@ -177,14 +177,14 @@ def panel_4e_dprime_correlation(
     save_format='svg',
     dpi=300,
 ):
-    """Figure 4 Panel e revision: per-mouse Pearson correlation between the
+    """Figure 5 Panel i revision: per-mouse Pearson correlation between the
     neural decoder's decision value and trial-resolved d' (in place of
     learning_curve_w).
 
     Uses the same pre-trained decoder cached in decoder_weights.pkl (built
-    by pipeline/06_decoder.py) that figure_4b.py/figure_4c.py already reuse,
+    by pipeline/06_decoder.py) that figure_5f.py/figure_5g.py already reuse,
     applied via the identical 10-trial sliding window -- rather than
-    figure_4e.py's original approach of retraining a fresh per-mouse
+    figure_5i.py's original approach of retraining a fresh per-mouse
     decoder inline. This keeps the decoder consistent with the rest of
     Figure 4 (per user decision) and avoids re-running classifier
     training; only the sliding-window application to Day-0 trials is
@@ -309,13 +309,13 @@ def panel_4e_dprime_correlation(
     plt.tight_layout()
 
     os.makedirs(save_path, exist_ok=True)
-    save_figure(fig, os.path.join(save_path, f'figure_4e_dprime.{save_format}'))
+    save_figure(fig, os.path.join(save_path, f'figure_5i_dprime.{save_format}'))
     plt.close()
 
-    df_corr.to_csv(os.path.join(save_path, 'figure_4e_dprime_correlations.csv'), index=False)
-    df_pop_stats.to_csv(os.path.join(save_path, 'figure_4e_dprime_stats.csv'), index=False)
+    df_corr.to_csv(os.path.join(save_path, 'figure_5i_dprime_correlations.csv'), index=False)
+    df_pop_stats.to_csv(os.path.join(save_path, 'figure_5i_dprime_stats.csv'), index=False)
 
-    print(f"Figure 4e (d' correlation) saved to: {save_path}")
+    print(f"Figure 5i (d' correlation) saved to: {save_path}")
 
 
 # ============================================================================

@@ -1,5 +1,5 @@
 """
-Figure 4h revision: does the reactivation rate depend on the outcome of the
+Figure 6c revision: does the reactivation rate depend on the outcome of the
 previous trial?
 
 Reactivations are detected in correct-rejection no-stim trials (step 07). For
@@ -15,11 +15,11 @@ Per mouse and day, rates are averaged over the trials of each category
   b: after a whisker hit vs a whisker miss (last whisker trial);
   paired Wilcoxon signed-rank test per reward group (n = mice).
   c: R+ vs R- after unrewarded trials only, so that the group difference of
-     Fig. 4h cannot come from the rewards collected by R+ mice (Mann-Whitney U).
+     Fig. 6c cannot come from the rewards collected by R+ mice (Mann-Whitney U).
 Figure: Day 0. Stats file: Days 0, +1 and +2. Bars: mean across mice with
 bootstrapped 95% CI; lines and dots: mice.
 
-Outputs: <figures_dir>/revisions/figure_4h_previous_outcome/output/
+Outputs: <figures_dir>/revisions/figure_6c_previous_outcome/output/
     previous_outcome.pdf, previous_outcome_trials.csv (correct-rejection
     trial), previous_outcome_data.csv (mouse x day x category),
     previous_outcome_stats.csv.
@@ -49,7 +49,7 @@ COMPARISONS = {
 }
 TICK_LABELS = {'rewarded': 'Rew.', 'unrewarded': 'Unrew.'}
 YLABEL = 'Reactivations\n(events/min)'
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_4h_previous_outcome', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_6c_previous_outcome', 'output')
 
 
 # ============================================================================

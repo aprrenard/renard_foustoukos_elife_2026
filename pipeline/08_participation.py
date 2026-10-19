@@ -18,7 +18,7 @@ Parts (both by default, or one with --only):
             fast_learning.participation), with the cell's noise SD and
             threshold, the chance rate and the rate above chance
             (excess_rate), and per-cell baseline / day-0 / post rates merged
-            with LMI                                   (Fig. 4i-j, Supp. 4)
+            with LMI                                   (Fig. 6d-e, Supp. 4)
             Held-out: also the in-sample rates (cells of the detecting half,
             same events), for comparison.
 

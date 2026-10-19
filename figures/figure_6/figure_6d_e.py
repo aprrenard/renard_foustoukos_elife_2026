@@ -1,7 +1,7 @@
 """
-Figure 4i_j: Reactivation participation rate vs LMI.
+Figure 6d-e: Reactivation participation rate vs LMI.
 
-Panel i: Scatter plot of day-0 participation rate vs LMI (one dot per cell),
+Panel d: Scatter plot of day-0 participation rate vs LMI (one dot per cell),
          separately for R+ and R- mice. Stats: linear mixed-effects model
          participation_rate ~ LMI + (1 + LMI | mouse), with an intercept and
          a slope per mouse, so that the test of the slope takes the mouse,
@@ -10,7 +10,7 @@ Panel i: Scatter plot of day-0 participation rate vs LMI (one dot per cell),
          against zero (n = mice), insensitive to the tails of the LMI
          distribution.
 
-Panel j: Participation rate across days (-2 to +2) for LMI+ vs LMI- cells,
+Panel e: Participation rate across days (-2 to +2) for LMI+ vs LMI- cells,
          showing per-mouse averages. Stats: linear trend across days with
          mice as the unit: one participation-vs-day slope per mouse, then a
          Wilcoxon signed-rank test of the slopes against zero, for each
@@ -31,8 +31,8 @@ at least one split). Mice: those in the participation mouse selection
 Inputs:  participation rates from pipeline/08_participation.py, at each
          participation threshold: 2.5 x each cell's noise SD (main), 5 and 10 x
          (robustness checks; see fast_learning.participation).
-Outputs: <figures_dir>/Figure4/figure_4i_<k>sd<sfx>.pdf, _stats.csv
-         and figure_4j_<k>sd<sfx>.pdf, _data.csv, _stats.csv; <sfx> is
+Outputs: <figures_dir>/Figure6/figure_6d_<k>sd<sfx>.pdf, _stats.csv
+         and figure_6e_<k>sd<sfx>.pdf, _data.csv, _stats.csv; <sfx> is
          empty for held-out cells, _insample or _allcells, then _nolick for
          the no-lick control.
 """
@@ -63,18 +63,18 @@ from fast_learning.stats import (
 DAYS = [-2, -1, 0, 1, 2]
 
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure6')
 
 
 # ============================================================================
-# Panel i: scatter of day-0 participation rate vs LMI, mixed-model stats
+# Panel d: scatter of day-0 participation rate vs LMI, mixed-model stats
 # ============================================================================
 
 
 def panel_i_participation_vs_lmi(
-    merged_df, output_dir=OUTPUT_DIR, filename='figure_4i', ylabel='Participation rate (day 0)'
+    merged_df, output_dir=OUTPUT_DIR, filename='figure_6d', ylabel='Participation rate (day 0)'
 ):
-    """Figure 4 Panel i: scatter of day-0 participation rate vs LMI.
+    """Figure 6 Panel d: scatter of day-0 participation rate vs LMI.
 
     One dot per cell, separate subplots for R+ and R-. The line and the
     annotated statistic are the fixed-effect slope of
@@ -157,7 +157,7 @@ def panel_i_participation_vs_lmi(
 
 
 # ============================================================================
-# Panel j: participation rate across days (LMI+ vs LMI-)
+# Panel e: participation rate across days (LMI+ vs LMI-)
 # ============================================================================
 
 
@@ -165,11 +165,11 @@ def panel_j_participation_across_days(
     merged_df,
     per_day_df,
     output_dir=OUTPUT_DIR,
-    filename='figure_4j',
+    filename='figure_6e',
     ylabel='Participation rate',
     ylim=(0, 0.4),
 ):
-    """Figure 4 Panel j: participation rate across days for LMI+ vs LMI- cells.
+    """Figure 6 Panel e: participation rate across days for LMI+ vs LMI- cells.
 
     Bars are means of per-mouse averages. Stats: per-mouse day slope,
     Wilcoxon signed-rank test against zero (n = mice), for each
@@ -326,5 +326,5 @@ if __name__ == '__main__':
             f"Dataset: {len(merged_df)} cells, {len(per_day_df)} cell-day records, "
             f"{merged_df['mouse_id'].nunique()} mice"
         )
-        panel_i_participation_vs_lmi(merged_df, filename=f'figure_4i_{tag}{sfx}')
-        panel_j_participation_across_days(merged_df, per_day_df, filename=f'figure_4j_{tag}{sfx}')
+        panel_i_participation_vs_lmi(merged_df, filename=f'figure_6d_{tag}{sfx}')
+        panel_j_participation_across_days(merged_df, per_day_df, filename=f'figure_6e_{tag}{sfx}')

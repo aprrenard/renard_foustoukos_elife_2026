@@ -1,5 +1,5 @@
 """
-Figure 4h: Reactivation rate across days, R+ vs R-
+Figure 6c: Reactivation rate across days, R+ vs R-
 
 Grouped bar plot (one bar per group per day) showing reactivation event
 frequency (events/min) across the 5 experimental days. Individual mouse
@@ -35,7 +35,7 @@ from fast_learning.stats import format_p
 
 DAYS = [-2, -1, 0, 1, 2]
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure6')
 
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
@@ -57,12 +57,12 @@ def panel_h_reactivation_rate(
     r_minus_results,
     days=DAYS,
     output_dir=OUTPUT_DIR,
-    filename='figure_4h',
+    filename='figure_6c',
     save_format='svg',
     dpi=300,
 ):
     """
-    Generate Figure 4 Panel h: reactivation frequency per day, R+ vs R-.
+    Generate Figure 6 Panel c: reactivation frequency per day, R+ vs R-.
 
     Args:
         filename: Output filename stem (without extension).
@@ -256,5 +256,5 @@ if __name__ == '__main__':
             print(f'{results_file} not found, skipped.')
             continue
         # p99 is the main threshold; p995 and p999 are robustness checks.
-        filename = ('figure_4h' if pstr == 'p99' else f'figure_4h_{pstr}') + sfx
+        filename = ('figure_6c' if pstr == 'p99' else f'figure_6c_{pstr}') + sfx
         _load_and_plot(results_file, filename=filename)

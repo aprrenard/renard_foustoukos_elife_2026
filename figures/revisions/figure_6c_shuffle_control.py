@@ -1,5 +1,5 @@
 """
-Figure 4H specificity control: shuffled-template reactivation detection.
+Figure 6C specificity control: shuffled-template reactivation detection.
 
 Addresses a second reviewer's specificity concern: template-matching with
 shuffled templates would help establish that detected reactivation events
@@ -25,21 +25,21 @@ Statistics are deliberately two-layered:
     minus that mouse's own mean shuffled rate), then a Wilcoxon signed-rank
     test of those indices against zero across mice (n = mice) per
     (reward_group, day) -- the same "one number per mouse, then test across
-    mice" pattern used for Figure 4J, and nonparametric to match the
+    mice" pattern used for Figure 6E, and nonparametric to match the
     manuscript's style elsewhere. Pooling mice x shuffles into one sample
     for a p-value would reintroduce the exact pseudoreplication problem
     this rebuttal is fixing elsewhere.
 
-Mice: all imaging mice, as in Figure 4h (the participation mouse selection
+Mice: all imaging mice, as in Figure 6c (the participation mouse selection
 in fast_learning.reactivations does not apply to event rates).
 
 The shuffle detection (expensive, ~n_mice x n_days x 1000 shuffles) runs
 when its cached CSVs are missing or with --recompute; otherwise the cached
 CSVs are plotted:
-    python figures/revisions/figure_4h_shuffle_control.py [--recompute]
+    python figures/revisions/figure_6c_shuffle_control.py [--recompute]
 
 Figures and CSVs are saved to
-    paths.manuscript_output_dir/revisions/figure_4h_shuffle_control/output/.
+    paths.manuscript_output_dir/revisions/figure_6c_shuffle_control/output/.
 """
 
 from functools import partial
@@ -76,7 +76,7 @@ GLOBAL_SEED = 42  # fixed for reproducibility of this stochastic control
 PERCENTILE_TAG = 'p99'  # detection threshold variant to use (see plan)
 N_JOBS = 35
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_4h_shuffle_control', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_6c_shuffle_control', 'output')
 
 
 # ============================================================================
@@ -343,7 +343,7 @@ def panel_4h_shuffle_control(
     real_df,
     group_stats_df,
     output_dir=OUTPUT_DIR,
-    filename='figure_4h_shuffle_control',
+    filename='figure_6c_shuffle_control',
     save_format='svg',
     dpi=300,
 ):
@@ -422,7 +422,7 @@ def panel_4h_shuffle_control(
 if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description='Figure 4h shuffled-template control.')
+    parser = argparse.ArgumentParser(description='Figure 6c shuffled-template control.')
     parser.add_argument(
         '--recompute', action='store_true', help='rerun the shuffle detection even if its CSVs are cached'
     )
@@ -457,5 +457,5 @@ if __name__ == '__main__':
         group_stats_df = pd.read_csv(group_csv)
         real_df = per_mouse_df[['mouse_id', 'reward_group', 'day', 'real_event_frequency']]
 
-    panel_4h_shuffle_control(long_df, real_df, group_stats_df, filename='figure_4h_shuffle_control')
+    panel_4h_shuffle_control(long_df, real_df, group_stats_df, filename='figure_6c_shuffle_control')
     print("\nDone.")

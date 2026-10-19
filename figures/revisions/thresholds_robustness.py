@@ -8,15 +8,15 @@ participates in an event if its baseline-subtracted dF/F averaged over
 deviation x 1.4826) of that 300-ms mean over the trials analysed
 (fast_learning.participation). Noise panel: distribution of the per-cell
 thresholds in dF/F0, with the fixed 10% threshold of the submitted version.
-Results at each threshold: Fig. 4i (day-0 LMM slope vs LMI) and Fig. 4j
+Results at each threshold: Fig. 6d (day-0 LMM slope vs LMI) and Fig. 6e
 (per-mouse day slopes, LMI+ / LMI-), on the participation rate and the rate
 above chance (Supp. 4), held-out cells (pipeline step 08).
 
 Detection threshold (surrogate percentile 99 main; 99.5 and 99.9). The
 detection threshold is the median over circular-shift surrogates of this
 percentile of the template correlation (step 07). Results at each percentile:
-Fig. 4h event rates (events of step 07 at that percentile; Mann-Whitney U per
-day) and Fig. 4i-j on held-out cells, with each half's events re-detected at
+Fig. 6c event rates (events of step 07 at that percentile; Mann-Whitney U per
+day) and Fig. 6d-e on held-out cells, with each half's events re-detected at
 that percentile (computed here when missing or with --recompute, cached in
 the output folder; about 20 min per percentile on 35 cores). Participation
 threshold 2.5 x noise SD. Mice: the participation mouse selection (at p99)
@@ -124,7 +124,7 @@ def with_measure(merged, per_day, measure):
 
 
 def event_rates(percentile):
-    """Per mouse x day reactivation rate (events/min) of step 07 at a percentile (Fig. 4h)."""
+    """Per mouse x day reactivation rate (events/min) of step 07 at a percentile (Fig. 6c)."""
     with open(
         os.path.join(rx.RESULTS_DIR, f'reactivation_results_{rx.percentile_tag(percentile)}.pkl'), 'rb'
     ) as f:

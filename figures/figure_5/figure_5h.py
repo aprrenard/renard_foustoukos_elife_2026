@@ -1,5 +1,5 @@
 """
-Figure 4d: Slope analysis of the progressive learning decoder — R+ vs R-.
+Figure 5h: Slope analysis of the progressive learning decoder — R+ vs R-.
 
 Per-mouse linear slopes of the decision value over Day-0 whisker trials are
 computed, then compared between R+ and R- groups (swarm + point plot with
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     cut_n_trials = 100
 
     RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
-    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
+    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure5')
 
     # ============================================================================
     # Load data
@@ -270,13 +270,13 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure_4d.svg'))
-    print("Saved: figure_4d.svg")
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure_5h.svg'))
+    print("Saved: figure_5h.svg")
 
-    df_slopes.to_csv(os.path.join(OUTPUT_DIR, 'figure_4d_slopes.csv'), index=False)
-    print("Saved: figure_4d_slopes.csv")
+    df_slopes.to_csv(os.path.join(OUTPUT_DIR, 'figure_5h_slopes.csv'), index=False)
+    print("Saved: figure_5h_slopes.csv")
 
-    df_pop_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure_4d_stats.csv'), index=False)
-    print("Saved: figure_4d_stats.csv")
+    df_pop_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure_5h_stats.csv'), index=False)
+    print("Saved: figure_5h_stats.csv")
 
     plt.close()

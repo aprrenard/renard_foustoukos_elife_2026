@@ -6,8 +6,8 @@ Participation rates are computed per reactivation event, so a mouse with
 almost no events on day 0 has undefined or unreliable day-0 rates (with one
 event, every cell's rate is exactly 0 or 1). Mice with fewer than
 MIN_DAY0_EVENTS events on day 0, at the main detection threshold, are
-therefore excluded from every participation analysis (Fig. 4i-j, Supp. 4a-b
-and their revisions). Event-rate analyses (Fig. 4h and its controls) keep all
+therefore excluded from every participation analysis (Fig. 6d-e, Supp. 4a-b
+and their revisions). Event-rate analyses (Fig. 6c and its controls) keep all
 mice: there, zero events is a valid measurement, and excluding mice on it
 would select on the outcome.
 
@@ -155,7 +155,7 @@ def select_trials_by_type(xarray_day, window=None):
 
     Mice do not lick before onset (no-lick period) nor in the 0-1 s response
     window of these trials; licks after 1 s are possible and are checked not
-    to drive events (figures/revisions/figure_4h_event_timing.py). window
+    to drive events (figures/revisions/figure_6c_event_timing.py). window
     (start, stop) in s restricts the frames (no-lick control: NOLICK_WINDOW).
     Returns (trials, number of trials)."""
     selected = xarray_day.sel(trial=(xarray_day['no_stim'] == 1) & (xarray_day['lick_flag'] == 0))

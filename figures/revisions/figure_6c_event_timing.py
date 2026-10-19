@@ -1,5 +1,5 @@
 """
-Figure 4h revision: are reactivation events over-represented when mice can lick?
+Figure 6c revision: are reactivation events over-represented when mice can lick?
 
 The reactivation analysis uses correct-rejection no-stim trials over the
 whole trial (-1 to 6 s around no-stim onset). These
@@ -24,9 +24,9 @@ averaged over its days).
          with bootstrapped 95% CI and individual mice (lines); paired
          Wilcoxon signed-rank test per reward group (n = mice).
 Stats file: also R+ vs R- in the lick-free window alone, per day
-(Mann-Whitney U, as Fig. 4h).
+(Mann-Whitney U, as Fig. 6c).
 
-Outputs: <figures_dir>/revisions/figure_4h_event_timing/output/
+Outputs: <figures_dir>/revisions/figure_6c_event_timing/output/
     event_timing.pdf, _data.csv (mouse x day x window),
     _bins.csv (mouse x time bin), _stats.csv.
 """
@@ -51,7 +51,7 @@ POST_RESPONSE = (1, 6 - EDGE_S)  # s: licks possible in correct rejections
 BIN_S = 0.5
 PROFILE = (-0.5, 5.5)  # s: range of the binned time course, away from the edges
 GROUP_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_4h_event_timing', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_6c_event_timing', 'output')
 
 
 def event_rates(results, t):
@@ -118,7 +118,7 @@ def compute_stats(win_df):
                 significance=significance_stars(p),
             )
         )
-    # R+ vs R- with the lick-free window alone, per day (as Fig. 4h).
+    # R+ vs R- with the lick-free window alone, per day (as Fig. 6c).
     free = win_df[win_df['window'] == 'lick_free']
     for day in sorted(free['day'].unique()):
         a = free.query('day == @day and reward_group == "R+"')['rate']

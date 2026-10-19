@@ -1,6 +1,6 @@
 """
 Reply to R2 public 4 (not in the paper): does the LMI-participation relation
-of Fig. 4i hold when each cell's whisker response before learning is a
+of Fig. 6d hold when each cell's whisker response before learning is a
 covariate?
 
 Pre-learning response: mean dF/F 0-300 ms (baseline-subtracted tensors) over

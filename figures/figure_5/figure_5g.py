@@ -1,5 +1,5 @@
 """
-Figure 4c: Progressive learning during Day 0 — population average behaviour
+Figure 5g: Progressive learning during Day 0 — population average behaviour
 and decoder value, R+ vs R-.
 
 Two-row × two-column layout:
@@ -35,7 +35,7 @@ step_size = 1
 cut_n_trials = 100
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure5')
 
 
 # ============================================================================
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     # ============================================================================
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    out_path = os.path.join(OUTPUT_DIR, 'figure_4c.svg')
+    out_path = os.path.join(OUTPUT_DIR, 'figure_5g.svg')
     save_figure(fig, out_path)
     print(f"\nSaved: {out_path}")
 

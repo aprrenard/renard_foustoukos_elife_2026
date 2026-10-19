@@ -1,5 +1,5 @@
 """
-Figure 4e: Correlation between decoder decision value and behavioural
+Figure 5i: Correlation between decoder decision value and behavioural
 performance across Day-0 whisker trials — R+ vs R-.
 
 For each mouse a Pearson correlation is computed between the sliding-window
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     step_size = 1
 
     RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
-    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
+    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure5')
 
     # ============================================================================
     # Load data
@@ -273,13 +273,13 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure_4e.svg'))
-    print("Saved: figure_4e.svg")
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure_5i.svg'))
+    print("Saved: figure_5i.svg")
 
-    df_corr.to_csv(os.path.join(OUTPUT_DIR, 'figure_4e_correlations.csv'), index=False)
-    print("Saved: figure_4e_correlations.csv")
+    df_corr.to_csv(os.path.join(OUTPUT_DIR, 'figure_5i_correlations.csv'), index=False)
+    print("Saved: figure_5i_correlations.csv")
 
-    df_pop_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure_4e_stats.csv'), index=False)
-    print("Saved: figure_4e_stats.csv")
+    df_pop_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure_5i_stats.csv'), index=False)
+    print("Saved: figure_5i_stats.csv")
 
     plt.close()

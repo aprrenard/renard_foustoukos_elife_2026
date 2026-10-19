@@ -44,7 +44,7 @@ deposited on Zenodo. Copy [`config.example.yaml`](config.example.yaml) to
 ```bash
 python run_all.py --list                  # the steps, in order
 python run_all.py --stage figures         # all figures from the processed data (~15 min)
-python run_all.py --only figure_4 supp_4  # some figures
+python run_all.py --only figure_6 supp_4  # some figures
 python run_all.py --stage all             # everything from the NWB files (several hours)
 python figures/figure_5/figure_5b_d.py    # or any script on its own
 ```
@@ -77,7 +77,7 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | `03_behavior_tables` | trial-level behaviour tables (imaging, particle test, muscimol, optogenetics) |
 | `04_learning_curves` | Bayesian learning curves and learning trial per session |
 | `05_lmi` | learning modulation index of each neuron, with shuffle significance |
-| `06_decoder` | per-mouse pre/post-learning decoder (weights reused by Fig. 4b–e) |
+| `06_decoder` | per-mouse pre/post-learning decoder (weights reused by Fig. 5f–i) |
 | `07_reactivations` | reactivation events (surrogate thresholds, template correlation), mouse selection |
 | `08_participation` | participation of each neuron in reactivations, measured in held-out cells (events detected with the other half of the cells); all-cell version for comparison |
 | `09_pairwise_correlations` | pre-stimulus correlations between projection neurons |
@@ -113,17 +113,17 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 3d, e | [`figures/figure_3/figure_3d_e.py`](figures/figure_3/figure_3d_e.py) | Pre vs post learning response comparison (all cells) |
 | 3f, g | [`figures/figure_3/figure_3f_g.py`](figures/figure_3/figure_3f_g.py) | Learning Modulation Index (LMI) for all cells |
 | 3h–j | [`figures/figure_3/figure_3h_j.py`](figures/figure_3/figure_3h_j.py) | Trial-by-trial correlation matrices and network reorganization metrics |
-| **Figure 4** | | |
-| 4b | [`figures/figure_4/figure_4b.py`](figures/figure_4/figure_4b.py) | Example mice — behaviour and decoder decision value during Day 0 |
-| 4c | [`figures/figure_4/figure_4c.py`](figures/figure_4/figure_4c.py) | Progressive learning during Day 0 — population average behaviour and decoder value, R+ vs R- |
-| 4d | [`figures/figure_4/figure_4d.py`](figures/figure_4/figure_4d.py) | Slope analysis of the progressive learning decoder — R+ vs R- |
-| 4e | [`figures/figure_4/figure_4e.py`](figures/figure_4/figure_4e.py) | Correlation between decoder decision value and behavioural performance across Day-0 whisker trials — R+ vs R- |
-| 4f | [`figures/figure_4/figure_4f.py`](figures/figure_4/figure_4f.py) | Reactivation heatmap illustration (mouse AR127, single day) |
-| 4g | [`figures/figure_4/figure_4g.py`](figures/figure_4/figure_4g.py) | Example correlation traces across days (mouse AR127) |
-| 4h | [`figures/figure_4/figure_4h.py`](figures/figure_4/figure_4h.py) | Reactivation rate across days, R+ vs R- |
-| 4i, j | [`figures/figure_4/figure_4i_j.py`](figures/figure_4/figure_4i_j.py) | Reactivation participation rate vs LMI |
 | **Figure 5** | | |
 | 5b–d | [`figures/figure_5/figure_5b_d.py`](figures/figure_5/figure_5b_d.py) | Decoding analyses (Figure 3l-n of the submitted version; 5a is a schematic) |
+| 5f | [`figures/figure_5/figure_5f.py`](figures/figure_5/figure_5f.py) | Example mice — behaviour and decoder decision value during Day 0 |
+| 5g | [`figures/figure_5/figure_5g.py`](figures/figure_5/figure_5g.py) | Progressive learning during Day 0 — population average behaviour and decoder value, R+ vs R- |
+| 5h | [`figures/figure_5/figure_5h.py`](figures/figure_5/figure_5h.py) | Slope analysis of the progressive learning decoder — R+ vs R- |
+| 5i | [`figures/figure_5/figure_5i.py`](figures/figure_5/figure_5i.py) | Correlation between decoder decision value and behavioural performance across Day-0 whisker trials — R+ vs R- |
+| **Figure 6** | | |
+| 6a | [`figures/figure_6/figure_6a.py`](figures/figure_6/figure_6a.py) | Reactivation heatmap illustration (mouse AR127, single day) |
+| 6b | [`figures/figure_6/figure_6b.py`](figures/figure_6/figure_6b.py) | Example correlation traces across days (mouse AR127) |
+| 6c | [`figures/figure_6/figure_6c.py`](figures/figure_6/figure_6c.py) | Reactivation rate across days, R+ vs R- |
+| 6d, e | [`figures/figure_6/figure_6d_e.py`](figures/figure_6/figure_6d_e.py) | Reactivation participation rate vs LMI |
 | **Figure 2 – supplement** | | |
 | S2b | [`figures/supp_2/supp_2b.py`](figures/supp_2/supp_2b.py) | Example mapping-trial PSTHs for three illustrative cells across learning days |
 | S2c | [`figures/supp_2/supp_2c.py`](figures/supp_2/supp_2c.py) | Relationship between classifier weights and the Learning Modulation Index (LMI) |
@@ -143,9 +143,9 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | — | [`figures/revisions/figure_3_passive_adaptation.py`](figures/revisions/figure_3_passive_adaptation.py) | Adaptation within the passive block, and the learning-related response changes in early vs late passive trials (R3 public 3) |
 | — | [`figures/revisions/figure_3f_LMIshuffles.py`](figures/revisions/figure_3f_LMIshuffles.py) | LMI distribution vs. shuffled null |
 | — | [`figures/revisions/figure_3g_i_signal_noise_drift.py`](figures/revisions/figure_3g_i_signal_noise_drift.py) | Response strength, trial-to-trial noise and day-to-day drift of whisker responses |
-| — | [`figures/revisions/figure_4h_event_timing.py`](figures/revisions/figure_4h_event_timing.py) | Are reactivation events over-represented when mice can lick? |
-| — | [`figures/revisions/figure_4h_previous_outcome.py`](figures/revisions/figure_4h_previous_outcome.py) | Does the reactivation rate depend on the outcome of the previous trial? |
-| — | [`figures/revisions/figure_4h_shuffle_control.py`](figures/revisions/figure_4h_shuffle_control.py) | Shuffled-template reactivation detection |
+| — | [`figures/revisions/figure_6c_event_timing.py`](figures/revisions/figure_6c_event_timing.py) | Are reactivation events over-represented when mice can lick? |
+| — | [`figures/revisions/figure_6c_previous_outcome.py`](figures/revisions/figure_6c_previous_outcome.py) | Does the reactivation rate depend on the outcome of the previous trial? |
+| — | [`figures/revisions/figure_6c_shuffle_control.py`](figures/revisions/figure_6c_shuffle_control.py) | Shuffled-template reactivation detection |
 | — | [`figures/revisions/movement_state_summary.py`](figures/revisions/movement_state_summary.py) | Whisker, tongue and jaw movement during the passive whisker trials, across days (R2 public 6) |
 | — | [`figures/revisions/thresholds_robustness.py`](figures/revisions/thresholds_robustness.py) | Robustness of the reactivation results to the participation threshold and to the detection threshold |
 <!-- figure-table:end -->

@@ -1,5 +1,5 @@
 """
-Figure 4f: Reactivation heatmap illustration (mouse AR127, single day)
+Figure 6a: Reactivation heatmap illustration (mouse AR127, single day)
 
 Layout:
   - Left strips: LMI, participation rate, and whisker template (one bar per cell)
@@ -9,7 +9,7 @@ Layout:
 Inputs:  reactivation_results_p99.pkl (pipeline/07_reactivations.py),
          lmi_results.csv, participation rates of all cells in these events
          (pipeline/08_participation.py --cells all).
-Outputs: <figures_dir>/Figure4/figure_4f.svg.
+Outputs: <figures_dir>/Figure6/figure_6a.svg.
 """
 
 import os
@@ -37,7 +37,7 @@ TIME_WINDOW = 180  # seconds
 HEATMAP_CMAP = 'RdBu_r'
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure6')
 
 
 # ============================================================================
@@ -55,13 +55,13 @@ def panel_f_reactivation_heatmap(
     sort_by='participation',
     top_n=20,
     results_dir=RESULTS_DIR,
-    filename='figure_4f',
+    filename='figure_6a',
     output_dir=OUTPUT_DIR,
     save_format='svg',
     dpi=300,
 ):
     """
-    Generate Figure 4 Panel h: reactivation heatmap for a single mouse/day.
+    Generate Figure 6 Panel a: reactivation heatmap for a single mouse/day.
 
     Args:
         sort_by: 'template' or 'participation' — cell ordering.
@@ -287,5 +287,5 @@ if __name__ == '__main__':
         r_minus_results,
         sort_by='participation',
         top_n=20,
-        filename='figure_4f',
+        filename='figure_6a',
     )

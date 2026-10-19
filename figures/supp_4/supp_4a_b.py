@@ -10,14 +10,14 @@ counted) at which its +/- 150 ms mean dF/F reaches the threshold, on the
 same day and trials. Participation above chance = participation rate -
 chance rate, per cell-day (fast_learning.participation).
 
-Panel a: day-0 participation above chance vs LMI, as Fig. 4i. Stats: linear
+Panel a: day-0 participation above chance vs LMI, as Fig. 6d. Stats: linear
          mixed-effects model excess ~ LMI + (1 + LMI | mouse), per reward group.
 Panel b: participation above chance across days for LMI+ vs LMI- cells, as
-         Fig. 4j. Stats: per-mouse day slope, Wilcoxon signed-rank test
+         Fig. 6e. Stats: per-mouse day slope, Wilcoxon signed-rank test
          against zero (n = mice).
 
 Participation is measured in held-out cells (events detected with the other
-half of the cells, 10 random splits; as Fig. 4i-j). --cells all: all cells in
+half of the cells, 10 random splits; as Fig. 6d-e). --cells all: all cells in
 the events of step 07, for comparison.
 
 Inputs:  participation rates with chance rates (pipeline/08_participation.py).
@@ -36,9 +36,9 @@ from fast_learning import paths, participation
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_4')
 
-# Panel functions of Figure 4i-j (figure scripts are not a package).
+# Panel functions of Figure 6d-e (figure scripts are not a package).
 _spec = importlib.util.spec_from_file_location(
-    'figure_4i_j', os.path.join(os.path.dirname(__file__), '..', 'figure_4', 'figure_4i_j.py')
+    'figure_6d_e', os.path.join(os.path.dirname(__file__), '..', 'figure_6', 'figure_6d_e.py')
 )
 fig4ij = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(fig4ij)

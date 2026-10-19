@@ -12,7 +12,7 @@ its output goes to <output_root>/logs/<step>.log. Paths come from config.yaml
 Examples:
     python run_all.py --list                    # show the steps
     python run_all.py --stage figures           # all figures from processed data
-    python run_all.py --only figure_4 supp_4    # one or more figure folders
+    python run_all.py --only figure_6 supp_4    # one or more figure folders
     python run_all.py --stage pipeline --from 06_decoder
     python run_all.py --stage all --skip 04_learning_curves
 """
@@ -54,6 +54,7 @@ FIGURE_DIRS = [
     'figure2_supfig2',
     'figure_3',
     'figure_5',
+    'figure_6',
     'supp_2',
     'supp_3',
     'figure_4',
@@ -66,12 +67,12 @@ FIGURE_DIRS = [
 _NOLICK = ('nolick', ['--nolick'])
 _ALLCELLS = ('allcells', ['--cells', 'all'])
 FIGURE_VARIANTS = {
-    'figure_4h': [_NOLICK],
-    'figure_4i_j': [_ALLCELLS, ('insample', ['--cells', 'insample']), _NOLICK],
+    'figure_6c': [_NOLICK],
+    'figure_6d_e': [_ALLCELLS, ('insample', ['--cells', 'insample']), _NOLICK],
     'supp_4a_b': [_ALLCELLS, _NOLICK],
 }
 # Revision analyses with a slow computation of their own; --recompute forces it.
-RECOMPUTE = {'figure_3f_LMIshuffles', 'figure_4h_shuffle_control', 'thresholds_robustness'}
+RECOMPUTE = {'figure_3f_LMIshuffles', 'figure_6c_shuffle_control', 'thresholds_robustness'}
 
 
 def figure_steps():

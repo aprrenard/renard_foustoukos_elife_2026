@@ -135,7 +135,7 @@ def plot_session_summary(
     df, days=DAYS, output_dir=OUTPUT_DIR, filename='session_state_summary', save_format='pdf', dpi=300
 ):
     """Bar plot of each metric across days, R+ vs R-, with Mann-Whitney U
-    per day (mirrors figure_4h.py's panel_h_reactivation_rate pattern).
+    per day (mirrors figure_6c.py's panel_h_reactivation_rate pattern).
 
     Saves:
         <filename>.pdf        -- figure (3 panels)
