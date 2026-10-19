@@ -206,7 +206,11 @@ def timecourse(ax, sessions, area, labels, xlabel=''):
     d = sessions[sessions.area == area].assign(x=lambda t: t.day_label.cat.codes)
     for col, color in OUTCOME_COLORS.items():
         for _, m in d.groupby('mouse_id'):
-            ax.plot(m['x'], m[col], color=color, alpha=0.4, linewidth=0.5)
+            m = m.dropna(subset=[col])
+            # A mouse with a single day for this trial type (e.g. whisker trials
+            # on Day 0 only) has no line to draw: show it as a dot.
+            marker = 'o' if len(m) == 1 else None
+            ax.plot(m['x'], m[col], color=color, alpha=0.4, linewidth=0.5, marker=marker, markersize=2)
         sns.pointplot(
             data=d,
             x='x',
