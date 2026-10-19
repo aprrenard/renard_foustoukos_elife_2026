@@ -14,7 +14,7 @@ from fast_learning.plotting import behavior_palette, save_figure, set_style, pan
 from fast_learning.behavior import plot_single_session
 
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure1')
 
 
 # ============================================================================

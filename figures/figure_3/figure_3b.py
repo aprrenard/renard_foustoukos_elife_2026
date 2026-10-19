@@ -25,7 +25,7 @@ if __name__ == '__main__':
     days = [-2, -1, 0, 1, 2]
     days_str = ['Day -2', 'Day -1', 'Day 0', 'Day +1', 'Day +2']
 
-    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
+    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3')
 
     # #############################################################################
     # Load LMI data.

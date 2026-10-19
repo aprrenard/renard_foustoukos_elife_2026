@@ -26,7 +26,7 @@ if __name__ == '__main__':
     DAYS = [-2, -1, 0, 1, 2]
     MIN_CELLS = 3
 
-    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
+    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3')
 
     # ============================================================================
     # Load and process imaging data

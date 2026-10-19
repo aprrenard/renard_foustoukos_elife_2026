@@ -35,7 +35,7 @@ from fast_learning.stats import format_p
 
 DAYS = [-2, -1, 0, 1, 2]
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
 
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')

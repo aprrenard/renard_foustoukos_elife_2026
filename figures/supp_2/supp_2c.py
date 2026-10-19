@@ -31,7 +31,7 @@ from fast_learning.stats import format_p, per_mouse_slope_test
 N_BOOT = 1000
 SEED = 42
 RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_2', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_2')
 
 
 if __name__ == '__main__':

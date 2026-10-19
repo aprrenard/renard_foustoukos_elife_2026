@@ -18,7 +18,7 @@ from fast_learning.plotting import stim_palette, reward_palette, save_figure, se
 from fast_learning.stats import format_p
 
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_2', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure2')
 
 
 # ============================================================================

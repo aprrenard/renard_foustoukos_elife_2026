@@ -9,7 +9,7 @@ This script generates Panels l-n for Figure 3:
 Population responses come from fast_learning.decoding. The per-mouse decoder
 reused by Fig. 4b-c is trained separately (pipeline/06_decoder.py).
 
-Outputs: <figures_dir>/figure_3/output/figure_3{l,m,n}.svg, with
+Outputs: <figures_dir>/Figure3/figure_3{l,m,n}.svg, with
          figure_3X_data.csv (plotted data) and figure_3X_stats.csv (tests).
 """
 
@@ -37,7 +37,7 @@ from fast_learning.stats import significance_stars as _significance_stars
 # Parameters
 # ============================================================================
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3')
 
 
 # ============================================================================

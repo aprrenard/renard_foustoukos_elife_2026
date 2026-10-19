@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 
 from fast_learning import similarity
-from fast_learning.stats import bootstrap_ci, dprime, significance_stars
+from fast_learning.stats import bootstrap_ci, dprime, dprime_from_rates, significance_stars
 
 
 def test_significance_stars():
@@ -18,6 +18,11 @@ def test_bootstrap_ci():
     low, high = bootstrap_ci(v)
     assert low < v.mean() < high and high - low < 1.5
     assert bootstrap_ci(v) == bootstrap_ci(v)  # seeded
+
+
+def test_dprime_from_rates():
+    assert dprime_from_rates(0.5, 0.5) == 0
+    assert np.isfinite(dprime_from_rates(1.0, 0.0)) and dprime_from_rates(0.9, 0.1) > 0
 
 
 def test_dprime():

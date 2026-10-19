@@ -28,7 +28,7 @@ from fast_learning.stats import format_p, ks_permutation_test
 
 LMI_POS_THRESHOLD = 0.975
 LMI_NEG_THRESHOLD = 0.025
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3')
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ from fast_learning import imaging
 from fast_learning import paths, database
 from fast_learning.plotting import save_figure, set_style, panel_size, reward_palette
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3')
 
 DAYS_SELECTED = [-2, -1, 1, 2]
 MIN_CELLS = 3

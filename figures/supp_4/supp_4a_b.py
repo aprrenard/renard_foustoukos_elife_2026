@@ -21,7 +21,7 @@ half of the cells, 10 random splits; as Fig. 4i-j). --cells all: all cells in
 the events of step 07, for comparison.
 
 Inputs:  participation rates with chance rates (pipeline/08_participation.py).
-Outputs: <figures_dir>/supp_4/output/supp_4a_<k>sd<sfx>.pdf, _stats.csv and
+Outputs: <figures_dir>/supp_4/supp_4a_<k>sd<sfx>.pdf, _stats.csv and
          supp_4b_<k>sd<sfx>.pdf, _data.csv, _stats.csv; <sfx> is empty for
          held-out cells, _allcells, then _nolick for the no-lick control.
 """
@@ -34,7 +34,7 @@ import pandas as pd
 
 from fast_learning import paths, participation
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_4', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_4')
 
 # Panel functions of Figure 4i-j (figure scripts are not a package).
 _spec = importlib.util.spec_from_file_location(

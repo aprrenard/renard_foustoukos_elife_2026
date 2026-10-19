@@ -61,6 +61,18 @@ def dprime(hits, n_hit, false_alarms, n_fa):
     return norm.ppf(hit_rate) - norm.ppf(fa_rate)
 
 
+def dprime_from_rates(p_hit, p_fa, eps=1e-3):
+    """d' from smoothed hit and false-alarm probabilities (e.g. fitted
+    learning curves), clipped to [eps, 1 - eps] so that the z-transform stays
+    finite. Works on scalars and arrays."""
+    import numpy as np
+    from scipy.stats import norm
+
+    p_hit = np.clip(p_hit, eps, 1 - eps)
+    p_fa = np.clip(p_fa, eps, 1 - eps)
+    return norm.ppf(p_hit) - norm.ppf(p_fa)
+
+
 OPTIMIZERS = ['bfgs', 'lbfgs', 'powell', 'cg']
 
 

@@ -40,7 +40,7 @@ EXAMPLE_MOUSE_RPLUS = 'GF306'
 EXAMPLE_MOUSE_RMINUS = 'AR179'
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
 
 
 # ============================================================================

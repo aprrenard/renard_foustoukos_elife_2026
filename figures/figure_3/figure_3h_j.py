@@ -38,7 +38,7 @@ from fast_learning.stats import format_p
 # Parameters
 # ============================================================================
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3')
 
 
 # ============================================================================

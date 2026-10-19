@@ -25,7 +25,7 @@ from fast_learning.plotting import behavior_palette, save_figure, set_style, pan
 DAY = 0
 TIME_RESOLUTION = 5  # seconds between interpolation grid points
 MAX_WHISKER_TRIALS = 100
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure1_SupFig1')
 
 
 # ============================================================================

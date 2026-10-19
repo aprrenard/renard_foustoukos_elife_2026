@@ -27,7 +27,7 @@ from fast_learning.stats import format_p
 # ============================================================================
 
 ON_OFF_ORDER = ['whisker_on_1', 'whisker_off', 'whisker_on_2']
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure1_SupFig1')
 
 
 # ============================================================================

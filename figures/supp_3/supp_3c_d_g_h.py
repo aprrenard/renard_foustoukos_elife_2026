@@ -44,7 +44,7 @@ if __name__ == '__main__':
     }
     BAR_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
 
-    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
+    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3')
 
     # ============================================================================
     # Load imaging data

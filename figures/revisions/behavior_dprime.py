@@ -3,12 +3,10 @@ Behavior quantified via d' (signal detection theory) instead of whisker hit
 rate.
 
 Addresses a reviewer comment asking that behavioral performance be
-quantified with d' rather than raw whisker hit rate, for:
-    - Figure 1C (right)
-    - Figure 1D
-    - Figure 4C and E
-The d' versions of Figure 2C and 2F, and of the execution inactivation, are
-in figure_2_supp_inactivation.py.
+quantified with d' rather than raw whisker hit rate, for Figure 4C and E.
+The d' versions of Figure 1C and 1D are in figure_1c.py and figure_1d.py, and
+those of Figure 2C and 2F and of the execution inactivation in
+figure_2_supp_inactivation.py.
 
 ------------------------------------------------------------------------
 How d' is computed
@@ -24,39 +22,15 @@ standard normal CDF (scipy.stats.norm.ppf).
                          (outcome_c in the trial tables), so no new data
                          collection is needed.
 
-Two computation modes are used, matching the two aggregation granularities
-already present in the original hit-rate panels:
-
-1. Session-level d' (count-based, log-linear corrected). Panels that
-   average outcome_w/outcome_c into one hit-rate/FA-rate value per session
-   (Fig 1C-right) instead compute d' directly
-   from that session's trial counts:
-       hits = sum(outcome_w),  n_hit = # whisker trials
-       fas  = sum(outcome_c),  n_fa  = # catch trials
-   A session can have as few as ~10-20 catch trials, so 0% or 100% rates
-   are common and would give +/-inf after the z-transform. This is
-   corrected with the standard log-linear correction (Hautus, 1995):
-       hit_rate' = (hits + 0.5) / (n_hit + 1)
-       fa_rate'  = (fas  + 0.5) / (n_fa  + 1)
-       d' = Z(hit_rate') - Z(fa_rate')
-   This is the standard, minimal-bias correction used throughout the
-   signal-detection literature for exactly this small-N/extreme-rate
-   problem. See `fast_learning.stats.dprime`.
-
-2. Trial-resolved d' (from the existing Bayesian learning curves). Panels
-   that plot a per-trial trajectory across Day-0 whisker trials (Fig 1D,
-   4C, 4E) already have, in the processed data
-   (behavior_imagingmice_table_5days_cut_with_learning_curves.csv), a
-   smoothed per-trial lick-probability curve fit separately to whisker
-   trials (learning_curve_w) and catch trials (learning_curve_ns), plus
-   learning_curve_chance: the catch curve cubic-spline-interpolated onto
-   whisker-trial indices (utils_behavior.compute_learning_trial). These
-   are Bayesian posterior means that only asymptotically approach 0/1, so
-   rather than the count-based correction, they are just clipped a small
-   epsilon away from the boundary before the z-transform:
-       d'(trial) = Z(clip(learning_curve_w, eps, 1-eps))
-                 - Z(clip(learning_curve_chance, eps, 1-eps))
-   with eps = 1e-3. See `_dprime_from_rates` / `_load_trial_resolved_dprime`.
+d' here is trial-resolved, from the existing Bayesian learning curves
+(behavior_imagingmice_table_5days_cut_with_learning_curves.csv): the
+smoothed whisker lick-probability curve (learning_curve_w) and the catch curve
+interpolated onto whisker-trial indices (learning_curve_chance). These are
+posterior means that only approach 0/1, so they are clipped eps = 1e-3 away
+from the boundary before the z-transform:
+    d'(trial) = Z(clip(learning_curve_w)) - Z(clip(learning_curve_chance))
+(fast_learning.stats.dprime_from_rates). Session-level d' from trial counts,
+with the log-linear correction, is fast_learning.stats.dprime.
 
 Everything else (grouping, day/mouse filters, bar/swarm plots, Mann-Whitney
 U or Wilcoxon tests, output file naming) is kept identical to the original
@@ -65,11 +39,6 @@ panel -- only the plotted/tested quantity changes.
 ------------------------------------------------------------------------
 Panel-specific notes / scope decisions
 ------------------------------------------------------------------------
-- Figure 1D: the original has two subplots -- raw single-trial outcomes
-  (left) and fitted learning curves (right). A per-trial d' isn't
-  meaningful at single-trial (binary, N=1) resolution, so only the
-  right-subplot's trajectory is reproduced here, as a single-panel plot.
-
 - Figure 4C: only the behavioral row (row 1: learning_curve_w vs trial) is
   reproduced. Row 2 (decoder decision value) is not a hit-rate-based
   quantity and is unchanged/out of scope.
@@ -97,15 +66,13 @@ import pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.colors
 import seaborn as sns
-from scipy.stats import norm, mannwhitneyu, wilcoxon, ttest_1samp, pearsonr
-from statsmodels.stats.multitest import multipletests
+from scipy.stats import wilcoxon, ttest_1samp, pearsonr
 
 from fast_learning import paths, decoding
 from fast_learning import imaging
-from fast_learning.plotting import reward_palette, behavior_palette, save_figure
-from fast_learning.stats import dprime, format_p
+from fast_learning.plotting import reward_palette, save_figure
+from fast_learning.stats import dprime_from_rates, format_p
 
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'behavior_dprime', 'output')
@@ -117,40 +84,13 @@ EPS = 1e-3  # clipping epsilon for already-smoothed probability curves
 # ============================================================================
 
 
-def _dprime_from_rates(p_hit, p_fa, eps=EPS):
-    """d' from already-smoothed probability curves (the Bayesian learning
-    curves), which only asymptote toward 0/1 -- a light clip is enough to
-    keep the z-transform finite."""
-    p_hit = np.clip(p_hit, eps, 1 - eps)
-    p_fa = np.clip(p_fa, eps, 1 - eps)
-    return norm.ppf(p_hit) - norm.ppf(p_fa)
-
-
-def _session_dprime(table, group_cols):
-    """Collapse a trial-level table to one d' value per group (typically
-    one row per session), using whisker trials as signal and no-stim/catch
-    trials as noise."""
-    counts = (
-        table.groupby(group_cols)
-        .agg(
-            n_hit=('outcome_w', 'count'),
-            hits=('outcome_w', 'sum'),
-            n_fa=('outcome_c', 'count'),
-            fas=('outcome_c', 'sum'),
-        )
-        .reset_index()
-    )
-    counts['dprime_w'] = dprime(counts['hits'], counts['n_hit'], counts['fas'], counts['n_fa'])
-    return counts
-
-
 def _load_trial_resolved_dprime(
     table_path=os.path.join(
         paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
     ),
     n_trials=120,
 ):
-    """Load the Day-0 whisker-trial table (used by figure_1d.py and
+    """Load the Day-0 whisker-trial table (as figure_1d.py and
     figure_4c/d/e.py) and add a trial-resolved d' column, computed from the
     existing Bayesian learning-curve fits:
         dprime_w(trial) = Z(learning_curve_w) - Z(learning_curve_chance)
@@ -164,258 +104,9 @@ def _load_trial_resolved_dprime(
     df = table.loc[(table.whisker_stim == 1) & (table.day == 0)].copy()
     df = df.loc[df.trial_w <= n_trials]
 
-    df['dprime_w'] = _dprime_from_rates(df['learning_curve_w'], df['learning_curve_chance'])
+    df['dprime_w'] = dprime_from_rates(df['learning_curve_w'], df['learning_curve_chance'], eps=EPS)
 
     return df
-
-
-# ============================================================================
-# Bar+swarm+Mann-Whitney plotting helper (Figure 1C-right)
-# ============================================================================
-
-
-def _dprime_barplot_by_group(
-    data,
-    day_col,
-    days_of_interest,
-    day_labels,
-    group_col,
-    group_order,
-    bar_palette,
-    filename,
-    output_dir=OUTPUT_DIR,
-    save_format='svg',
-    dpi=300,
-    xlabel='Day',
-    ylabel="d' (whisker vs. catch)",
-    legend_title=None,
-    swarm_color='grey',
-):
-    """Bar + swarm plot of dprime_w across days_of_interest, split into the
-    two levels of group_col, with a Mann-Whitney U test between them for
-    each day. Mirrors the bar+swarm+MWU scaffold of the original
-    whisker-hit-rate panel (figure_1c.py right), with
-    dprime_w substituted for outcome_w, and an unbounded y-axis instead of
-    the original's [0, 100] percentage range."""
-
-    day_data = data[data[day_col].astype(str).isin([str(d) for d in days_of_interest])].copy()
-    day_data['day_label'] = (
-        day_data[day_col].astype(str).map(dict(zip([str(d) for d in days_of_interest], day_labels)))
-    )
-
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
-    plt.figure(figsize=(8, 6))
-
-    sns.barplot(
-        data=day_data,
-        x='day_label',
-        y='dprime_w',
-        hue=group_col,
-        order=day_labels,
-        hue_order=group_order,
-        palette=bar_palette,
-        width=0.3,
-        dodge=True,
-        seed=0,
-    )
-    sns.swarmplot(
-        data=day_data,
-        x='day_label',
-        y='dprime_w',
-        hue=group_col,
-        order=day_labels,
-        hue_order=group_order,
-        dodge=True,
-        color=swarm_color,
-        alpha=0.6,
-    )
-
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.axhline(0, color='black', linestyle='--', alpha=0.4, linewidth=1)
-    if legend_title:
-        plt.legend(title=legend_title)
-    sns.despine()
-
-    y_top = day_data['dprime_w'].max()
-    y_range = day_data['dprime_w'].max() - day_data['dprime_w'].min()
-    ypos_star = y_top + 0.12 * y_range
-    ypos_p = y_top + 0.04 * y_range
-
-    stats = []
-    for day, label in zip(days_of_interest, day_labels):
-        df_day = day_data[day_data['day_label'] == label]
-        group_a = df_day[df_day[group_col] == group_order[0]]['dprime_w']
-        group_b = df_day[df_day[group_col] == group_order[1]]['dprime_w']
-
-        stat, p_value = mannwhitneyu(group_a, group_b, alternative='two-sided')
-        stats.append({'day': label, 'statistic': stat, 'p_value': p_value})
-
-        xpos = day_labels.index(label)
-        plt.text(xpos, ypos_star, format_p(p_value), ha='center', va='bottom', color='black', fontsize=8)
-
-    os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f'{filename}.{save_format}')
-    save_figure(plt.gcf(), output_file)
-    plt.close()
-
-    data_file = os.path.join(output_dir, f'{filename}_data.csv')
-    stats_file = os.path.join(output_dir, f'{filename}_stats.csv')
-    day_data.to_csv(data_file, index=False)
-    pd.DataFrame(stats).to_csv(stats_file, index=False)
-
-    print(f"{filename} saved to: {output_file}")
-    return day_data, pd.DataFrame(stats)
-
-
-# ============================================================================
-# Figure 1C (right): session-level d', R+ vs R-, days 0/+1/+2
-# ============================================================================
-
-
-def panel_1c_right_dprime(
-    table_path=os.path.join(paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut.csv'),
-    days_of_interest=[0, 1, 2],
-    save_path=OUTPUT_DIR,
-    save_format='svg',
-    dpi=300,
-):
-    """Figure 1 Panel c (right) revision: session-level d' bar plot,
-    R+ vs R-, days 0/+1/+2. Mirrors figure_1c.py's
-    panel_c_right_performance_barplot, with dprime_w (whisker vs. catch)
-    substituted for outcome_w (whisker hit rate)."""
-
-    table_path = paths.adjust_path_to_host(table_path)
-    table = pd.read_csv(table_path)
-
-    table = table.loc[table.day.isin(days_of_interest)].copy()
-    table['day'] = table['day'].astype(str)
-
-    session_dprime = _session_dprime(table, ['mouse_id', 'session_id', 'reward_group', 'day'])
-    avg_performance = session_dprime.groupby(['day', 'mouse_id', 'reward_group'], as_index=False)[
-        'dprime_w'
-    ].mean()
-
-    _dprime_barplot_by_group(
-        avg_performance,
-        day_col='day',
-        days_of_interest=[str(d) for d in days_of_interest],
-        day_labels=[str(d) for d in days_of_interest],
-        group_col='reward_group',
-        group_order=['R+', 'R-'],
-        bar_palette=behavior_palette[2:4][::-1],
-        filename='figure_1c_right_dprime',
-        output_dir=save_path,
-        save_format=save_format,
-        dpi=dpi,
-        xlabel='Day',
-        legend_title='Reward group',
-        swarm_color='grey',
-    )
-
-
-# ============================================================================
-# Figure 1D: trial-resolved d' across Day-0 whisker trials, R+ vs R-
-# ============================================================================
-
-
-def panel_1d_dprime(
-    table_path=os.path.join(
-        paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
-    ),
-    n_trials=120,
-    save_path=OUTPUT_DIR,
-    save_format='svg',
-    dpi=300,
-):
-    """Figure 1 Panel d revision: trial-resolved d' across Day-0 whisker
-    trials, R+ vs R-. Single panel -- see module docstring for why the
-    original's raw-outcome subplot has no per-trial d' counterpart."""
-
-    df = _load_trial_resolved_dprime(table_path=table_path, n_trials=n_trials)
-
-    sns.set_theme(context='paper', style='ticks', palette='deep', font='sans-serif', font_scale=1)
-    fig, ax = plt.subplots(1, 1, figsize=(6, 5))
-
-    sns.lineplot(
-        data=df,
-        x='trial_w',
-        y='dprime_w',
-        palette=reward_palette[::-1],
-        hue='reward_group',
-        errorbar='ci',
-        err_style='band',
-        ax=ax,
-        seed=0,
-    )
-
-    # Same p-value color code as figure_1d.py: p > 0.05 (not significant)
-    # is pure white (via cmap.set_over(), not part of the gradient); p <=
-    # 0.05 uses a log10 gradient from a visible grey right at the p=0.05
-    # boundary down to black as p keeps shrinking. PVALUE_FLOOR is where
-    # the gradient bottoms out at pure black -- tuned to 1e-3 here (vs.
-    # 1e-6 in figure_1d.py) to match the smaller dynamic range of p-values
-    # this panel's d' test actually produces.
-    PVALUE_FLOOR = 1e-3
-    NONSIG_GREY = 0.8  # grey at p=0.05
-    cmap = matplotlib.colors.LinearSegmentedColormap.from_list(
-        'pval_cmap', [(0.0, 'black'), (1.0, (NONSIG_GREY,) * 3)]
-    )
-    cmap.set_over('white')  # p > vmax (0.05) -- not part of the gradient
-    cnorm = matplotlib.colors.LogNorm(vmin=PVALUE_FLOOR, vmax=0.05)
-
-    p_values = []
-    for trial_w in df['trial_w'].unique():
-        group_R_plus = df[(df.trial_w == trial_w) & (df.reward_group == 'R+')]['dprime_w']
-        group_R_minus = df[(df.trial_w == trial_w) & (df.reward_group == 'R-')]['dprime_w']
-        if len(group_R_plus) > 0 and len(group_R_minus) > 0:
-            _, p_value = mannwhitneyu(group_R_plus, group_R_minus, alternative='two-sided')
-            p_values.append((trial_w, p_value))
-
-    trials, raw_pvals = zip(*p_values)
-    _, corrected_pvals, _, _ = multipletests(raw_pvals, alpha=0.05, method='fdr_bh')
-    p_values = list(zip(trials, corrected_pvals))
-
-    rect_height = 0.1
-    rect_y = 3 - rect_height - 0.05  # just below the ylim=3 ceiling
-    for trial, p_value in p_values:
-        color = cmap(cnorm(max(p_value, PVALUE_FLOOR)))
-        ax.add_patch(plt.Rectangle((trial - 0.4, rect_y), 0.8, rect_height, color=color, edgecolor='none'))
-
-    ax.axhline(0, color='black', linestyle='--', alpha=0.4, linewidth=1)
-    ax.set_title("d' (whisker vs. catch)")
-    ax.set_xlabel('Whisker trial')
-    ax.set_ylabel("d'")
-    ax.legend(frameon=False, title='Reward group')
-    ax.set_ylim(0, 3)
-
-    # Colorbar for the p-value color code (same cmap/cnorm as the rectangles
-    # above; p > 0.05 renders white via cmap.set_over(), not depicted on the
-    # bar -- no extend cap). Reversed so the most significant (blackest)
-    # end is on top and the p=0.05 boundary is at the bottom.
-    sm = plt.cm.ScalarMappable(norm=cnorm, cmap=cmap)
-    sm.set_array([])
-    cbar = fig.colorbar(sm, ax=ax, orientation='vertical', shrink=0.6, pad=0.02, aspect=15)
-    tick_vals = [PVALUE_FLOOR, 1e-2, 0.05]
-    cbar.set_ticks(tick_vals)
-    cbar.set_ticklabels(['≤ {:.0e}'.format(PVALUE_FLOOR), '0.01', '0.05'])
-    cbar.set_label('p-value (FDR-corrected)', fontsize=9)
-    cbar.ax.invert_yaxis()
-
-    sns.despine()
-    plt.tight_layout()
-
-    os.makedirs(save_path, exist_ok=True)
-    output_file = os.path.join(save_path, f'figure_1d_dprime.{save_format}')
-    save_figure(plt.gcf(), output_file)
-    plt.close()
-
-    data_file = os.path.join(save_path, 'figure_1d_dprime_data.csv')
-    stats_file = os.path.join(save_path, 'figure_1d_dprime_stats.csv')
-    df.to_csv(data_file, index=False)
-    pd.DataFrame(p_values, columns=['trial_w', 'p_value']).to_csv(stats_file, index=False)
-
-    print(f"Figure 1d (d') saved to: {output_file}")
 
 
 # ============================================================================
@@ -632,7 +323,5 @@ def panel_4e_dprime_correlation(
 # ============================================================================
 
 if __name__ == '__main__':
-    panel_1c_right_dprime()
-    panel_1d_dprime()
     panel_4c_dprime()
     panel_4e_dprime_correlation()

@@ -21,7 +21,7 @@ from fast_learning.plotting import reward_palette, save_figure, set_style, panel
 # Parameters
 # ============================================================================
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure1_SupFig1')
 
 
 # ============================================================================

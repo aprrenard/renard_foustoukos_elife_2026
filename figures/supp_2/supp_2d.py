@@ -32,7 +32,7 @@ from fast_learning.decoding import load_and_process_data
 PERCENTILES = np.arange(0, 91, 5)  # % of most-modulated cells to remove
 N_SPLITS = 10
 SEED = 42
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_2', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_2')
 
 
 if __name__ == '__main__':

@@ -9,7 +9,7 @@ Wilcoxon signed-rank test (n = mice). Pairs share neurons and their number
 per mouse varies widely, so pairs are not independent and are not the unit.
 
 Inputs:  pair-level correlations (pipeline/09_pairwise_correlations.py).
-Outputs: <figures_dir>/supp_3/output/supp_3m_<group>.pdf, _data.csv (pairs),
+Outputs: <figures_dir>/supp_3/supp_3m_<group>.pdf, _data.csv (pairs),
          _mouse_means.csv (plotted, one value per mouse), _stats.csv.
 Figure: mean over each mouse's pairs, pre and post (lines); bars = mean across
 mice with bootstrapped 95% CI (seeded).
@@ -35,7 +35,7 @@ from fast_learning.stats import bootstrap_ci, format_p, significance_stars
 
 PAIR_TYPES = correlations.PAIR_TYPES
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3')
 
 
 # ============================================================================

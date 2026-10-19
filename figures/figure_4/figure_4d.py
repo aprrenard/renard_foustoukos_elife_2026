@@ -36,7 +36,7 @@ if __name__ == '__main__':
     cut_n_trials = 100
 
     RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
-    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
+    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
 
     # ============================================================================
     # Load data

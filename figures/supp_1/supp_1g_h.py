@@ -35,7 +35,7 @@ from fast_learning.stats import format_p
 DAYS = [-2, -1, 0, 1, 2]
 MAX_TRIALS_RT = 100
 MIN_MICE_PER_TRIAL = 5  # minimum mice required to plot a trial bin in panel h
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure1_SupFig1')
 
 # (filter_col, outcome_col, trial_col, label, rp_palette_idx, rm_palette_idx)
 STIM_DEFS = [

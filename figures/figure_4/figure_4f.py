@@ -9,7 +9,7 @@ Layout:
 Inputs:  reactivation_results_p99.pkl (pipeline/07_reactivations.py),
          lmi_results.csv, participation rates of all cells in these events
          (pipeline/08_participation.py --cells all).
-Outputs: <figures_dir>/figure_4/output/figure_4f.svg.
+Outputs: <figures_dir>/Figure4/figure_4f.svg.
 """
 
 import os
@@ -37,7 +37,7 @@ TIME_WINDOW = 180  # seconds
 HEATMAP_CMAP = 'RdBu_r'
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'reactivation')
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
 
 
 # ============================================================================

@@ -43,7 +43,7 @@ offset_step = 400  # % dF/F vertical offset between cells
 file_name = 'tensor_xarray_mapping_data.nc'
 folder = paths.tensor_dir
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3')
 
 
 # #############################################################################

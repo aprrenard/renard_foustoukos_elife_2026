@@ -28,7 +28,7 @@ if __name__ == '__main__':
     CELL_TYPES = ['wS2', 'wM1']
     MIN_CELLS = 3  # minimum cells per mouse to include that mouse
 
-    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
+    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3')
 
     # ============================================================================
     # Load and process imaging data

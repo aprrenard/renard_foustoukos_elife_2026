@@ -25,7 +25,7 @@ from fast_learning.plotting import reward_palette, save_figure, set_style, panel
 
 DAY = 0
 MAX_TRIALS = 100
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure1_SupFig1')
 
 
 # ============================================================================

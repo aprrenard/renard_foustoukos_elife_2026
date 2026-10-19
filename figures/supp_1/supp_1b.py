@@ -22,7 +22,7 @@ from fast_learning.stats import format_p
 # ============================================================================
 
 DAYS = [0, 1, 2]
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_1', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure1_SupFig1')
 
 
 # ============================================================================

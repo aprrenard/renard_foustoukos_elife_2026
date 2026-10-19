@@ -33,7 +33,7 @@ from fast_learning.stats import format_p, ks_permutation_test, significance_star
 CELL_TYPES = ['wS2', 'wM1']
 CELL_TYPE_COLORS = {'wS2': s2_m1_palette[0], 'wM1': s2_m1_palette[1]}
 RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3')
 
 
 # ============================================================================

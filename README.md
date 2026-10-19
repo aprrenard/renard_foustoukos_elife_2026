@@ -49,9 +49,10 @@ python run_all.py --stage all             # everything from the NWB files (sever
 python figures/figure_3/figure_3l_n.py    # or any script on its own
 ```
 
-Each figure script writes, in `<output_root>/figures/<figure>/output/`, the
-panel (PDF by default; set `figure_formats: [pdf, svg]` in `config.yaml` for
-SVG too) with its plotted data (`*_data.csv`) and statistics (`*_stats.csv`).
+Each figure script writes, in `<output_root>/figures/<figure>/` (e.g.
+`Figure1/`, `Figure1_SupFig1/`), the panel (PDF by default; set
+`figure_formats: [pdf, svg]` in `config.yaml` for SVG too) with its plotted
+data (`*_data.csv`) and statistics (`*_stats.csv`).
 Each step's log goes to `<output_root>/logs/`. Computations are seeded, so
 reruns give identical results.
 
@@ -88,8 +89,8 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 |---|---|---|
 | **Figure 1** | | |
 | 1b | [`figures/figure_1/figure_1b.py`](figures/figure_1/figure_1b.py) | Example behavioral performance across learning days |
-| 1c | [`figures/figure_1/figure_1c.py`](figures/figure_1/figure_1c.py) | Average behavioral performance across imaging mice |
-| 1d | [`figures/figure_1/figure_1d.py`](figures/figure_1/figure_1d.py) | Day 0 performance across whisker trials |
+| 1c | [`figures/figure_1/figure_1c.py`](figures/figure_1/figure_1c.py) | Behavioral performance of the imaging mice across days |
+| 1d | [`figures/figure_1/figure_1d.py`](figures/figure_1/figure_1d.py) | Day 0 performance across whisker trials, R+ vs R- |
 | **Figure 2** | | |
 | 2b, c | [`figures/figure_2/figure_2b_c.py`](figures/figure_2/figure_2b_c.py) | Muscimol inactivation during learning |
 | 2e, f | [`figures/figure_2/figure_2e_f.py`](figures/figure_2/figure_2e_f.py) | Optogenetic inactivation during learning |

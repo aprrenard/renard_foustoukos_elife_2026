@@ -31,7 +31,7 @@ at least one split). Mice: those in the participation mouse selection
 Inputs:  participation rates from pipeline/08_participation.py, at each
          participation threshold: 2.5 x each cell's noise SD (main), 5 and 10 x
          (robustness checks; see fast_learning.participation).
-Outputs: <figures_dir>/figure_4/output/figure_4i_<k>sd<sfx>.pdf, _stats.csv
+Outputs: <figures_dir>/Figure4/figure_4i_<k>sd<sfx>.pdf, _stats.csv
          and figure_4j_<k>sd<sfx>.pdf, _data.csv, _stats.csv; <sfx> is
          empty for held-out cells, _insample or _allcells, then _nolick for
          the no-lick control.
@@ -63,7 +63,7 @@ from fast_learning.stats import (
 DAYS = [-2, -1, 0, 1, 2]
 
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'figure_4', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
 
 
 # ============================================================================

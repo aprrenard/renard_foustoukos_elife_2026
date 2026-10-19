@@ -44,7 +44,7 @@ YLIMS = {
 WIN_SEC = (-0.5, 1.5)
 DAYS = [-2, -1, 0, 1, 2]
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_2', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_2')
 
 
 if __name__ == '__main__':
