@@ -48,7 +48,7 @@ PIPELINE = [
 
 FIGURE_DIRS = [
     'figure_1',
-    'supp_1',
+    'figure1_supfig1',
     'figure_2',
     'figure_3',
     'supp_2',

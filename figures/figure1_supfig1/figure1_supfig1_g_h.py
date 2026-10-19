@@ -1,5 +1,5 @@
 """
-Supplementary Figure 1g_h: Reaction times for auditory, whisker, and no-stim
+Figure 1—figure supplement 1g_h: Reaction times for auditory, whisker, and no-stim
 hit trials.
 
 Panel g: Mean reaction time per stimulus type across days (bar plot).
@@ -269,22 +269,22 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig_g, os.path.join(OUTPUT_DIR, 'supp_1g.svg'))
-    print("Saved: supp_1g.svg")
+    save_figure(fig_g, os.path.join(OUTPUT_DIR, 'figure1_supfig1_g.svg'))
+    print("Saved: figure1_supfig1_g.svg")
 
-    save_figure(fig_h, os.path.join(OUTPUT_DIR, 'supp_1h.svg'))
-    print("Saved: supp_1h.svg")
+    save_figure(fig_h, os.path.join(OUTPUT_DIR, 'figure1_supfig1_h.svg'))
+    print("Saved: figure1_supfig1_h.svg")
 
-    rt_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1g_data.csv'), index=False)
-    print("Saved: supp_1g_data.csv")
+    rt_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_g_data.csv'), index=False)
+    print("Saved: figure1_supfig1_g_data.csv")
 
-    stats_g_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1g_stats.csv'), index=False)
-    print("Saved: supp_1g_stats.csv")
+    stats_g_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_g_stats.csv'), index=False)
+    print("Saved: figure1_supfig1_g_stats.csv")
 
-    pd.DataFrame(rt_day0_rows).to_csv(os.path.join(OUTPUT_DIR, 'supp_1h_data.csv'), index=False)
-    print("Saved: supp_1h_data.csv")
+    pd.DataFrame(rt_day0_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_h_data.csv'), index=False)
+    print("Saved: figure1_supfig1_h_data.csv")
 
-    stats_h_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1h_stats.csv'), index=False)
-    print("Saved: supp_1h_stats.csv")
+    stats_h_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_h_stats.csv'), index=False)
+    print("Saved: figure1_supfig1_h_stats.csv")
 
     plt.close()

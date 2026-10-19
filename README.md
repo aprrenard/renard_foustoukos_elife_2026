@@ -111,14 +111,14 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 4g | [`figures/figure_4/figure_4g.py`](figures/figure_4/figure_4g.py) | Example correlation traces across days (mouse AR127) |
 | 4h | [`figures/figure_4/figure_4h.py`](figures/figure_4/figure_4h.py) | Reactivation rate across days, R+ vs R- |
 | 4i, j | [`figures/figure_4/figure_4i_j.py`](figures/figure_4/figure_4i_j.py) | Reactivation participation rate vs LMI |
-| **Figure 1 – supplement** | | |
-| S1a | [`figures/supp_1/supp_1a.py`](figures/supp_1/supp_1a.py) | First hit trial on Day 0 for R+ vs R- |
-| S1b | [`figures/supp_1/supp_1b.py`](figures/supp_1/supp_1b.py) | Whisker lick probability on Days 0, +1, +2 for R+ vs R- |
-| S1c | [`figures/supp_1/supp_1c.py`](figures/supp_1/supp_1c.py) | Particle test — whisker hit rate and false alarm rate across ON / OFF / ON periods (R+ mice only) |
-| S1d | [`figures/supp_1/supp_1d.py`](figures/supp_1/supp_1d.py) | Single-trial whisker hit rate across Day 0 trials, R+ vs R- (non-realigned) |
-| S1e | [`figures/supp_1/supp_1e.py`](figures/supp_1/supp_1e.py) | Fitted learning curve across Day 0 trials, R+ vs R-, realigned to each mouse's first hit trial |
-| S1f | [`figures/supp_1/supp_1f.py`](figures/supp_1/supp_1f.py) | Day 0 lick probability for whisker, auditory, and no-stim trial types on a common time axis (minutes from session start) |
-| S1g, h | [`figures/supp_1/supp_1g_h.py`](figures/supp_1/supp_1g_h.py) | Reaction times for auditory, whisker, and no-stim hit trials |
+| **Figure 1 – figure supplement 1** | | |
+| 1-S1a | [`figures/figure1_supfig1/figure1_supfig1_a.py`](figures/figure1_supfig1/figure1_supfig1_a.py) | First hit trial on Day 0 for R+ vs R- |
+| 1-S1b | [`figures/figure1_supfig1/figure1_supfig1_b.py`](figures/figure1_supfig1/figure1_supfig1_b.py) | Whisker lick probability on Days 0, +1, +2 for R+ vs R- |
+| 1-S1c | [`figures/figure1_supfig1/figure1_supfig1_c.py`](figures/figure1_supfig1/figure1_supfig1_c.py) | Particle test — whisker hit rate and false alarm rate across ON / OFF / ON periods (R+ mice only) |
+| 1-S1d | [`figures/figure1_supfig1/figure1_supfig1_d.py`](figures/figure1_supfig1/figure1_supfig1_d.py) | Single-trial whisker hit rate across Day 0 trials, R+ vs R- (non-realigned) |
+| 1-S1e | [`figures/figure1_supfig1/figure1_supfig1_e.py`](figures/figure1_supfig1/figure1_supfig1_e.py) | Fitted learning curve across Day 0 trials, R+ vs R-, realigned to each mouse's first hit trial |
+| 1-S1f | [`figures/figure1_supfig1/figure1_supfig1_f.py`](figures/figure1_supfig1/figure1_supfig1_f.py) | Day 0 lick probability for whisker, auditory, and no-stim trial types on a common time axis (minutes from session start) |
+| 1-S1g, h | [`figures/figure1_supfig1/figure1_supfig1_g_h.py`](figures/figure1_supfig1/figure1_supfig1_g_h.py) | Reaction times for auditory, whisker, and no-stim hit trials |
 | **Figure 2 – supplement** | | |
 | S2b | [`figures/supp_2/supp_2b.py`](figures/supp_2/supp_2b.py) | Example mapping-trial PSTHs for three illustrative cells across learning days |
 | S2c | [`figures/supp_2/supp_2c.py`](figures/supp_2/supp_2c.py) | Relationship between classifier weights and the Learning Modulation Index (LMI) |

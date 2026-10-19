@@ -1,5 +1,5 @@
 """
-Supplementary Figure 1f: Day 0 lick probability for whisker, auditory, and
+Figure 1—figure supplement 1f: Day 0 lick probability for whisker, auditory, and
 no-stim trial types on a common time axis (minutes from session start).
 
 Traces are interpolated onto a regular time grid per mouse and cut at the
@@ -141,10 +141,10 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_1f.svg'))
-    print("Saved: supp_1f.svg")
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure1_supfig1_f.svg'))
+    print("Saved: figure1_supfig1_f.svg")
 
-    df_interp.to_csv(os.path.join(OUTPUT_DIR, 'supp_1f_data.csv'), index=False)
-    print("Saved: supp_1f_data.csv")
+    df_interp.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_f_data.csv'), index=False)
+    print("Saved: figure1_supfig1_f_data.csv")
 
     plt.close()

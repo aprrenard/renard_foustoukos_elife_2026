@@ -8,6 +8,7 @@ Usage (repo root): python tools/update_figure_table.py
 """
 
 import ast
+import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -17,7 +18,7 @@ SECTIONS = [
     ('figure_2', 'Figure 2'),
     ('figure_3', 'Figure 3'),
     ('figure_4', 'Figure 4'),
-    ('supp_1', 'Figure 1 – supplement'),
+    ('figure1_supfig1', 'Figure 1 – figure supplement 1'),
     ('supp_2', 'Figure 2 – supplement'),
     ('supp_3', 'Figure 3 – supplement'),
     ('supp_4', 'Figure 4 – supplement'),
@@ -36,7 +37,12 @@ def describe(path):
 
 
 def panel_label(stem):
-    """figure_3h_j -> '3h–j' (range), supp_3c_d_g_h -> 'S3c, d, g, h'."""
+    """figure_3h_j -> '3h–j' (range), supp_3c_d_g_h -> 'S3c, d, g, h',
+    figure1_supfig1_g_h -> '1-S1g, h'."""
+    match = re.fullmatch(r'figure(\d+)_supfig(\d+)_(.+)', stem)
+    if match:
+        figure, supplement, letters = match.groups()
+        return f"{figure}-S{supplement}" + ', '.join(letters.split('_'))
     prefix = 'S' if stem.startswith('supp_') else ''
     number_and_letters = stem.split('_', 1)[1].split('_')
     first, letters = number_and_letters[0], number_and_letters[1:]

@@ -1,5 +1,5 @@
 """
-Supplementary Figure 1b: Whisker lick probability on Days 0, +1, +2 for R+ vs R-.
+Figure 1—figure supplement 1b: Whisker lick probability on Days 0, +1, +2 for R+ vs R-.
 
 Bar plot (mean) with individual mouse dots per day, comparing reward groups.
 P-values from per-day Mann-Whitney U tests (two-sided).
@@ -117,13 +117,13 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_1b.svg'))
-    print("Saved: supp_1b.svg")
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure1_supfig1_b.svg'))
+    print("Saved: figure1_supfig1_b.svg")
 
-    avg_performance.to_csv(os.path.join(OUTPUT_DIR, 'supp_1b_data.csv'), index=False)
-    print("Saved: supp_1b_data.csv")
+    avg_performance.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_b_data.csv'), index=False)
+    print("Saved: figure1_supfig1_b_data.csv")
 
-    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1b_stats.csv'), index=False)
-    print("Saved: supp_1b_stats.csv")
+    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_b_stats.csv'), index=False)
+    print("Saved: figure1_supfig1_b_stats.csv")
 
     plt.close()

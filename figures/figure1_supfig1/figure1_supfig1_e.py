@@ -1,6 +1,6 @@
 """
-Supplementary Figure 1d: Single-trial whisker hit rate across Day 0 trials,
-R+ vs R- (non-realigned).
+Figure 1—figure supplement 1e: Fitted learning curve across Day 0 trials, R+ vs R-,
+realigned to each mouse's first hit trial.
 
 Per-trial Mann-Whitney U tests with FDR correction; significant trials shown
 as a colour bar at the top of the panel.
@@ -38,20 +38,38 @@ bh_path = os.path.join(
 if __name__ == '__main__':
     table = pd.read_csv(bh_path)
 
-    df = table.loc[(table['whisker_stim'] == 1) & (table['day'] == DAY)]
-    df = df.loc[df['trial_w'] < MAX_TRIALS]
+    df_base = table.loc[(table['whisker_stim'] == 1) & (table['day'] == DAY)]
+    df_base = df_base.loc[df_base['trial_w'] < MAX_TRIALS]
+
+    # ============================================================================
+    # Realign to first hit per mouse
+    # ============================================================================
+
+    def realign_to_first_hit(data):
+        realigned = []
+        for mouse in data['mouse_id'].unique():
+            md = data[data['mouse_id'] == mouse].copy().sort_values('trial_w')
+            first_hit_idx = md[md['outcome_w'] == 1].index
+            if len(first_hit_idx) > 0:
+                first_hit_trial = md.loc[first_hit_idx[0], 'trial_w']
+                md['trial_w_realigned'] = md['trial_w'] - first_hit_trial
+                realigned.append(md)
+        return pd.concat(realigned, ignore_index=True)
+
+    df = realign_to_first_hit(df_base)
+    df = df.loc[(df['trial_w_realigned'] >= 0) & (df['trial_w_realigned'] < MAX_TRIALS)]
 
     # ============================================================================
     # Statistics: per-trial Mann-Whitney U with FDR correction
     # ============================================================================
 
     p_values_raw = []
-    for trial_w in sorted(df['trial_w'].unique()):
-        rp = df[(df['trial_w'] == trial_w) & (df['reward_group'] == 'R+')]['outcome_w']
-        rm = df[(df['trial_w'] == trial_w) & (df['reward_group'] == 'R-')]['outcome_w']
+    for trial_w in sorted(df['trial_w_realigned'].unique()):
+        rp = df[(df['trial_w_realigned'] == trial_w) & (df['reward_group'] == 'R+')]['learning_curve_w']
+        rm = df[(df['trial_w_realigned'] == trial_w) & (df['reward_group'] == 'R-')]['learning_curve_w']
         if len(rp) > 0 and len(rm) > 0:
             stat, p = mannwhitneyu(rp, rm, alternative='two-sided')
-            p_values_raw.append({'trial_w': trial_w, 'statistic': stat, 'p_value_raw': p})
+            p_values_raw.append({'trial_w_realigned': trial_w, 'statistic': stat, 'p_value_raw': p})
 
     stats_df = pd.DataFrame(p_values_raw)
     _, corrected, _, _ = multipletests(stats_df['p_value_raw'], alpha=0.05, method='fdr_bh')
@@ -70,25 +88,27 @@ if __name__ == '__main__':
 
     sns.lineplot(
         data=df,
-        x='trial_w',
-        y='outcome_w',
+        x='trial_w_realigned',
+        y='learning_curve_w',
         hue='reward_group',
         hue_order=['R+', 'R-'],
         palette=reward_palette[::-1],
         errorbar='ci',
         err_style='band',
         ax=ax,
-        legend=False,
         seed=0,
     )
 
     for _, row in stats_df.iterrows():
         color = cmap(norm(min(row['p_value_fdr'], 0.05)))
-        ax.add_patch(plt.Rectangle((row['trial_w'] - 0.4, 0.95), 0.8, 0.03, color=color, edgecolor='none'))
+        ax.add_patch(
+            plt.Rectangle((row['trial_w_realigned'] - 0.4, 0.95), 0.8, 0.03, color=color, edgecolor='none')
+        )
 
-    ax.set_xlabel('Whisker trial')
-    ax.set_ylabel('Hit rate')
+    ax.set_xlabel('Whisker trial (from first hit)')
+    ax.set_ylabel('Lick probability')
     ax.set_ylim(-0.1, 1)
+    ax.legend(frameon=False, title='Reward group')
     sns.despine()
 
     # ============================================================================
@@ -97,13 +117,13 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_1d.svg'))
-    print("Saved: supp_1d.svg")
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure1_supfig1_e.svg'))
+    print("Saved: figure1_supfig1_e.svg")
 
-    df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1d_data.csv'), index=False)
-    print("Saved: supp_1d_data.csv")
+    df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_e_data.csv'), index=False)
+    print("Saved: figure1_supfig1_e_data.csv")
 
-    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1d_stats.csv'), index=False)
-    print("Saved: supp_1d_stats.csv")
+    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_e_stats.csv'), index=False)
+    print("Saved: figure1_supfig1_e_stats.csv")
 
     plt.close()

@@ -1,5 +1,5 @@
 """
-Supplementary Figure 1c: Particle test — whisker hit rate and false alarm rate
+Figure 1—figure supplement 1c: Particle test — whisker hit rate and false alarm rate
 across ON / OFF / ON periods (R+ mice only).
 
 Three panels:
@@ -201,12 +201,12 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_1c.svg'))
-    print("Saved: supp_1c.svg")
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure1_supfig1_c.svg'))
+    print("Saved: figure1_supfig1_c.svg")
 
-    df_w.to_csv(os.path.join(OUTPUT_DIR, 'supp_1c_data_whisker.csv'), index=False)
-    df_ns.to_csv(os.path.join(OUTPUT_DIR, 'supp_1c_data_nostim.csv'), index=False)
-    df_off.to_csv(os.path.join(OUTPUT_DIR, 'supp_1c_data_off.csv'), index=False)
+    df_w.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_c_data_whisker.csv'), index=False)
+    df_ns.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_c_data_nostim.csv'), index=False)
+    df_off.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_c_data_off.csv'), index=False)
     print("Saved: data CSVs")
 
     pd.DataFrame(
@@ -217,7 +217,7 @@ if __name__ == '__main__':
             {'comparison': 'no-stim OFF vs ON2', 'test': 'Wilcoxon', 'statistic': stat4, 'p_value': p4},
             {'comparison': 'OFF: whisker hit vs FA', 'test': 'Wilcoxon', 'statistic': stat5, 'p_value': p5},
         ]
-    ).to_csv(os.path.join(OUTPUT_DIR, 'supp_1c_stats.csv'), index=False)
-    print("Saved: supp_1c_stats.csv")
+    ).to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_c_stats.csv'), index=False)
+    print("Saved: figure1_supfig1_c_stats.csv")
 
     plt.close()

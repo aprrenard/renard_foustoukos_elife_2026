@@ -1,5 +1,5 @@
 """
-Supplementary Figure 1a: First hit trial on Day 0 for R+ vs R-.
+Figure 1—figure supplement 1a: First hit trial on Day 0 for R+ vs R-.
 
 Bar plot (mean) with individual mouse dots showing the trial number of the
 first whisker hit on Day 0, comparing reward groups.
@@ -92,11 +92,11 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_1a.svg'))
-    print("Saved: supp_1a.svg")
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure1_supfig1_a.svg'))
+    print("Saved: figure1_supfig1_a.svg")
 
-    fh.to_csv(os.path.join(OUTPUT_DIR, 'supp_1a_data.csv'), index=False)
-    print("Saved: supp_1a_data.csv")
+    fh.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_a_data.csv'), index=False)
+    print("Saved: figure1_supfig1_a_data.csv")
 
     stats_df = pd.DataFrame(
         [
@@ -110,7 +110,7 @@ if __name__ == '__main__':
             }
         ]
     )
-    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_1a_stats.csv'), index=False)
-    print("Saved: supp_1a_stats.csv")
+    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_a_stats.csv'), index=False)
+    print("Saved: figure1_supfig1_a_stats.csv")
 
     plt.close()
