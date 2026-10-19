@@ -187,16 +187,13 @@ def panel_h_correlation_matrices(
     vmax = np.nanpercentile(avg_corr_rew, 99)
     vmin = 0
 
-    fig = plt.figure(figsize=panel_size(2, h=1.1))
-    gs = fig.add_gridspec(1, 3, width_ratios=[1, 1, 0.05], wspace=0.25)
-    ax0 = fig.add_subplot(gs[0, 0])
-    ax1 = fig.add_subplot(gs[0, 1])
-    ax_cbar = fig.add_subplot(gs[0, 2])
+    # Square matrices (equal aspect), colour bar the height of the matrices.
+    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=panel_size(2, h=1.1), layout='constrained')
 
     edges = np.cumsum([N_MAP_TRIALS] * len(DAYS))
 
     # R+ group
-    ax0.imshow(avg_corr_rew, cmap='viridis', vmax=vmax, vmin=vmin, aspect='auto')
+    ax0.imshow(avg_corr_rew, cmap='viridis', vmax=vmax, vmin=vmin, aspect='equal')
     for edge in edges[:-1] - 0.5:
         ax0.axvline(x=edge, color='white', linestyle='-', linewidth=1)
         ax0.axhline(y=edge, color='white', linestyle='-', linewidth=1)
@@ -209,7 +206,7 @@ def panel_h_correlation_matrices(
     ax0.set_title(f'R+ Group (N={len(mice_rew)} mice)')
 
     # R- group
-    im1 = ax1.imshow(avg_corr_nonrew, cmap='viridis', vmax=vmax, vmin=vmin, aspect='auto')
+    im1 = ax1.imshow(avg_corr_nonrew, cmap='viridis', vmax=vmax, vmin=vmin, aspect='equal')
     for edge in edges[:-1] - 0.5:
         ax1.axvline(x=edge, color='white', linestyle='-', linewidth=1)
         ax1.axhline(y=edge, color='white', linestyle='-', linewidth=1)
@@ -225,9 +222,8 @@ def panel_h_correlation_matrices(
         'spearman': 'Spearman Correlation',
         'cosine': 'Cosine Similarity',
     }[similarity_metric]
-    cbar = fig.colorbar(im1, cax=ax_cbar, label=metric_label)
-    cbar.set_ticks([vmin, vmax])
-    plt.tight_layout()
+    cbar = fig.colorbar(im1, ax=[ax0, ax1], label=metric_label, shrink=0.8, aspect=15)
+    cbar.set_ticks([vmin, vmax], labels=[f'{vmin:.2f}', f'{vmax:.2f}'])
 
     # Save figure
     os.makedirs(output_dir, exist_ok=True)

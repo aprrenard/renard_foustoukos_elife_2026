@@ -1,16 +1,16 @@
 """
-Figure 3l-n: Decoding analyses
+Figure 5b-d: Decoding analyses (Figure 3l-n of the submitted version; 5a is
+a schematic)
 
-This script generates Panels l-n for Figure 3:
-- Panel l: Pre vs post learning decoding accuracy per reward group
-- Panel m: Pairwise day decoding with fixed pre/post decoder (accuracy matrix)
-- Panel n: Does day 0 activity resemble pre or post learning? (pre vs day0 / day0 vs post)
+- Panel b: Pre vs post learning decoding accuracy per reward group
+- Panel c: Pairwise day decoding with fixed pre/post decoder (accuracy matrix)
+- Panel d: Does day 0 activity resemble pre or post learning? (pre vs day0 / day0 vs post)
 
 Population responses come from fast_learning.decoding. The per-mouse decoder
-reused by Fig. 4b-c is trained separately (pipeline/06_decoder.py).
+reused by the Day-0 projection figure (Fig. 4b-c of the submitted version) is trained separately (pipeline/06_decoder.py).
 
-Outputs: <figures_dir>/Figure3/figure_3{l,m,n}.svg, with
-         figure_3X_data.csv (plotted data) and figure_3X_stats.csv (tests).
+Outputs: <figures_dir>/Figure5/figure_5{b,c,d}.pdf, with
+         figure_5X_data.csv (plotted data) and figure_5X_stats.csv (tests).
 """
 
 import os
@@ -37,7 +37,7 @@ from fast_learning.stats import significance_stars as _significance_stars
 # Parameters
 # ============================================================================
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure5')
 
 
 # ============================================================================
@@ -102,7 +102,7 @@ def _per_mouse_cv_accuracy(vectors, label_encoder, seed=42, n_shuffles=100, n_jo
 
 
 # ============================================================================
-# Panel l: Pre vs post learning decoding accuracy
+# Panel b: Pre vs post learning decoding accuracy
 # ============================================================================
 
 
@@ -120,15 +120,15 @@ def panel_l_decoding_accuracy(
     dpi=300,
 ):
     """
-    Generate Figure 3 Panel l: Pre vs post learning decoding accuracy.
+    Generate Figure 5 Panel b: Pre vs post learning decoding accuracy.
 
     Trains a logistic regression classifier per mouse to distinguish pre-learning
     (days -2, -1) from post-learning (days +1, +2) population activity patterns.
     Compares cross-validated accuracy between R+ and R- groups.
 
     Saves:
-        figure_3l_data.csv: per-mouse accuracy and chance accuracy
-        figure_3l_stats.csv: Mann-Whitney U (R+ vs R-) and Wilcoxon (accuracy vs chance)
+        figure_5b_data.csv: per-mouse accuracy and chance accuracy
+        figure_5b_stats.csv: Mann-Whitney U (R+ vs R-) and Wilcoxon (accuracy vs chance)
     """
     if vectors_rew is None or vectors_nonrew is None:
         vectors_rew, vectors_nonrew, mice_rew, mice_nonrew = load_and_process_data(
@@ -185,9 +185,9 @@ def panel_l_decoding_accuracy(
 
     # Save figure
     os.makedirs(output_dir, exist_ok=True)
-    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_3l.{save_format}'))
+    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_5b.{save_format}'))
     plt.close()
-    print(f"Figure 3l saved to: {os.path.join(output_dir, 'figure_3l.' + save_format)}")
+    print(f"Figure 5b saved to: {os.path.join(output_dir, 'figure_5b.' + save_format)}")
 
     # Save CSVs
     data_df = pd.DataFrame(
@@ -198,13 +198,13 @@ def panel_l_decoding_accuracy(
             'chance_accuracy': np.concatenate([chance_rew, chance_nonrew]),
         }
     )
-    data_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_3l_data.csv'), index=False)
-    pd.DataFrame(stats_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure_3l_stats.csv'), index=False)
-    print(f"Figure 3l data/stats saved to: {OUTPUT_DIR}")
+    data_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_5b_data.csv'), index=False)
+    pd.DataFrame(stats_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure_5b_stats.csv'), index=False)
+    print(f"Figure 5b data/stats saved to: {OUTPUT_DIR}")
 
 
 # ============================================================================
-# Panel m: Pairwise day decoding with fixed pre/post decoder
+# Panel c: Pairwise day decoding with fixed pre/post decoder
 # ============================================================================
 
 
@@ -318,15 +318,15 @@ def panel_m_pairwise_decoding(
     dpi=300,
 ):
     """
-    Generate Figure 3 Panel m: Pairwise day decoding with fixed pre/post decoder.
+    Generate Figure 5 Panel c: Pairwise day decoding with fixed pre/post decoder.
 
     Trains a classifier to distinguish pre (-2, -1) from post (+1, +2) activity,
     then applies it to decode all pairs of days (including day 0) to show when
     activity transitions from pre-like to post-like.
 
     Saves:
-        figure_3l_data.csv: per-mouse accuracy for each (day_i, day_j) pair
-        figure_3l_stats.csv: Mann-Whitney U (R+ vs R-) for each day pair
+        figure_5c_data.csv: per-mouse accuracy for each (day_i, day_j) pair
+        figure_5c_stats.csv: Mann-Whitney U (R+ vs R-) for each day pair
     """
     if vectors_rew is None or vectors_nonrew is None:
         vectors_rew, vectors_nonrew, mice_rew, mice_nonrew = load_and_process_data(
@@ -430,9 +430,9 @@ def panel_m_pairwise_decoding(
 
     # Save figure
     os.makedirs(output_dir, exist_ok=True)
-    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_3m.{save_format}'))
+    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_5c.{save_format}'))
     plt.close()
-    print(f"Figure 3m saved to: {os.path.join(output_dir, 'figure_3m.' + save_format)}")
+    print(f"Figure 5c saved to: {os.path.join(output_dir, 'figure_5c.' + save_format)}")
 
     # Save CSVs
     records = []
@@ -452,13 +452,13 @@ def panel_m_pairwise_decoding(
                             'accuracy': matrices[m_idx, i, j],
                         }
                     )
-    pd.DataFrame(records).to_csv(os.path.join(OUTPUT_DIR, 'figure_3m_data.csv'), index=False)
-    pd.DataFrame(stats_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure_3m_stats.csv'), index=False)
-    print(f"Figure 3m data/stats saved to: {OUTPUT_DIR}")
+    pd.DataFrame(records).to_csv(os.path.join(OUTPUT_DIR, 'figure_5c_data.csv'), index=False)
+    pd.DataFrame(stats_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure_5c_stats.csv'), index=False)
+    print(f"Figure 5c data/stats saved to: {OUTPUT_DIR}")
 
 
 # ============================================================================
-# Panel n: Does day 0 look more like pre or post?
+# Panel d: Does day 0 look more like pre or post?
 # ============================================================================
 
 
@@ -477,7 +477,7 @@ def panel_n_day0_classification(
     dpi=300,
 ):
     """
-    Generate Figure 3 Panel n: Does day 0 activity resemble pre or post learning?
+    Generate Figure 5 Panel d: Does day 0 activity resemble pre or post learning?
 
     Extracts from the fixed-decoder pairwise matrix:
     - Pre vs Day 0: average decoding accuracy between pre days (-2, -1) and day 0
@@ -485,8 +485,8 @@ def panel_n_day0_classification(
     Plots both comparisons per reward group.
 
     Saves:
-        figure_3n_data.csv: per-mouse pre_vs_day0 and day0_vs_post accuracies
-        figure_3n_stats.csv: Wilcoxon (each condition vs chance and paired) +
+        figure_5d_data.csv: per-mouse pre_vs_day0 and day0_vs_post accuracies
+        figure_5d_stats.csv: Wilcoxon (each condition vs chance and paired) +
                              Mann-Whitney U (R+ vs R- per comparison)
     """
     if vectors_rew is None or vectors_nonrew is None:
@@ -594,9 +594,9 @@ def panel_n_day0_classification(
 
     # Save figure
     os.makedirs(output_dir, exist_ok=True)
-    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_3n.{save_format}'))
+    save_figure(plt.gcf(), os.path.join(output_dir, f'figure_5d.{save_format}'))
     plt.close()
-    print(f"Figure 3n saved to: {os.path.join(output_dir, 'figure_3n.' + save_format)}")
+    print(f"Figure 5d saved to: {os.path.join(output_dir, 'figure_5d.' + save_format)}")
 
     # Save CSVs
     data_df = pd.DataFrame(
@@ -617,9 +617,9 @@ def panel_n_day0_classification(
             ),
         }
     )
-    data_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_3n_data.csv'), index=False)
-    pd.DataFrame(stats_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure_3n_stats.csv'), index=False)
-    print(f"Figure 3n data/stats saved to: {OUTPUT_DIR}")
+    data_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_5d_data.csv'), index=False)
+    pd.DataFrame(stats_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure_5d_stats.csv'), index=False)
+    print(f"Figure 5d data/stats saved to: {OUTPUT_DIR}")
 
 
 # ============================================================================

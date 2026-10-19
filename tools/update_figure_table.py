@@ -21,6 +21,7 @@ SECTIONS = [
     ('figure2_supfig2', 'Figure 2 – figure supplement 2'),
     ('figure_3', 'Figure 3'),
     ('figure_4', 'Figure 4'),
+    ('figure_5', 'Figure 5'),
     ('supp_2', 'Figure 2 – supplement'),
     ('supp_3', 'Figure 3 – supplement'),
     ('supp_4', 'Figure 4 – supplement'),
