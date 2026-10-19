@@ -35,6 +35,7 @@ TABLE_PATH = os.path.join(
     paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
 )
 N_TRIALS = 120
+XLIM = (0, 100)  # whisker trials shown
 
 # p-value colour code: p > 0.05 white; p <= 0.05 a log10 gradient from a
 # visible grey at p = 0.05 down to black at PVALUE_FLOOR and below.
@@ -95,6 +96,7 @@ def curve_panel(ax, df, y, stats, ylabel, ylim, legend=False, zero_line=False):
     if zero_line:
         ax.axhline(0, color='grey', linestyle='--', linewidth=0.6)
     ax.set_ylim(*ylim)
+    ax.set_xlim(*XLIM)
     ax.set_xlabel('Whisker trial')
     ax.set_ylabel(ylabel)
     if legend:
