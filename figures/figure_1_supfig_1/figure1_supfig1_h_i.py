@@ -1,9 +1,9 @@
 """
-Figure 1—figure supplement 1g_h: Reaction times for auditory, whisker, and no-stim
+Figure 1—figure supplement 1h-i: Reaction times for auditory, whisker, and no-stim
 hit trials.
 
-Panel g: Mean reaction time per stimulus type across days (bar plot).
-Panel h: Mean reaction time across trials within Day 0 (line plot).
+Panel h: Mean reaction time per stimulus type across days (bar plot).
+Panel i: Mean reaction time across trials within Day 0 (line plot).
 
 Only hit trials (lick_flag == 1 and outcome == 1) are included.
 """
@@ -34,7 +34,7 @@ from fast_learning.stats import format_p
 
 DAYS = [-2, -1, 0, 1, 2]
 MAX_TRIALS_RT = 100
-MIN_MICE_PER_TRIAL = 5  # minimum mice required to plot a trial bin in panel h
+MIN_MICE_PER_TRIAL = 5  # minimum mice required to plot a trial bin in panel i
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure1_SupFig1')
 
 # (filter_col, outcome_col, trial_col, label, rp_palette_idx, rm_palette_idx)
@@ -66,7 +66,7 @@ if __name__ == '__main__':
         table.loc[mask, trial_col] = table[mask].groupby(['mouse_id', 'session_id']).cumcount()
 
     # ============================================================================
-    # Panel g: per-mouse mean RT per stim type × day
+    # Panel h: per-mouse mean RT per stim type × day
     # ============================================================================
 
     rt_rows = []
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     rt_df = pd.DataFrame(rt_rows)
 
     # ============================================================================
-    # Stats panel g: Mann-Whitney R+ vs R- per stim type × day
+    # Stats panel h: Mann-Whitney R+ vs R- per stim type × day
     # ============================================================================
 
     stats_g_rows = []
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     plt.tight_layout()
 
     # ============================================================================
-    # Panel h: mean RT across trials within Day 0
+    # Panel i: mean RT across trials within Day 0
     # ============================================================================
 
     fig_h, axes_h = plt.subplots(1, 3, figsize=panel_size(3), sharey=True)
@@ -225,7 +225,7 @@ if __name__ == '__main__':
     plt.tight_layout()
 
     # ============================================================================
-    # Stats panel h: Mann-Whitney R+ vs R- per stim type × trial bin
+    # Stats panel i: Mann-Whitney R+ vs R- per stim type × trial bin
     # ============================================================================
 
     stats_h_rows = []
@@ -269,22 +269,22 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig_g, os.path.join(OUTPUT_DIR, 'figure1_supfig1_g.svg'))
-    print("Saved: figure1_supfig1_g.svg")
-
-    save_figure(fig_h, os.path.join(OUTPUT_DIR, 'figure1_supfig1_h.svg'))
+    save_figure(fig_g, os.path.join(OUTPUT_DIR, 'figure1_supfig1_h.svg'))
     print("Saved: figure1_supfig1_h.svg")
 
-    rt_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_g_data.csv'), index=False)
-    print("Saved: figure1_supfig1_g_data.csv")
+    save_figure(fig_h, os.path.join(OUTPUT_DIR, 'figure1_supfig1_i.svg'))
+    print("Saved: figure1_supfig1_i.svg")
 
-    stats_g_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_g_stats.csv'), index=False)
-    print("Saved: figure1_supfig1_g_stats.csv")
-
-    pd.DataFrame(rt_day0_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_h_data.csv'), index=False)
+    rt_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_h_data.csv'), index=False)
     print("Saved: figure1_supfig1_h_data.csv")
 
-    stats_h_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_h_stats.csv'), index=False)
+    stats_g_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_h_stats.csv'), index=False)
     print("Saved: figure1_supfig1_h_stats.csv")
+
+    pd.DataFrame(rt_day0_rows).to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_i_data.csv'), index=False)
+    print("Saved: figure1_supfig1_i_data.csv")
+
+    stats_h_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_i_stats.csv'), index=False)
+    print("Saved: figure1_supfig1_i_stats.csv")
 
     plt.close()

@@ -48,7 +48,7 @@ def describe(path):
 
 def panel_label(stem):
     """figure_3h_j -> '3h–j' (range), supp_3c_d_g_h -> 'S3c, d, g, h',
-    figure2_supfig1_a_d -> '2-S1a–d', figure1_supfig1_g_h -> '1-S1g, h'."""
+    figure2_supfig1_a_d -> '2-S1a–d', figure1_supfig1_h_i -> '1-S1h, i'."""
     match = re.fullmatch(r'figure(\d+)_supfig(\d+)_(.+)', stem)
     if match:
         figure, supplement, letters = match.groups()

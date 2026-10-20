@@ -10,7 +10,7 @@ Lines: mean across mice with 95% CI. Per-trial Mann-Whitney U test R+ vs R-,
 FDR-corrected (Benjamini-Hochberg) over trials; p-values shown as a grey
 scale above the curves (white: p > 0.05), with a shared colour bar.
 
-The raw single-trial outcomes are in Figure 1—figure supplement 1d.
+The raw single-trial outcomes are in Figure 1—figure supplement 1e.
 
 Input: behavior_imagingmice_table_5days_cut_with_learning_curves.csv.
 Outputs: <figures_dir>/Figure1/figure_1d.pdf, figure_1d_learning_data.csv,

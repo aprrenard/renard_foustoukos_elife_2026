@@ -1,21 +1,22 @@
 """
-Figure 1—figure supplement 1f: Day 0 lick probability for whisker, auditory, and
-no-stim trial types on a common time axis (minutes from session start).
+Figure 1—figure supplement 1f: Fitted learning curve across Day 0 trials, R+ vs R-,
+realigned to each mouse's first hit trial.
 
-Traces are interpolated onto a regular time grid per mouse and cut at the
-100th whisker trial. R+ and R- share the same axis; colour encodes stimulus
-type × reward group.
+Per-trial Mann-Whitney U tests with FDR correction; significant trials shown
+as a colour bar at the top of the panel.
 """
 
 import os
 
+import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy.stats import mannwhitneyu
+from statsmodels.stats.multitest import multipletests
 
 from fast_learning import paths
-from fast_learning.plotting import behavior_palette, save_figure, set_style, panel_size
+from fast_learning.plotting import reward_palette, save_figure, set_style, panel_size
 
 
 # ============================================================================
@@ -23,13 +24,12 @@ from fast_learning.plotting import behavior_palette, save_figure, set_style, pan
 # ============================================================================
 
 DAY = 0
-TIME_RESOLUTION = 5  # seconds between interpolation grid points
-MAX_WHISKER_TRIALS = 100
+MAX_TRIALS = 100
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure1_SupFig1')
 
 
 # ============================================================================
-# Load data
+# Load and prepare data
 # ============================================================================
 
 bh_path = os.path.join(
@@ -37,72 +37,43 @@ bh_path = os.path.join(
 )
 if __name__ == '__main__':
     table = pd.read_csv(bh_path)
-    df_day0 = table.loc[table['day'] == DAY].copy()
+
+    df_base = table.loc[(table['whisker_stim'] == 1) & (table['day'] == DAY)]
+    df_base = df_base.loc[df_base['trial_w'] < MAX_TRIALS]
 
     # ============================================================================
-    # Interpolate learning curves onto common time grid
+    # Realign to first hit per mouse
     # ============================================================================
 
-    stim_type_map = {
-        'whisker': ('whisker_stim', 'learning_curve_w'),
-        'auditory': ('auditory_stim', 'learning_curve_a'),
-        'no_stim': ('no_stim', 'learning_curve_ns'),
-    }
+    def realign_to_first_hit(data):
+        realigned = []
+        for mouse in data['mouse_id'].unique():
+            md = data[data['mouse_id'] == mouse].copy().sort_values('trial_w')
+            first_hit_idx = md[md['outcome_w'] == 1].index
+            if len(first_hit_idx) > 0:
+                first_hit_trial = md.loc[first_hit_idx[0], 'trial_w']
+                md['trial_w_realigned'] = md['trial_w'] - first_hit_trial
+                realigned.append(md)
+        return pd.concat(realigned, ignore_index=True)
 
-    rg_stim_colors = {
-        'R+': {
-            'whisker': behavior_palette[3],
-            'auditory': behavior_palette[1],
-            'no_stim': behavior_palette[5],
-        },
-        'R-': {
-            'whisker': behavior_palette[2],
-            'auditory': behavior_palette[0],
-            'no_stim': behavior_palette[4],
-        },
-    }
-    stim_labels = {'whisker': 'Whisker', 'auditory': 'Auditory', 'no_stim': 'No stim'}
+    df = realign_to_first_hit(df_base)
+    df = df.loc[(df['trial_w_realigned'] >= 0) & (df['trial_w_realigned'] < MAX_TRIALS)]
 
-    max_time = df_day0['stim_onset'].max()
-    time_grid = np.arange(0, max_time + TIME_RESOLUTION, TIME_RESOLUTION)
+    # ============================================================================
+    # Statistics: per-trial Mann-Whitney U with FDR correction
+    # ============================================================================
 
-    interp_records = []
-    for mouse in df_day0['mouse_id'].unique():
-        mouse_data = df_day0[df_day0['mouse_id'] == mouse]
-        reward_group = mouse_data['reward_group'].iloc[0]
+    p_values_raw = []
+    for trial_w in sorted(df['trial_w_realigned'].unique()):
+        rp = df[(df['trial_w_realigned'] == trial_w) & (df['reward_group'] == 'R+')]['learning_curve_w']
+        rm = df[(df['trial_w_realigned'] == trial_w) & (df['reward_group'] == 'R-')]['learning_curve_w']
+        if len(rp) > 0 and len(rm) > 0:
+            stat, p = mannwhitneyu(rp, rm, alternative='two-sided')
+            p_values_raw.append({'trial_w_realigned': trial_w, 'statistic': stat, 'p_value_raw': p})
 
-        whisker_onsets = (
-            mouse_data.loc[mouse_data['whisker_stim'] == 1, 'stim_onset']
-            .dropna()
-            .sort_values()
-            .reset_index(drop=True)
-        )
-        if len(whisker_onsets) == 0:
-            continue
-        cutoff_time = whisker_onsets.iloc[min(MAX_WHISKER_TRIALS, len(whisker_onsets)) - 1]
-
-        for stim_name, (stim_col, lc_col) in stim_type_map.items():
-            if lc_col not in mouse_data.columns:
-                continue
-            stim_data = mouse_data.loc[mouse_data[stim_col] == 1, ['stim_onset', lc_col]].dropna()
-            if len(stim_data) < 2:
-                continue
-
-            t_mouse = time_grid[time_grid <= cutoff_time]
-            lc_interp = np.interp(t_mouse, stim_data['stim_onset'].values, stim_data[lc_col].values)
-
-            for t, lc in zip(t_mouse, lc_interp):
-                interp_records.append(
-                    {
-                        'mouse_id': mouse,
-                        'reward_group': reward_group,
-                        'stim_type': stim_name,
-                        'time': t / 60,
-                        'lick_probability': lc,
-                    }
-                )
-
-    df_interp = pd.DataFrame(interp_records)
+    stats_df = pd.DataFrame(p_values_raw)
+    _, corrected, _, _ = multipletests(stats_df['p_value_raw'], alpha=0.05, method='fdr_bh')
+    stats_df['p_value_fdr'] = corrected
 
     # ============================================================================
     # Figure
@@ -110,30 +81,35 @@ if __name__ == '__main__':
 
     set_style()
 
-    fig, ax = plt.subplots(figsize=panel_size())
+    cmap = matplotlib.colors.LinearSegmentedColormap.from_list('pval_cmap', ['black', 'white'])
+    norm = matplotlib.colors.Normalize(vmin=0, vmax=0.05)
 
-    for rg in ['R+', 'R-']:
-        df_rg = df_interp[df_interp['reward_group'] == rg]
-        for stim_name in ['whisker', 'auditory', 'no_stim']:
-            df_stim = df_rg[df_rg['stim_type'] == stim_name]
-            sns.lineplot(
-                data=df_stim,
-                x='time',
-                y='lick_probability',
-                color=rg_stim_colors[rg][stim_name],
-                errorbar='ci',
-                err_style='band',
-                label=f'{stim_labels[stim_name]} {rg}',
-                ax=ax,
-                seed=0,
-            )
+    fig, ax = plt.subplots(figsize=panel_size(w=1.3))
 
-    ax.set_xlabel('Time from session start (min)')
+    sns.lineplot(
+        data=df,
+        x='trial_w_realigned',
+        y='learning_curve_w',
+        hue='reward_group',
+        hue_order=['R+', 'R-'],
+        palette=reward_palette[::-1],
+        errorbar='ci',
+        err_style='band',
+        ax=ax,
+        seed=0,
+    )
+
+    for _, row in stats_df.iterrows():
+        color = cmap(norm(min(row['p_value_fdr'], 0.05)))
+        ax.add_patch(
+            plt.Rectangle((row['trial_w_realigned'] - 0.4, 0.95), 0.8, 0.03, color=color, edgecolor='none')
+        )
+
+    ax.set_xlabel('Whisker trial (from first hit)')
     ax.set_ylabel('Lick probability')
-    ax.set_ylim(-0.1, 1.05)
-    ax.set_xlim(right=50)
+    ax.set_ylim(-0.1, 1)
+    ax.legend(frameon=False, title='Reward group')
     sns.despine()
-    plt.tight_layout()
 
     # ============================================================================
     # Save
@@ -144,7 +120,10 @@ if __name__ == '__main__':
     save_figure(fig, os.path.join(OUTPUT_DIR, 'figure1_supfig1_f.svg'))
     print("Saved: figure1_supfig1_f.svg")
 
-    df_interp.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_f_data.csv'), index=False)
+    df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_f_data.csv'), index=False)
     print("Saved: figure1_supfig1_f_data.csv")
+
+    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_f_stats.csv'), index=False)
+    print("Saved: figure1_supfig1_f_stats.csv")
 
     plt.close()
