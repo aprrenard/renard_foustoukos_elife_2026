@@ -1,52 +1,66 @@
 """
-Figure 2—figure supplement 1a-d: Muscimol inactivation of wS1 or fpS1 during
-task execution, in expert mice
+Figure 2—figure supplement 1a-d: Auditory performance during the
+inactivation of wS1 or fpS1 in learning
 
-A separate cohort of mice trained to expert performance, with a muscimol day
-(M 1), a Ringer control day and a second muscimol day (M 2) after two
-baseline days. No optogenetic inactivation in this cohort.
-- a, b: lick probability on whisker, auditory and catch trials across days,
-  wS1 and fpS1 mice;
-- c: whisker lick probability, wS1 vs fpS1 on each muscimol and Ringer day;
-- d: d' (whisker vs catch) on the same days.
-Bars: mean and bootstrapped 95% CI across mice; dots: mice. Mann-Whitney U
-per day (n = mice). See fast_learning.inactivation.
+The same quantification as the whisker performance of Figure 2c-d and 2f-g,
+for the auditory trials of the same sessions:
+- a, b: muscimol (Days 0, +1, +2): auditory lick probability and d'
+  (auditory vs catch), wS1 vs fpS1;
+- c, d: optogenetics (light on Day 0, no light on Day +1): the same.
+Auditory d' = Z(auditory hit rate) - Z(catch false-alarm rate), from trial
+counts with the log-linear correction. Bars: mean and bootstrapped 95% CI
+across mice; dots: mice. Mann-Whitney U per day (n = mice). See
+fast_learning.inactivation.
+
+Panels e-h (inactivation during execution) are in figure2_supfig1_e_h.py.
 
 Outputs: <figures_dir>/Figure2_SupFig1/figure2_supfig1_a_d.pdf,
-figure2_supfig1_a_d_data.csv (session), figure2_supfig1_c_stats.csv,
-figure2_supfig1_d_stats.csv.
+figure2_supfig1_a_d_data.csv (session), figure2_supfig1_a_d_stats.csv.
 """
 
 import os
 
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from fast_learning import inactivation as inact
 from fast_learning import paths
 from fast_learning.plotting import panel_size, set_style
 
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure2_SupFig1')
-COHORT = inact.MUSCIMOL_EXECUTION
-TESTED = ['M 1', 'Ringer', 'M 2']
+# (name, cohort, tested day labels, their tick labels, title), as Figure 2.
+COHORTS = [
+    ('muscimol', inact.MUSCIMOL_LEARNING, ['M 1', 'M 2', 'M 3'], ['0', '+1', '+2'], 'Muscimol'),
+    ('optogenetics', inact.OPTO_LEARNING, ['0', '+1'], ['0', '+1'], 'Optogenetics'),
+]
 
 
 if __name__ == '__main__':
-    sessions = inact.session_table(COHORT)
-    stats = {y: inact.area_stats(sessions, y, TESTED) for y in ('p_whisker', 'dprime')}
-
     set_style()
-    fig, axes = plt.subplots(1, 4, figsize=panel_size(4, w=1.1))
-    for ax, area in zip(axes[:2], inact.AREAS):
-        inact.timecourse(ax, sessions, area, list(COHORT.labels), 'Muscimol during execution')
-    for ax, y in zip(axes[2:], stats):
-        inact.area_bars(ax, sessions, stats[y], TESTED, y, legend=ax is axes[-1])
-    axes[-1].set_ylim(-0.2, 4)  # d' never below 0 here (minimum -0.02)
-    axes[-1].set_yticks(range(5))
+    widths = [2 + len(c[2]) for c in COHORTS for _ in inact.AUDITORY_MEASURES]
+    fig, axes = plt.subplots(1, 4, figsize=panel_size(4, w=1.2), gridspec_kw={'width_ratios': widths})
+    all_sessions, all_stats = [], []
+    for i, (name, cohort, tested, tested_labels, title) in enumerate(COHORTS):
+        sessions = inact.session_table(cohort)
+        shown = sessions.assign(
+            day_label=sessions['day_label'].cat.rename_categories(dict(zip(tested, tested_labels)))
+        )
+        for j, y in enumerate(inact.AUDITORY_MEASURES):
+            stats = inact.area_stats(sessions, y, tested).assign(cohort=name)
+            ax = axes[2 * i + j]
+            s = stats.replace({'day': dict(zip(tested, tested_labels))})
+            inact.area_bars(ax, shown, s, tested_labels, y, title=title, legend=ax is axes[-1])
+            if y == 'p_auditory':  # most mice at 100%: room for the p-values
+                ax.set_ylim(0, 110)
+                ax.set_yticks(range(0, 101, 20))
+            ax.set_xlabel('Day')
+            all_stats.append(stats)
+        all_sessions.append(sessions.assign(cohort=name))
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     inact.save(fig, os.path.join(OUTPUT_DIR, 'figure2_supfig1_a_d.pdf'))
 
-    sessions.to_csv(os.path.join(OUTPUT_DIR, 'figure2_supfig1_a_d_data.csv'), index=False)
-    stats['p_whisker'].to_csv(os.path.join(OUTPUT_DIR, 'figure2_supfig1_c_stats.csv'), index=False)
-    stats['dprime'].to_csv(os.path.join(OUTPUT_DIR, 'figure2_supfig1_d_stats.csv'), index=False)
-    for y, s in stats.items():
-        print(y, s[['day', 'n_1', 'n_2', 'median_1', 'median_2', 'p_value']].round(4).to_string(index=False))
+    pd.concat(all_sessions).to_csv(os.path.join(OUTPUT_DIR, 'figure2_supfig1_a_d_data.csv'), index=False)
+    stats = pd.concat(all_stats)
+    stats.to_csv(os.path.join(OUTPUT_DIR, 'figure2_supfig1_a_d_stats.csv'), index=False)
+    cols = ['cohort', 'measure', 'day', 'n_1', 'n_2', 'median_1', 'median_2', 'p_value']
+    print(stats[cols].round(4).to_string(index=False))

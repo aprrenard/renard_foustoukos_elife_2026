@@ -4,8 +4,9 @@ comparison with the naive R+ imaging mice, and shared plots.
 A cohort is the trial table of one inactivation experiment, with the
 inactivated area of each mouse (wS1, or fpS1 as control) and the day label of
 each session from the session metadata. Per session: lick probability (%) on
-whisker, auditory and catch trials, and d' = Z(whisker hit rate) - Z(catch
-false-alarm rate) from trial counts with the log-linear correction
+whisker, auditory and catch trials, d' = Z(whisker hit rate) - Z(catch
+false-alarm rate) and auditory d' = Z(auditory hit rate) - Z(catch
+false-alarm rate), from trial counts with the log-linear correction
 (fast_learning.stats.dprime). n = mice throughout; group comparisons are
 Mann-Whitney U tests.
 """
@@ -28,7 +29,12 @@ AREAS = ['wS1', 'fpS1']
 AREA_COLORS = {'wS1': reward_palette[1], 'fpS1': '#8c8c8c'}
 OUTCOME_COLORS = {'p_whisker': reward_palette[1], 'p_auditory': stim_palette[0], 'p_catch': stim_palette[2]}
 MEASURES = {'p_whisker': 'Whisker lick probability (%)', 'dprime': "d' (whisker vs catch)"}
-YLIMS = {'p_whisker': (0, 100), 'dprime': (-1, 4)}
+AUDITORY_MEASURES = {
+    'p_auditory': 'Auditory lick probability (%)',
+    'dprime_auditory': "d' (auditory vs catch)",
+}
+LABELS = MEASURES | AUDITORY_MEASURES
+YLIMS = {'p_whisker': (0, 100), 'dprime': (-1, 4), 'p_auditory': (0, 100), 'dprime_auditory': (0, 6)}
 
 
 @dataclass(frozen=True)
@@ -100,6 +106,8 @@ def counts(trials, by):
     out = trials.groupby(by, observed=True).agg(
         n_whisker=('outcome_w', 'count'),
         hits=('outcome_w', 'sum'),
+        n_auditory=('outcome_a', 'count'),
+        auditory_hits=('outcome_a', 'sum'),
         n_catch=('outcome_c', 'count'),
         false_alarms=('outcome_c', 'sum'),
         p_whisker=('outcome_w', 'mean'),
@@ -108,6 +116,9 @@ def counts(trials, by):
     )
     out[['p_whisker', 'p_auditory', 'p_catch']] *= 100
     out['dprime'] = dprime(out['hits'], out['n_whisker'], out['false_alarms'], out['n_catch'])
+    out['dprime_auditory'] = dprime(
+        out['auditory_hits'], out['n_auditory'], out['false_alarms'], out['n_catch']
+    )
     return out.reset_index()
 
 
@@ -187,7 +198,7 @@ def bars(ax, data, x, order, hue, hue_order, colors, y, pvalues, legend=False):
         ax.axhline(0, color='grey', linestyle='--', linewidth=0.6)
     ax.set_ylim(*YLIMS[y])
     ax.set_xlabel('')
-    ax.set_ylabel(MEASURES[y])
+    ax.set_ylabel(LABELS[y])
     if legend:
         ax.legend(frameon=False, title='', loc='upper left', bbox_to_anchor=(1.0, 1.0))
 

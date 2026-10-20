@@ -103,7 +103,8 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 2b–d | [`figures/figure_2/figure_2b_d.py`](figures/figure_2/figure_2b_d.py) | Muscimol inactivation of wS1 or fpS1 during learning |
 | 2e–g | [`figures/figure_2/figure_2e_g.py`](figures/figure_2/figure_2e_g.py) | Optogenetic inactivation of wS1 or fpS1 during learning |
 | **Figure 2 – figure supplement 1** | | |
-| 2-S1a–d | [`figures/figure_2_supfig_1/figure2_supfig1_a_d.py`](figures/figure_2_supfig_1/figure2_supfig1_a_d.py) | Muscimol inactivation of wS1 or fpS1 during task execution, in expert mice |
+| 2-S1a–d | [`figures/figure_2_supfig_1/figure2_supfig1_a_d.py`](figures/figure_2_supfig_1/figure2_supfig1_a_d.py) | Auditory performance during the inactivation of wS1 or fpS1 in learning |
+| 2-S1e–h | [`figures/figure_2_supfig_1/figure2_supfig1_e_h.py`](figures/figure_2_supfig_1/figure2_supfig1_e_h.py) | Muscimol inactivation of wS1 or fpS1 during task execution, in expert mice |
 | **Figure 2 – figure supplement 2** | | |
 | 2-S2a–l | [`figures/figure_2_supfig_2/figure2_supfig2_a_l.py`](figures/figure_2_supfig_2/figure2_supfig2_a_l.py) | Learning on the first day without inactivation, compared with naive mice learning on Day 0 |
 | **Figure 3** | | |
