@@ -155,7 +155,7 @@ def select_trials_by_type(xarray_day, window=None):
 
     Mice do not lick before onset (no-lick period) nor in the 0-1 s response
     window of these trials; licks after 1 s are possible and are checked not
-    to drive events (figures/revisions/figure_6c_event_timing.py). window
+    to drive events (figures/figure_6_supfig_2/figure6_supfig2_a_b.py). window
     (start, stop) in s restricts the frames (no-lick control: NOLICK_WINDOW).
     Returns (trials, number of trials)."""
     selected = xarray_day.sel(trial=(xarray_day['no_stim'] == 1) & (xarray_day['lick_flag'] == 0))

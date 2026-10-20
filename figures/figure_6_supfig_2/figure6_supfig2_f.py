@@ -1,5 +1,6 @@
 """
-Figure 6C specificity control: shuffled-template reactivation detection.
+Figure 6—figure supplement 2f: Specificity of the reactivation events, real vs
+shuffled templates
 
 Addresses a second reviewer's specificity concern: template-matching with
 shuffled templates would help establish that detected reactivation events
@@ -36,10 +37,11 @@ in fast_learning.reactivations does not apply to event rates).
 The shuffle detection (expensive, ~n_mice x n_days x 1000 shuffles) runs
 when its cached CSVs are missing or with --recompute; otherwise the cached
 CSVs are plotted:
-    python figures/revisions/figure_6c_shuffle_control.py [--recompute]
+    python figures/figure_6_supfig_2/figure6_supfig2_f.py [--recompute]
 
-Figures and CSVs are saved to
-    paths.manuscript_output_dir/revisions/figure_6c_shuffle_control/output/.
+Outputs: <figures_dir>/Figure6_SupFig2/figure6_supfig2_f.pdf,
+figure6_supfig2_f_events_long.csv, figure6_supfig2_f_per_mouse.csv,
+figure6_supfig2_f_group_stats.csv.
 """
 
 from functools import partial
@@ -76,7 +78,7 @@ GLOBAL_SEED = 42  # fixed for reproducibility of this stochastic control
 PERCENTILE_TAG = 'p99'  # detection threshold variant to use (see plan)
 N_JOBS = 35
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_6c_shuffle_control', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure6_SupFig2')
 
 
 # ============================================================================
@@ -338,12 +340,12 @@ def _compute_group_stats(per_mouse_df):
 # ============================================================================
 
 
-def panel_4h_shuffle_control(
+def panel_shuffle_control(
     long_df,
     real_df,
     group_stats_df,
     output_dir=OUTPUT_DIR,
-    filename='figure_6c_shuffle_control',
+    filename='figure6_supfig2_f',
     save_format='svg',
     dpi=300,
 ):
@@ -433,9 +435,9 @@ if __name__ == '__main__':
     print(f"N shuffles: {N_SHUFFLES}")
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    long_csv = os.path.join(OUTPUT_DIR, 'shuffle_control_events_long.csv')
-    per_mouse_csv = os.path.join(OUTPUT_DIR, 'shuffle_control_per_mouse.csv')
-    group_csv = os.path.join(OUTPUT_DIR, 'shuffle_control_group_stats.csv')
+    long_csv = os.path.join(OUTPUT_DIR, 'figure6_supfig2_f_events_long.csv')
+    per_mouse_csv = os.path.join(OUTPUT_DIR, 'figure6_supfig2_f_per_mouse.csv')
+    group_csv = os.path.join(OUTPUT_DIR, 'figure6_supfig2_f_group_stats.csv')
 
     if args.recompute or not all(os.path.exists(p) for p in [long_csv, per_mouse_csv, group_csv]):
         r_plus_results, r_minus_results = _load_reactivation_results(results_file)
@@ -457,5 +459,5 @@ if __name__ == '__main__':
         group_stats_df = pd.read_csv(group_csv)
         real_df = per_mouse_df[['mouse_id', 'reward_group', 'day', 'real_event_frequency']]
 
-    panel_4h_shuffle_control(long_df, real_df, group_stats_df, filename='figure_6c_shuffle_control')
+    panel_shuffle_control(long_df, real_df, group_stats_df, filename='figure6_supfig2_f')
     print("\nDone.")

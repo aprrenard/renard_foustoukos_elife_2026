@@ -1,6 +1,6 @@
 """
-Figure 6c revision: does the reactivation rate depend on the outcome of the
-previous trial?
+Figure 6—figure supplement 2c-e: Reactivation rate and the outcome of the
+previous trial
 
 Reactivations are detected in correct-rejection no-stim trials (step 07). For
 each of these trials, the trial just before it in the session is classified
@@ -11,18 +11,18 @@ a trial is its number of events per minute of trial (-1 to 6 s).
 
 Per mouse and day, rates are averaged over the trials of each category
 (a category needs at least MIN_TRIALS trials).
-  a: after a rewarded vs an unrewarded trial;
-  b: after a whisker hit vs a whisker miss (last whisker trial);
+  c: after a rewarded vs an unrewarded trial;
+  d: after a whisker hit vs a whisker miss (last whisker trial);
   paired Wilcoxon signed-rank test per reward group (n = mice).
-  c: R+ vs R- after unrewarded trials only, so that the group difference of
+  e: R+ vs R- after unrewarded trials only, so that the group difference of
      Fig. 6c cannot come from the rewards collected by R+ mice (Mann-Whitney U).
 Figure: Day 0. Stats file: Days 0, +1 and +2. Bars: mean across mice with
 bootstrapped 95% CI; lines and dots: mice.
 
-Outputs: <figures_dir>/revisions/figure_6c_previous_outcome/output/
-    previous_outcome.pdf, previous_outcome_trials.csv (correct-rejection
-    trial), previous_outcome_data.csv (mouse x day x category),
-    previous_outcome_stats.csv.
+Outputs: <figures_dir>/Figure6_SupFig2/figure6_supfig2_c_e.pdf,
+figure6_supfig2_c_e_trials.csv (correct-rejection trial),
+figure6_supfig2_c_e_data.csv (mouse x day x category),
+figure6_supfig2_c_e_stats.csv.
 """
 
 import os
@@ -49,7 +49,7 @@ COMPARISONS = {
 }
 TICK_LABELS = {'rewarded': 'Rew.', 'unrewarded': 'Unrew.'}
 YLABEL = 'Reactivations\n(events/min)'
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_6c_previous_outcome', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure6_SupFig2')
 
 
 # ============================================================================
@@ -233,7 +233,7 @@ def group_panel(ax, means, stats):
     ax.set_ylabel(YLABEL)
 
 
-def plot(means, stats, filename='previous_outcome'):
+def plot(means, stats, filename='figure6_supfig2_c_e'):
     set_style()
     fig, axes = plt.subplots(1, 3, figsize=panel_size(3, w=1.15))
     paired_panel(axes[0], means, stats, 'previous_trial', 'Previous trial')
@@ -261,9 +261,9 @@ if __name__ == '__main__':
     stats = compute_stats(means)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    trials.to_csv(os.path.join(OUTPUT_DIR, 'previous_outcome_trials.csv'), index=False)
-    means.to_csv(os.path.join(OUTPUT_DIR, 'previous_outcome_data.csv'), index=False)
-    stats.to_csv(os.path.join(OUTPUT_DIR, 'previous_outcome_stats.csv'), index=False)
+    trials.to_csv(os.path.join(OUTPUT_DIR, 'figure6_supfig2_c_e_trials.csv'), index=False)
+    means.to_csv(os.path.join(OUTPUT_DIR, 'figure6_supfig2_c_e_data.csv'), index=False)
+    stats.to_csv(os.path.join(OUTPUT_DIR, 'figure6_supfig2_c_e_stats.csv'), index=False)
     plot(means, stats)
     cols = [
         'day',

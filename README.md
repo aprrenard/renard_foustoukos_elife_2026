@@ -98,6 +98,7 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 1-S1e | [`figures/figure_1_supfig_1/figure1_supfig1_e.py`](figures/figure_1_supfig_1/figure1_supfig1_e.py) | Fitted learning curve across Day 0 trials, R+ vs R-, realigned to each mouse's first hit trial |
 | 1-S1f | [`figures/figure_1_supfig_1/figure1_supfig1_f.py`](figures/figure_1_supfig_1/figure1_supfig1_f.py) | Day 0 lick probability for whisker, auditory, and no-stim trial types on a common time axis (minutes from session start) |
 | 1-S1g, h | [`figures/figure_1_supfig_1/figure1_supfig1_g_h.py`](figures/figure_1_supfig_1/figure1_supfig1_g_h.py) | Reaction times for auditory, whisker, and no-stim hit trials |
+| 1-S1i | [`figures/figure_1_supfig_1/figure1_supfig1_i.py`](figures/figure_1_supfig_1/figure1_supfig1_i.py) | Licking to the whisker stimulus at the start of Day 0 (R2 public 1, R1 recommendation 1, R3 public 1) |
 | **Figure 2** | | |
 | 2b–d | [`figures/figure_2/figure_2b_d.py`](figures/figure_2/figure_2b_d.py) | Muscimol inactivation of wS1 or fpS1 during learning |
 | 2e–g | [`figures/figure_2/figure_2e_g.py`](figures/figure_2/figure_2e_g.py) | Optogenetic inactivation of wS1 or fpS1 during learning |
@@ -146,13 +147,12 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 6d, e | [`figures/figure_6/figure_6d_e.py`](figures/figure_6/figure_6d_e.py) | Participation in reactivations above chance vs LMI |
 | **Figure 6 – figure supplement 1** | | |
 | 6-S1a, b | [`figures/figure_6_supfig_1/figure6_supfig1_a_b.py`](figures/figure_6_supfig_1/figure6_supfig1_a_b.py) | Participation rate in reactivations vs LMI, without correction for chance |
+| **Figure 6 – figure supplement 2** | | |
+| 6-S2a, b | [`figures/figure_6_supfig_2/figure6_supfig2_a_b.py`](figures/figure_6_supfig_2/figure6_supfig2_a_b.py) | Reactivation rate in the lick-free and the lick-possible parts of the catch trials |
+| 6-S2c–e | [`figures/figure_6_supfig_2/figure6_supfig2_c_e.py`](figures/figure_6_supfig_2/figure6_supfig2_c_e.py) | Reactivation rate and the outcome of the previous trial |
+| 6-S2f | [`figures/figure_6_supfig_2/figure6_supfig2_f.py`](figures/figure_6_supfig_2/figure6_supfig2_f.py) | Specificity of the reactivation events, real vs shuffled templates |
 | **Figure 6 – figure supplement 3** | | |
 | 6-S3a–c | [`figures/figure_6_supfig_3/figure6_supfig3_a_c.py`](figures/figure_6_supfig_3/figure6_supfig3_a_c.py) | Robustness of the reactivation results to the detection threshold, the participation threshold and licking |
-| **Revision analyses (in progress)** | | |
-| — | [`figures/revisions/behavior_day0_initial_licking.py`](figures/revisions/behavior_day0_initial_licking.py) | Licking to the whisker stimulus at the start of Day 0 (R2 public 1, R1 recommendation 1, R3 public 1) |
-| — | [`figures/revisions/figure_6c_event_timing.py`](figures/revisions/figure_6c_event_timing.py) | Are reactivation events over-represented when mice can lick? |
-| — | [`figures/revisions/figure_6c_previous_outcome.py`](figures/revisions/figure_6c_previous_outcome.py) | Does the reactivation rate depend on the outcome of the previous trial? |
-| — | [`figures/revisions/figure_6c_shuffle_control.py`](figures/revisions/figure_6c_shuffle_control.py) | Shuffled-template reactivation detection |
 <!-- figure-table:end -->
 
 The table is generated from the scripts' docstrings: `python tools/update_figure_table.py`.

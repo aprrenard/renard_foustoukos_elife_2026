@@ -1,5 +1,6 @@
 """
-Figure 6c revision: are reactivation events over-represented when mice can lick?
+Figure 6—figure supplement 2a-b: Reactivation rate in the lick-free and the
+lick-possible parts of the catch trials
 
 The reactivation analysis uses correct-rejection no-stim trials over the
 whole trial (-1 to 6 s around no-stim onset). These
@@ -19,16 +20,15 @@ trial (edges excluded) and in two windows: lick-free (-0.6 to 1 s) and
 post-response (1 to 5.6 s). Days are pooled per mouse (each mouse's rate
 averaged over its days).
 
-  Left : event rate across the trial, mean across mice with bootstrapped 95% CI.
-  Right: rate in the lick-free vs post-response window, mean across mice
+  a: event rate across the trial, mean across mice with bootstrapped 95% CI.
+  b: rate in the lick-free vs post-response window, mean across mice
          with bootstrapped 95% CI and individual mice (lines); paired
          Wilcoxon signed-rank test per reward group (n = mice).
 Stats file: also R+ vs R- in the lick-free window alone, per day
 (Mann-Whitney U, as Fig. 6c).
 
-Outputs: <figures_dir>/revisions/figure_6c_event_timing/output/
-    event_timing.pdf, _data.csv (mouse x day x window),
-    _bins.csv (mouse x time bin), _stats.csv.
+Outputs: <figures_dir>/Figure6_SupFig2/figure6_supfig2_a_b.pdf, _data.csv
+(mouse x day x window), _bins.csv (mouse x time bin), _stats.csv.
 """
 
 import os
@@ -51,7 +51,7 @@ POST_RESPONSE = (1, 6 - EDGE_S)  # s: licks possible in correct rejections
 BIN_S = 0.5
 PROFILE = (-0.5, 5.5)  # s: range of the binned time course, away from the edges
 GROUP_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'figure_6c_event_timing', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure6_SupFig2')
 
 
 def event_rates(results, t):
@@ -222,7 +222,7 @@ if __name__ == '__main__':
     win_df, bin_df = event_rates(results, t)
     stats, per_mouse = compute_stats(win_df)
 
-    name = 'event_timing'
+    name = 'figure6_supfig2_a_b'
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     win_df.to_csv(os.path.join(OUTPUT_DIR, f'{name}_data.csv'), index=False)
     bin_df.to_csv(os.path.join(OUTPUT_DIR, f'{name}_bins.csv'), index=False)

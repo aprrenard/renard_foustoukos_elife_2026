@@ -1,6 +1,6 @@
 """
-Revision: licking to the whisker stimulus at the start of Day 0 (R2 public 1,
-R1 recommendation 1, R3 public 1).
+Figure 1—figure supplement 1i: Licking to the whisker stimulus at the start of
+Day 0 (R2 public 1, R1 recommendation 1, R3 public 1).
 
 Do mice lick to the whisker stimulus before they learn its contingency, as
 expected if the auditory lick policy generalizes to the new stimulus? For
@@ -13,8 +13,8 @@ R+ vs R- whisker lick probability (Mann-Whitney U). Bars: mean across mice
 with bootstrapped 95% CI; lines: mice.
 
 Input: behavior_imagingmice_table_5days_cut.csv (pipeline step 03).
-Outputs: <figures_dir>/revisions/behavior_day0_initial_licking/output/
-    initial_licking.pdf, initial_licking_data.csv (mouse), initial_licking_stats.csv.
+Outputs: <figures_dir>/Figure1_SupFig1/figure1_supfig1_i.pdf,
+figure1_supfig1_i_data.csv (mouse), figure1_supfig1_i_stats.csv.
 """
 
 import os
@@ -31,7 +31,7 @@ from fast_learning.stats import format_p
 
 N_WHISKER = 10
 GROUP_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'behavior_day0_initial_licking', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure1_SupFig1')
 
 
 def initial_licking(table):
@@ -92,7 +92,7 @@ def compute_stats(mice):
     return pd.DataFrame(rows)
 
 
-def plot(mice, stats, filename='initial_licking'):
+def plot(mice, stats, filename='figure1_supfig1_i'):
     set_style()
     fig, ax = plt.subplots(figsize=panel_size(1, w=1.5))
     for gi, rg in enumerate(GROUP_COLORS):
@@ -156,8 +156,8 @@ if __name__ == '__main__':
     mice = initial_licking(table)
     stats = compute_stats(mice)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    mice.to_csv(os.path.join(OUTPUT_DIR, 'initial_licking_data.csv'), index=False)
-    stats.to_csv(os.path.join(OUTPUT_DIR, 'initial_licking_stats.csv'), index=False)
+    mice.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_i_data.csv'), index=False)
+    stats.to_csv(os.path.join(OUTPUT_DIR, 'figure1_supfig1_i_stats.csv'), index=False)
     plot(mice, stats)
     print(stats.round(3).to_string(index=False))
     print(
