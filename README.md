@@ -92,20 +92,20 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 1c | [`figures/figure_1/figure_1c.py`](figures/figure_1/figure_1c.py) | Behavioral performance of the imaging mice across days |
 | 1d | [`figures/figure_1/figure_1d.py`](figures/figure_1/figure_1d.py) | Day 0 performance across whisker trials, R+ vs R- |
 | **Figure 1 – figure supplement 1** | | |
-| 1-S1a | [`figures/figure1_supfig1/figure1_supfig1_a.py`](figures/figure1_supfig1/figure1_supfig1_a.py) | First hit trial on Day 0 for R+ vs R- |
-| 1-S1b | [`figures/figure1_supfig1/figure1_supfig1_b.py`](figures/figure1_supfig1/figure1_supfig1_b.py) | Whisker lick probability on Days 0, +1, +2 for R+ vs R- |
-| 1-S1c | [`figures/figure1_supfig1/figure1_supfig1_c.py`](figures/figure1_supfig1/figure1_supfig1_c.py) | Particle test — whisker hit rate and false alarm rate across ON / OFF / ON periods (R+ mice only) |
-| 1-S1d | [`figures/figure1_supfig1/figure1_supfig1_d.py`](figures/figure1_supfig1/figure1_supfig1_d.py) | Single-trial whisker hit rate across Day 0 trials, R+ vs R- (non-realigned) |
-| 1-S1e | [`figures/figure1_supfig1/figure1_supfig1_e.py`](figures/figure1_supfig1/figure1_supfig1_e.py) | Fitted learning curve across Day 0 trials, R+ vs R-, realigned to each mouse's first hit trial |
-| 1-S1f | [`figures/figure1_supfig1/figure1_supfig1_f.py`](figures/figure1_supfig1/figure1_supfig1_f.py) | Day 0 lick probability for whisker, auditory, and no-stim trial types on a common time axis (minutes from session start) |
-| 1-S1g, h | [`figures/figure1_supfig1/figure1_supfig1_g_h.py`](figures/figure1_supfig1/figure1_supfig1_g_h.py) | Reaction times for auditory, whisker, and no-stim hit trials |
+| 1-S1a | [`figures/figure_1_supfig_1/figure1_supfig1_a.py`](figures/figure_1_supfig_1/figure1_supfig1_a.py) | First hit trial on Day 0 for R+ vs R- |
+| 1-S1b | [`figures/figure_1_supfig_1/figure1_supfig1_b.py`](figures/figure_1_supfig_1/figure1_supfig1_b.py) | Whisker lick probability on Days 0, +1, +2 for R+ vs R- |
+| 1-S1c | [`figures/figure_1_supfig_1/figure1_supfig1_c.py`](figures/figure_1_supfig_1/figure1_supfig1_c.py) | Particle test — whisker hit rate and false alarm rate across ON / OFF / ON periods (R+ mice only) |
+| 1-S1d | [`figures/figure_1_supfig_1/figure1_supfig1_d.py`](figures/figure_1_supfig_1/figure1_supfig1_d.py) | Single-trial whisker hit rate across Day 0 trials, R+ vs R- (non-realigned) |
+| 1-S1e | [`figures/figure_1_supfig_1/figure1_supfig1_e.py`](figures/figure_1_supfig_1/figure1_supfig1_e.py) | Fitted learning curve across Day 0 trials, R+ vs R-, realigned to each mouse's first hit trial |
+| 1-S1f | [`figures/figure_1_supfig_1/figure1_supfig1_f.py`](figures/figure_1_supfig_1/figure1_supfig1_f.py) | Day 0 lick probability for whisker, auditory, and no-stim trial types on a common time axis (minutes from session start) |
+| 1-S1g, h | [`figures/figure_1_supfig_1/figure1_supfig1_g_h.py`](figures/figure_1_supfig_1/figure1_supfig1_g_h.py) | Reaction times for auditory, whisker, and no-stim hit trials |
 | **Figure 2** | | |
 | 2b–d | [`figures/figure_2/figure_2b_d.py`](figures/figure_2/figure_2b_d.py) | Muscimol inactivation of wS1 or fpS1 during learning |
 | 2e–g | [`figures/figure_2/figure_2e_g.py`](figures/figure_2/figure_2e_g.py) | Optogenetic inactivation of wS1 or fpS1 during learning |
 | **Figure 2 – figure supplement 1** | | |
-| 2-S1a–d | [`figures/figure2_supfig1/figure2_supfig1_a_d.py`](figures/figure2_supfig1/figure2_supfig1_a_d.py) | Muscimol inactivation of wS1 or fpS1 during task execution, in expert mice |
+| 2-S1a–d | [`figures/figure_2_supfig_1/figure2_supfig1_a_d.py`](figures/figure_2_supfig_1/figure2_supfig1_a_d.py) | Muscimol inactivation of wS1 or fpS1 during task execution, in expert mice |
 | **Figure 2 – figure supplement 2** | | |
-| 2-S2a–l | [`figures/figure2_supfig2/figure2_supfig2_a_l.py`](figures/figure2_supfig2/figure2_supfig2_a_l.py) | Learning on the first day without inactivation, compared with naive mice learning on Day 0 |
+| 2-S2a–l | [`figures/figure_2_supfig_2/figure2_supfig2_a_l.py`](figures/figure_2_supfig_2/figure2_supfig2_a_l.py) | Learning on the first day without inactivation, compared with naive mice learning on Day 0 |
 | **Figure 3** | | |
 | 3a | [`figures/figure_3/figure_3a.py`](figures/figure_3/figure_3a.py) | FOV with LMI overlay + calcium transient illustration for the same mouse |
 | 3b | [`figures/figure_3/figure_3b.py`](figures/figure_3/figure_3b.py) | Raster plot of single-cell PSTH activity across learning days for GF314 |
@@ -114,13 +114,13 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 3f, g | [`figures/figure_3/figure_3f_g.py`](figures/figure_3/figure_3f_g.py) | Learning Modulation Index (LMI) for all cells |
 | 3h–j | [`figures/figure_3/figure_3h_j.py`](figures/figure_3/figure_3h_j.py) | Trial-by-trial correlation matrices and network reorganization metrics |
 | **Figure 3 – figure supplement 1** | | |
-| 3-S1b | [`figures/figure3_supfig1/figure3_supfig1_b.py`](figures/figure3_supfig1/figure3_supfig1_b.py) | Example mapping-trial PSTHs for three illustrative cells across learning days |
-| 3-S1c | [`figures/figure3_supfig1/figure3_supfig1_c.py`](figures/figure3_supfig1/figure3_supfig1_c.py) | Relationship between classifier weights and the Learning Modulation Index (LMI) |
-| 3-S1d | [`figures/figure3_supfig1/figure3_supfig1_d.py`](figures/figure3_supfig1/figure3_supfig1_d.py) | Decoding accuracy vs percentage of most-modulated cells retained |
+| 3-S1b | [`figures/figure_3_supfig_1/figure3_supfig1_b.py`](figures/figure_3_supfig_1/figure3_supfig1_b.py) | Example mapping-trial PSTHs for three illustrative cells across learning days |
+| 3-S1c | [`figures/figure_3_supfig_1/figure3_supfig1_c.py`](figures/figure_3_supfig_1/figure3_supfig1_c.py) | Relationship between classifier weights and the Learning Modulation Index (LMI) |
+| 3-S1d | [`figures/figure_3_supfig_1/figure3_supfig1_d.py`](figures/figure_3_supfig_1/figure3_supfig1_d.py) | Decoding accuracy vs percentage of most-modulated cells retained |
 | **Figure 3 – figure supplement 2** | | |
-| 3-S2a, b | [`figures/figure3_supfig2/figure3_supfig2_a_b.py`](figures/figure3_supfig2/figure3_supfig2_a_b.py) | Signal and noise power of the passive whisker responses, before vs after learning |
+| 3-S2a, b | [`figures/figure_3_supfig_2/figure3_supfig2_a_b.py`](figures/figure_3_supfig_2/figure3_supfig2_a_b.py) | Signal and noise power of the passive whisker responses, before vs after learning |
 | **Figure 3 – figure supplement 3** | | |
-| 3-S3a–d | [`figures/figure3_supfig3/figure3_supfig3_a_d.py`](figures/figure3_supfig3/figure3_supfig3_a_d.py) | Day-to-day drift of the passive whisker responses, between the baseline days (-2/-1) and across learning (-1/0) |
+| 3-S3a–d | [`figures/figure_3_supfig_3/figure3_supfig3_a_d.py`](figures/figure_3_supfig_3/figure3_supfig3_a_d.py) | Day-to-day drift of the passive whisker responses, between the baseline days (-2/-1) and across learning (-1/0) |
 | **Figure 5** | | |
 | 5b–d | [`figures/figure_5/figure_5b_d.py`](figures/figure_5/figure_5b_d.py) | Decoding analyses (Figure 3l-n of the submitted version; 5a is a schematic) |
 | 5f | [`figures/figure_5/figure_5f.py`](figures/figure_5/figure_5f.py) | Example mice — behaviour and decoder decision value during Day 0 |
@@ -128,7 +128,7 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 5h | [`figures/figure_5/figure_5h.py`](figures/figure_5/figure_5h.py) | Slope analysis of the progressive learning decoder — R+ vs R- |
 | 5i | [`figures/figure_5/figure_5i.py`](figures/figure_5/figure_5i.py) | Correlation between decoder decision value and behavioural performance across Day-0 whisker trials — R+ vs R- |
 | **Figure 5 – figure supplement 2** | | |
-| 5-S2a–f | [`figures/figure5_supfig2/figure5_supfig2_a_f.py`](figures/figure5_supfig2/figure5_supfig2_a_f.py) | Behavioural state of the imaging mice across days |
+| 5-S2a–f | [`figures/figure_5_supfig_2/figure5_supfig2_a_f.py`](figures/figure_5_supfig_2/figure5_supfig2_a_f.py) | Behavioural state of the imaging mice across days |
 | **Figure 6** | | |
 | 6a | [`figures/figure_6/figure_6a.py`](figures/figure_6/figure_6a.py) | Reactivation heatmap illustration (mouse AR127, single day) |
 | 6b | [`figures/figure_6/figure_6b.py`](figures/figure_6/figure_6b.py) | Example correlation traces across days (mouse AR127) |
