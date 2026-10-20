@@ -60,6 +60,7 @@ FIGURE_DIRS = [
     'figure_4_supfig_1',
     'figure_5',
     'figure_5_supfig_1',
+    'figure_5_supfig_2',
     'figure_6',
     'figure_6_supfig_1',
     'revisions',

@@ -137,6 +137,8 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | **Figure 5 – figure supplement 1** | | |
 | 5-S1a | [`figures/figure_5_supfig_1/figure5_supfig1_a.py`](figures/figure_5_supfig_1/figure5_supfig1_a.py) | Relationship between classifier weights and the Learning Modulation Index (LMI) |
 | 5-S1b | [`figures/figure_5_supfig_1/figure5_supfig1_b.py`](figures/figure_5_supfig_1/figure5_supfig1_b.py) | Decoding accuracy vs percentage of most-modulated cells retained |
+| **Figure 5 – figure supplement 2** | | |
+| 5-S2a, b | [`figures/figure_5_supfig_2/figure5_supfig2_a_b.py`](figures/figure_5_supfig_2/figure5_supfig2_a_b.py) | Day-0 behaviour and its relation to the decoder, with performance quantified by d' instead of whisker lick probability |
 | **Figure 6** | | |
 | 6a | [`figures/figure_6/figure_6a.py`](figures/figure_6/figure_6a.py) | Reactivation heatmap illustration (mouse AR127, single day) |
 | 6b | [`figures/figure_6/figure_6b.py`](figures/figure_6/figure_6b.py) | Example correlation traces across days (mouse AR127) |
@@ -146,7 +148,6 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 6-S1a, b | [`figures/figure_6_supfig_1/figure6_supfig1_a_b.py`](figures/figure_6_supfig_1/figure6_supfig1_a_b.py) | Participation rate in reactivations vs LMI, without correction for chance |
 | **Revision analyses (in progress)** | | |
 | — | [`figures/revisions/behavior_day0_initial_licking.py`](figures/revisions/behavior_day0_initial_licking.py) | Licking to the whisker stimulus at the start of Day 0 (R2 public 1, R1 recommendation 1, R3 public 1) |
-| — | [`figures/revisions/behavior_dprime.py`](figures/revisions/behavior_dprime.py) | Behavior quantified via d' (signal detection theory) instead of whisker hit rate |
 | — | [`figures/revisions/figure_6c_event_timing.py`](figures/revisions/figure_6c_event_timing.py) | Are reactivation events over-represented when mice can lick? |
 | — | [`figures/revisions/figure_6c_previous_outcome.py`](figures/revisions/figure_6c_previous_outcome.py) | Does the reactivation rate depend on the outcome of the previous trial? |
 | — | [`figures/revisions/figure_6c_shuffle_control.py`](figures/revisions/figure_6c_shuffle_control.py) | Shuffled-template reactivation detection |

@@ -5,6 +5,9 @@ performance across Day-0 whisker trials — R+ vs R-.
 For each mouse a Pearson correlation is computed between the sliding-window
 mean decision value and the behavioural learning curve, then compared between
 reward groups (swarm + point plot, Wilcoxon one-sample test against zero).
+
+Decoder: each mouse's pre/post decoder trained by pipeline/06_decoder.py
+(decoder_weights.pkl), the same as in Fig. 5f-g.
 """
 
 import os
@@ -14,8 +17,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from scipy.stats import wilcoxon, ttest_1samp, pearsonr
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
 
 
 from fast_learning import imaging, decoding
@@ -42,6 +43,7 @@ if __name__ == '__main__':
     # Load data
     # ============================================================================
 
+    weights = decoding.load_decoder_weights()
     _, _, mice, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir, two_p_imaging='yes')
 
     bh_path = os.path.join(
@@ -105,8 +107,8 @@ if __name__ == '__main__':
         seed=42,
     ):
         """
-        Train a pre/post decoder on mapping trials and apply it with a sliding
-        window to Day-0 learning trials.
+        Apply each mouse's pre/post decoder (pipeline/06_decoder.py) with a
+        sliding window to Day-0 learning trials.
 
         Returns a DataFrame with columns: mouse_id, trial_start, trial_center,
         mean_decision_value.
@@ -114,25 +116,11 @@ if __name__ == '__main__':
         results = []
 
         for d_mapping, d_learning, mouse in zip(vectors_mapping, vectors_learning, mice_list):
-            day_per_trial = d_mapping['day'].values
-            train_mask = np.isin(day_per_trial, pre_days + post_days)
-            if np.sum(train_mask) < 4:
+            # The decoder of pipeline/06_decoder.py, as in Fig. 5f-g.
+            if mouse not in weights:
                 continue
-
-            X_train = d_mapping.values[:, train_mask].T
-            y_train = np.array([0 if day in pre_days else 1 for day in day_per_trial[train_mask]])
-
-            scaler = StandardScaler()
-            X_train_scaled = scaler.fit_transform(X_train)
-            clf = LogisticRegression(max_iter=5000, random_state=seed)
-            clf.fit(X_train_scaled, y_train)
-
-            # Check sign convention
-            pre_mask = np.isin(day_per_trial, pre_days)
-            post_mask = np.isin(day_per_trial, post_days)
-            mean_dec_pre = np.mean(clf.decision_function(scaler.transform(d_mapping.values[:, pre_mask].T)))
-            mean_dec_post = np.mean(clf.decision_function(scaler.transform(d_mapping.values[:, post_mask].T)))
-            sign_flip = -1 if mean_dec_pre > mean_dec_post else 1
+            w = weights[mouse]
+            scaler, clf, sign_flip = w['scaler'], w['clf'], w['sign_flip']
 
             # Sliding-window application to Day-0 learning trials
             n_trials = d_learning.sizes['trial']

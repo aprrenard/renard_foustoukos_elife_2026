@@ -5,7 +5,16 @@ and decoder value, R+ vs R-.
 Two-row × two-column layout:
   Row 1: Behavioural learning curve averaged across mice (Day 0 whisker trials).
   Row 2: Mean decoder decision value averaged across mice (sliding window on
-         Day 0 whisker trials).
+         Day 0 whisker trials), with references: the passive pre-learning
+         (left) and post-learning (right) trials that train the decoder,
+         projected in the same way (decoding.reference_projections: each
+         trial projected by a decoder trained on the other folds of a 10-fold
+         split, response over the 0-180 ms window of the Day-0 projection).
+         Mean and bootstrapped 95% CI across mice.
+
+Outputs: <figures_dir>/Figure5/figure_5g.pdf, figure_5g_behaviour_data.csv
+(mouse x trial), figure_5g_decoder_data.csv (mouse x window),
+figure_5g_reference_data.csv (mouse: pre and post reference projections).
 
 Decoder weights (trained on Days -2/-1 vs +1/+2 mapping trials) are loaded
 from RESULTS_DIR/decoder_weights.pkl, produced by pipeline/06_decoder.py.
@@ -23,6 +32,7 @@ import seaborn as sns
 from fast_learning import imaging, decoding
 from fast_learning import paths
 from fast_learning.plotting import reward_palette, save_figure, panel_size
+from fast_learning.stats import bootstrap_ci
 
 
 # ============================================================================
@@ -33,6 +43,7 @@ win = (0, 0.300)  # response window from stimulus onset (seconds)
 window_size = 10
 step_size = 1
 cut_n_trials = 100
+REF_X = {'pre': -22, 'post': cut_n_trials + 22}  # x positions of the reference projections
 
 RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure5')
@@ -93,6 +104,7 @@ if __name__ == '__main__':
             )
 
     results_df = pd.concat([pd.DataFrame(results)], ignore_index=True)
+    references = decoding.reference_projections(weights)
     mice_rew = [m for m, w in weights.items() if w['reward_group'] == 'R+']
     mice_nonrew = [m for m, w in weights.items() if w['reward_group'] == 'R-']
 
@@ -104,8 +116,9 @@ if __name__ == '__main__':
 
     data_rew = bh_df.loc[bh_df['mouse_id'].isin(mice_rew)]
     data_nonrew = bh_df.loc[bh_df['mouse_id'].isin(mice_nonrew)]
-    results_rew = results_df[results_df['reward_group'] == 'R+']
-    results_nonrew = results_df[results_df['reward_group'] == 'R-']
+    shown = results_df[results_df['trial_center'] <= cut_n_trials]
+    results_rew = shown[shown['reward_group'] == 'R+']
+    results_nonrew = shown[shown['reward_group'] == 'R-']
 
     # Row 1: behaviour
     for ax, data, color, title in [
@@ -120,10 +133,22 @@ if __name__ == '__main__':
         ax.set_xlim(0, cut_n_trials)
 
     # Row 2: decision values
-    for ax, data, color, title in [
-        (axes[1, 0], results_rew, reward_palette[1], 'R+ decoder value'),
-        (axes[1, 1], results_nonrew, reward_palette[0], 'R- decoder value'),
+    for ax, data, color, title, rg in [
+        (axes[1, 0], results_rew, reward_palette[1], 'R+ decoder value', 'R+'),
+        (axes[1, 1], results_nonrew, reward_palette[0], 'R- decoder value', 'R-'),
     ]:
+        ref = references[references['reward_group'] == rg]
+        for period, x in REF_X.items():
+            low, high = bootstrap_ci(ref[period])
+            ax.errorbar(
+                x,
+                ref[period].mean(),
+                yerr=[[ref[period].mean() - low], [high - ref[period].mean()]],
+                fmt='o',
+                color=color,
+                markersize=3,
+                linewidth=1,
+            )
         sns.lineplot(
             data=data,
             x='trial_center',
@@ -138,7 +163,10 @@ if __name__ == '__main__':
         ax.set_xlabel('Trial within Day 0')
         ax.set_ylabel('Mean decision value')
         ax.set_title(title)
-        ax.set_xlim(0, cut_n_trials)
+        ax.set_xlim(REF_X['pre'] - 8, REF_X['post'] + 8)
+        ticks = [REF_X['pre'], *range(0, cut_n_trials + 1, 25), REF_X['post']]
+        ax.set_xticks(ticks, ['Pre', *[str(t) for t in ticks[1:-1]], 'Post'])
+        ax.axvspan(0, cut_n_trials, color='grey', alpha=0.06, linewidth=0)
 
     plt.tight_layout()
     sns.despine()
@@ -151,5 +179,12 @@ if __name__ == '__main__':
     out_path = os.path.join(OUTPUT_DIR, 'figure_5g.svg')
     save_figure(fig, out_path)
     print(f"\nSaved: {out_path}")
+    cols = ['mouse_id', 'reward_group', 'trial_w', 'learning_curve_w']
+    bh_df[bh_df['mouse_id'].isin(weights)][cols].to_csv(
+        os.path.join(OUTPUT_DIR, 'figure_5g_behaviour_data.csv'), index=False
+    )
+    results_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_5g_decoder_data.csv'), index=False)
+    references.to_csv(os.path.join(OUTPUT_DIR, 'figure_5g_reference_data.csv'), index=False)
+    print(references.groupby('reward_group')[['pre', 'post']].agg(['mean', 'median']).round(2))
 
     plt.close()

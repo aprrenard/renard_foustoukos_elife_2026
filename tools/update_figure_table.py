@@ -28,6 +28,7 @@ SECTIONS = [
     ('figure_4_supfig_1', 'Figure 4 – figure supplement 1'),
     ('figure_5', 'Figure 5'),
     ('figure_5_supfig_1', 'Figure 5 – figure supplement 1'),
+    ('figure_5_supfig_2', 'Figure 5 – figure supplement 2'),
     ('figure_6', 'Figure 6'),
     ('figure_6_supfig_1', 'Figure 6 – figure supplement 1'),
     ('revisions', 'Revision analyses (in progress)'),

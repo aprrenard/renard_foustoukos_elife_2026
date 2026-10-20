@@ -1,12 +1,16 @@
 """
-Behavior quantified via d' (signal detection theory) instead of whisker hit
-rate.
+Figure 5—figure supplement 2a-b: Day-0 behaviour and its relation to the
+decoder, with performance quantified by d' instead of whisker lick probability
 
-Addresses a reviewer comment asking that behavioral performance be
-quantified with d' rather than raw whisker hit rate, for Figure 5G and E.
-The d' versions of Figure 1C and 1D are in figure_1c.py and figure_1d.py, and
-those of Figure 2C and 2F and of the execution inactivation in
-figures/figure_2 and figures/figure2_supfig1 (execution).
+- a: trial-resolved d' across Day-0 whisker trials, R+ vs R- (the behaviour
+  row of Fig. 5g in d').
+- b: per-mouse correlation between the decoder decision value and d' across
+  Day-0 whisker trials (Fig. 5i with d' in place of lick probability);
+  Wilcoxon signed-rank test against zero (n = mice).
+
+Outputs: <figures_dir>/Figure5_SupFig2/figure5_supfig2_a.pdf,
+figure5_supfig2_a_data.csv, figure5_supfig2_b.pdf,
+figure5_supfig2_b_correlations.csv, figure5_supfig2_b_stats.csv.
 
 ------------------------------------------------------------------------
 How d' is computed
@@ -36,28 +40,10 @@ Everything else (grouping, day/mouse filters, bar/swarm plots, Mann-Whitney
 U or Wilcoxon tests, output file naming) is kept identical to the original
 panel -- only the plotted/tested quantity changes.
 
-------------------------------------------------------------------------
-Panel-specific notes / scope decisions
-------------------------------------------------------------------------
-- Figure 5G: only the behavioral row (row 1: learning_curve_w vs trial) is
-  reproduced. Row 2 (decoder decision value) is not a hit-rate-based
-  quantity and is unchanged/out of scope.
-
-- Figure 5H is out of scope: the original figure_5h.py doesn't plot a
-  hit-rate-based quantity at all -- it plots the slope of a neural
-  decoder's decision value (the behavior table it loads is unused, dead
-  code), so there's no whisker-hit-rate metric there for d' to replace.
-
-- Figure 5I: correlates a neural decoder's decision value against
-  behavior. Only the behavioral variable correlated against it changes,
-  from learning_curve_w to the trial-resolved d' -- the decoder itself
-  isn't a hit-rate-based quantity, so the reviewer's request doesn't apply
-  to it. Rather than duplicating figure_5i.py's inline decoder retraining,
-  this reuses the pre-trained decoder cached in decoder_weights.pkl (built
-  by pipeline/06_decoder.py) that figure_5f.py/figure_5g.py already reuse, applied
-  via the same sliding window -- keeping one decoder consistent across
-  Figure 4 instead of two subtly different ones. Still needs
-  NWB/network-drive access to load the Day-0 imaging tensors.
+Scope: Fig. 5h (slopes of the decoder value) has no behavioural measure, so
+it has no d' version. In b, only the behavioural variable changes; the
+decoder is the one of Fig. 5f-i (pipeline/06_decoder.py, decoder_weights.pkl),
+applied with the same 10-trial sliding window.
 """
 
 import os
@@ -75,7 +61,7 @@ from fast_learning.plotting import reward_palette, save_figure
 from fast_learning.stats import dprime_from_rates, format_p
 
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'revisions', 'behavior_dprime', 'output')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure5_SupFig2')
 EPS = 1e-3  # clipping epsilon for already-smoothed probability curves
 
 
@@ -91,7 +77,7 @@ def _load_trial_resolved_dprime(
     n_trials=120,
 ):
     """Load the Day-0 whisker-trial table (as figure_1d.py and
-    figure_5g/d/e.py) and add a trial-resolved d' column, computed from the
+    figure_5g.py) and add a trial-resolved d' column, computed from the
     existing Bayesian learning-curve fits:
         dprime_w(trial) = Z(learning_curve_w) - Z(learning_curve_chance)
     where learning_curve_w is the smoothed whisker hit-probability curve
@@ -110,11 +96,11 @@ def _load_trial_resolved_dprime(
 
 
 # ============================================================================
-# Figure 5G (behavior row only): trial-resolved d', R+ vs R-
+# Panel a: trial-resolved d', R+ vs R- (behaviour row of Fig. 5g)
 # ============================================================================
 
 
-def panel_4c_dprime(
+def panel_a_dprime(
     table_path=os.path.join(
         paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
     ),
@@ -151,21 +137,21 @@ def panel_4c_dprime(
     plt.tight_layout()
 
     os.makedirs(save_path, exist_ok=True)
-    out_path = os.path.join(save_path, f'figure_5g_dprime.{save_format}')
+    out_path = os.path.join(save_path, f'figure5_supfig2_a.{save_format}')
     save_figure(fig, out_path)
     plt.close()
 
-    df.to_csv(os.path.join(save_path, 'figure_5g_dprime_data.csv'), index=False)
+    df.to_csv(os.path.join(save_path, 'figure5_supfig2_a_data.csv'), index=False)
 
     print(f"Figure 5g (d', behavior row) saved to: {out_path}")
 
 
 # ============================================================================
-# Figure 5I: per-mouse correlation between decoder value and d'
+# Panel b: per-mouse correlation between decoder value and d' (Fig. 5i)
 # ============================================================================
 
 
-def panel_4e_dprime_correlation(
+def panel_b_dprime_correlation(
     table_path=os.path.join(
         paths.processed_dir, 'behavior', 'behavior_imagingmice_table_5days_cut_with_learning_curves.csv'
     ),
@@ -177,20 +163,9 @@ def panel_4e_dprime_correlation(
     save_format='svg',
     dpi=300,
 ):
-    """Figure 5 Panel i revision: per-mouse Pearson correlation between the
-    neural decoder's decision value and trial-resolved d' (in place of
-    learning_curve_w).
-
-    Uses the same pre-trained decoder cached in decoder_weights.pkl (built
-    by pipeline/06_decoder.py) that figure_5f.py/figure_5g.py already reuse,
-    applied via the identical 10-trial sliding window -- rather than
-    figure_5i.py's original approach of retraining a fresh per-mouse
-    decoder inline. This keeps the decoder consistent with the rest of
-    Figure 4 (per user decision) and avoids re-running classifier
-    training; only the sliding-window application to Day-0 trials is
-    (unavoidably) redone here, since no script caches per-trial decision
-    values to disk. Still needs NWB/network-drive access to load the
-    Day-0 imaging tensors."""
+    """Panel b: per-mouse Pearson correlation between the decoder decision
+    value and trial-resolved d' (in place of learning_curve_w), with the
+    decoder of Fig. 5f-i and the same 10-trial sliding window."""
 
     win = (0, 0.300)
 
@@ -309,11 +284,11 @@ def panel_4e_dprime_correlation(
     plt.tight_layout()
 
     os.makedirs(save_path, exist_ok=True)
-    save_figure(fig, os.path.join(save_path, f'figure_5i_dprime.{save_format}'))
+    save_figure(fig, os.path.join(save_path, f'figure5_supfig2_b.{save_format}'))
     plt.close()
 
-    df_corr.to_csv(os.path.join(save_path, 'figure_5i_dprime_correlations.csv'), index=False)
-    df_pop_stats.to_csv(os.path.join(save_path, 'figure_5i_dprime_stats.csv'), index=False)
+    df_corr.to_csv(os.path.join(save_path, 'figure5_supfig2_b_correlations.csv'), index=False)
+    df_pop_stats.to_csv(os.path.join(save_path, 'figure5_supfig2_b_stats.csv'), index=False)
 
     print(f"Figure 5i (d' correlation) saved to: {save_path}")
 
@@ -323,5 +298,5 @@ def panel_4e_dprime_correlation(
 # ============================================================================
 
 if __name__ == '__main__':
-    panel_4c_dprime()
-    panel_4e_dprime_correlation()
+    panel_a_dprime()
+    panel_b_dprime_correlation()
