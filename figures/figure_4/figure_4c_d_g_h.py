@@ -1,5 +1,5 @@
 """
-Supplementary Figure 3c, d, g, h: Pre vs post learning responses for
+Figure 4c, d, g, h: Pre vs post learning responses for
 projection neurons.
 
   Panel c: wS2 PSTH (pre vs post, R+ top / R- bottom)
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     }
     BAR_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
 
-    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3')
+    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
 
     # ============================================================================
     # Load imaging data
@@ -208,16 +208,16 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig_wS2, os.path.join(OUTPUT_DIR, 'supp_3c_d.svg'))
-    print("Saved: supp_3c_d.svg")
+    save_figure(fig_wS2, os.path.join(OUTPUT_DIR, 'figure_4c_d.svg'))
+    print("Saved: figure_4c_d.svg")
 
-    save_figure(fig_wM1, os.path.join(OUTPUT_DIR, 'supp_3g_h.svg'))
-    print("Saved: supp_3g_h.svg")
+    save_figure(fig_wM1, os.path.join(OUTPUT_DIR, 'figure_4g_h.svg'))
+    print("Saved: figure_4g_h.svg")
 
-    data_avg_proj.to_csv(os.path.join(OUTPUT_DIR, 'supp_3c_d_g_h_data.csv'), index=False)
-    print("Saved: supp_3c_d_g_h_data.csv")
+    data_avg_proj.to_csv(os.path.join(OUTPUT_DIR, 'figure_4c_d_g_h_data.csv'), index=False)
+    print("Saved: figure_4c_d_g_h_data.csv")
 
-    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_3c_d_g_h_stats.csv'), index=False)
-    print("Saved: supp_3c_d_g_h_stats.csv")
+    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_4c_d_g_h_stats.csv'), index=False)
+    print("Saved: figure_4c_d_g_h_stats.csv")
 
     plt.close()

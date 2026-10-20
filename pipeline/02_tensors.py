@@ -210,7 +210,7 @@ for mouse in mice_list:
         # Parameters for tensor array.
         cell_types = ['na', 'wM1', 'wS2']
         rrs_keys = ['ophys', 'fluorescence_all_cells', 'dff']
-        # 2 s before the stimulus for the pre-stimulus pairwise correlations (Supp. 3m).
+        # From 2 s before the stimulus.
         time_range = (2, 6)  # seconds before and after the stimulus
         epoch_name = None
         trial_selection = None

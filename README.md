@@ -80,7 +80,6 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | `06_decoder` | per-mouse pre/post-learning decoder (weights reused by Fig. 5f–i) |
 | `07_reactivations` | reactivation events (surrogate thresholds, template correlation), mouse selection |
 | `08_participation` | participation of each neuron in reactivations, measured in held-out cells (events detected with the other half of the cells); all-cell version for comparison |
-| `09_pairwise_correlations` | pre-stimulus correlations between projection neurons |
 
 ### Figures
 
@@ -123,6 +122,12 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 3-S3a, b | [`figures/figure_3_supfig_3/figure3_supfig3_a_b.py`](figures/figure_3_supfig_3/figure3_supfig3_a_b.py) | Signal and noise power of the passive whisker responses, before vs after learning |
 | **Figure 3 – figure supplement 4** | | |
 | 3-S4a–j | [`figures/figure_3_supfig_4/figure3_supfig4_a_j.py`](figures/figure_3_supfig_4/figure3_supfig4_a_j.py) | Stability of the passive whisker responses within the passive block, and day-to-day drift between the baseline days (-2/-1) and across learning (-1/0) |
+| **Figure 4** | | |
+| 4b | [`figures/figure_4/figure_4b.py`](figures/figure_4/figure_4b.py) | Grand-average mapping-trial PSTHs for projection neurons (wS2 and wM1) across learning days, R+ vs R- |
+| 4c, d, g, h | [`figures/figure_4/figure_4c_d_g_h.py`](figures/figure_4/figure_4c_d_g_h.py) | Pre vs post learning responses for projection neurons |
+| 4e, f, i, j | [`figures/figure_4/figure_4e_f_i_j.py`](figures/figure_4/figure_4e_f_i_j.py) | Proportions and distributions of LMI for projection neurons |
+| **Figure 4 – figure supplement 1** | | |
+| 4-S1a, b | [`figures/figure_4_supfig_1/figure4_supfig1_a_b.py`](figures/figure_4_supfig_1/figure4_supfig1_a_b.py) | CDF comparison of wS2 vs wM1 projector neurons |
 | **Figure 5** | | |
 | 5b–d | [`figures/figure_5/figure_5b_d.py`](figures/figure_5/figure_5b_d.py) | Decoding analyses (Figure 3l-n of the submitted version; 5a is a schematic) |
 | 5f | [`figures/figure_5/figure_5f.py`](figures/figure_5/figure_5f.py) | Example mice — behaviour and decoder decision value during Day 0 |
@@ -139,12 +144,6 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 6d, e | [`figures/figure_6/figure_6d_e.py`](figures/figure_6/figure_6d_e.py) | Participation in reactivations above chance vs LMI |
 | **Figure 6 – figure supplement 1** | | |
 | 6-S1a, b | [`figures/figure_6_supfig_1/figure6_supfig1_a_b.py`](figures/figure_6_supfig_1/figure6_supfig1_a_b.py) | Participation rate in reactivations vs LMI, without correction for chance |
-| **Figure 3 – supplement** | | |
-| S3b | [`figures/supp_3/supp_3b.py`](figures/supp_3/supp_3b.py) | Grand-average mapping-trial PSTHs for projection neurons (wS2 and wM1) across learning days, R+ vs R- |
-| S3c, d, g, h | [`figures/supp_3/supp_3c_d_g_h.py`](figures/supp_3/supp_3c_d_g_h.py) | Pre vs post learning responses for projection neurons |
-| S3e, f, i, j | [`figures/supp_3/supp_3e_f_i_j.py`](figures/supp_3/supp_3e_f_i_j.py) | Proportions and distributions of LMI for projection neurons |
-| S3k, l | [`figures/supp_3/supp_3k_l.py`](figures/supp_3/supp_3k_l.py) | CDF comparison of wS2 vs wM1 projector neurons |
-| S3m | [`figures/supp_3/supp_3m.py`](figures/supp_3/supp_3m.py) | Pairwise correlations between projection neurons (wS2-wS2 and wM1-wM1 pairs) during a 2 s pre-stimulus quiet window, compared pre vs post learning. Mapping trials only |
 | **Revision analyses (in progress)** | | |
 | — | [`figures/revisions/behavior_day0_initial_licking.py`](figures/revisions/behavior_day0_initial_licking.py) | Licking to the whisker stimulus at the start of Day 0 (R2 public 1, R1 recommendation 1, R3 public 1) |
 | — | [`figures/revisions/behavior_dprime.py`](figures/revisions/behavior_dprime.py) | Behavior quantified via d' (signal detection theory) instead of whisker hit rate |

@@ -43,7 +43,6 @@ PIPELINE = [
     ('08_participation', 'pipeline/08_participation.py', [], True),
     ('08_participation_allcells', 'pipeline/08_participation.py', ['--cells', 'all'], True),
     ('08_participation_nolick', 'pipeline/08_participation.py', ['--nolick'], True),
-    ('09_pairwise_correlations', 'pipeline/09_pairwise_correlations.py', [], True),
 ]
 
 FIGURE_DIRS = [
@@ -57,12 +56,12 @@ FIGURE_DIRS = [
     'figure_3_supfig_2',
     'figure_3_supfig_3',
     'figure_3_supfig_4',
+    'figure_4',
+    'figure_4_supfig_1',
     'figure_5',
     'figure_5_supfig_1',
     'figure_6',
     'figure_6_supfig_1',
-    'supp_3',
-    'figure_4',
     'revisions',
 ]
 # Figure scripts that also run as variants (name suffix, extra arguments): the

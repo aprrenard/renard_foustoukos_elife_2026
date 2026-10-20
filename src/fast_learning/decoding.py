@@ -6,7 +6,7 @@ last N_MAP_TRIALS mapping trials of each day. A logistic-regression decoder
 trained on days -2/-1 vs +1/+2 separates pre- from post-learning responses
 (Day-0 active whisker trials are projected onto it with ACTIVE_WIN, 0-180 ms);
 pipeline/06_decoder.py trains it once per mouse and saves the weights, which
-Fig. 5f-g, Fig. 3—supp. 1c, Supp. 3k-l and the d-prime revision reuse.
+Fig. 5f-g, Fig. 5—supp. 1a, Fig. 4—supp. 1b and the d-prime revision reuse.
 """
 
 import os

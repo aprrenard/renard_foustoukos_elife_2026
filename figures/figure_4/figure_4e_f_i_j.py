@@ -1,5 +1,5 @@
 """
-Supplementary Figure 3e, f, i, j: Proportions and distributions of LMI for
+Figure 4e, f, i, j: Proportions and distributions of LMI for
 projection neurons.
 
   Panel e: wS2 — distribution of LMI values (R+ vs R-)
@@ -33,7 +33,7 @@ from fast_learning.stats import format_p, ks_permutation_test
 
 LMI_POS_THRESHOLD = 0.975
 LMI_NEG_THRESHOLD = 0.025
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
 
 
 if __name__ == '__main__':
@@ -205,27 +205,27 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig_wS2_dist, os.path.join(OUTPUT_DIR, 'supp_3e.svg'))
-    print("Saved: supp_3e.svg")
+    save_figure(fig_wS2_dist, os.path.join(OUTPUT_DIR, 'figure_4e.svg'))
+    print("Saved: figure_4e.svg")
 
-    save_figure(fig_wS2, os.path.join(OUTPUT_DIR, 'supp_3f.svg'))
-    print("Saved: supp_3f.svg")
+    save_figure(fig_wS2, os.path.join(OUTPUT_DIR, 'figure_4f.svg'))
+    print("Saved: figure_4f.svg")
 
-    save_figure(fig_wM1_dist, os.path.join(OUTPUT_DIR, 'supp_3i.svg'))
-    print("Saved: supp_3i.svg")
+    save_figure(fig_wM1_dist, os.path.join(OUTPUT_DIR, 'figure_4i.svg'))
+    print("Saved: figure_4i.svg")
 
-    save_figure(fig_wM1, os.path.join(OUTPUT_DIR, 'supp_3j.svg'))
-    print("Saved: supp_3j.svg")
+    save_figure(fig_wM1, os.path.join(OUTPUT_DIR, 'figure_4j.svg'))
+    print("Saved: figure_4j.svg")
 
     lmi_prop_ct[lmi_prop_ct['cell_type'].isin(['wS2', 'wM1'])].to_csv(
-        os.path.join(OUTPUT_DIR, 'supp_3e_f_i_j_data.csv'), index=False
+        os.path.join(OUTPUT_DIR, 'figure_4e_f_i_j_data.csv'), index=False
     )
-    print("Saved: supp_3e_f_i_j_data.csv")
+    print("Saved: figure_4e_f_i_j_data.csv")
 
-    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_3e_f_i_j_stats.csv'), index=False)
-    print("Saved: supp_3e_f_i_j_stats.csv")
+    stats_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_4e_f_i_j_stats.csv'), index=False)
+    print("Saved: figure_4e_f_i_j_stats.csv")
 
-    ks_df.to_csv(os.path.join(OUTPUT_DIR, 'supp_3e_i_ks_stats.csv'), index=False)
-    print("Saved: supp_3e_i_ks_stats.csv")
+    ks_df.to_csv(os.path.join(OUTPUT_DIR, 'figure_4e_i_ks_stats.csv'), index=False)
+    print("Saved: figure_4e_i_ks_stats.csv")
 
     plt.close()

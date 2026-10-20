@@ -1,5 +1,5 @@
 """
-Supplementary Figure 3b: Grand-average mapping-trial PSTHs for projection
+Figure 4b: Grand-average mapping-trial PSTHs for projection
 neurons (wS2 and wM1) across learning days, R+ vs R-.
 
 2 rows (wS2, wM1) × 5 columns (Days -2 to +2). Each panel shows the mean ±
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     CELL_TYPES = ['wS2', 'wM1']
     MIN_CELLS = 3  # minimum cells per mouse to include that mouse
 
-    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3')
+    OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4')
 
     # ============================================================================
     # Load and process imaging data
@@ -113,10 +113,10 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'supp_3b.svg'))
-    print("Saved: supp_3b.svg")
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure_4b.svg'))
+    print("Saved: figure_4b.svg")
 
-    data_ctype.to_csv(os.path.join(OUTPUT_DIR, 'supp_3b_data.csv'), index=False)
-    print("Saved: supp_3b_data.csv")
+    data_ctype.to_csv(os.path.join(OUTPUT_DIR, 'figure_4b_data.csv'), index=False)
+    print("Saved: figure_4b_data.csv")
 
     plt.close()

@@ -1,8 +1,8 @@
 """
-Supplementary Figure 3k, l: CDF comparison of wS2 vs wM1 projector neurons.
+Figure 4—figure supplement 1a, b: CDF comparison of wS2 vs wM1 projector neurons.
 
-  Panel k: CDF of LMI values (positive and negative, 2 reward groups)
-  Panel l: CDF of classifier weights (positive and negative, 2 reward groups)
+  Panel a: CDF of LMI values (positive and negative, 2 reward groups)
+  Panel b: CDF of classifier weights (positive and negative, 2 reward groups)
 
 Statistics: KS distance between pooled wS2 and wM1 cells per reward group and
 sign, with a permutation p-value that respects mice (wS2/wM1 labels shuffled
@@ -33,7 +33,7 @@ from fast_learning.stats import format_p, ks_permutation_test, significance_star
 CELL_TYPES = ['wS2', 'wM1']
 CELL_TYPE_COLORS = {'wS2': s2_m1_palette[0], 'wM1': s2_m1_palette[1]}
 RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'supp_3')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4_SupFig1')
 
 
 # ============================================================================
@@ -167,7 +167,7 @@ if __name__ == '__main__':
     print(stats_weight)
 
     # ============================================================================
-    # Figure k: CDF of LMI
+    # Figure a: CDF of LMI
     # ============================================================================
 
     set_style()
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     sns.despine()
 
     # ============================================================================
-    # Figure l: CDF of classifier weights
+    # Figure b: CDF of classifier weights
     # ============================================================================
 
     fig_l = plt.figure(figsize=panel_size(2, 2))
@@ -236,27 +236,27 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig_k, os.path.join(OUTPUT_DIR, 'supp_3k.svg'))
-    print("Saved: supp_3k.svg")
+    save_figure(fig_k, os.path.join(OUTPUT_DIR, 'figure4_supfig1_a.svg'))
+    print("Saved: figure4_supfig1_a.svg")
 
-    save_figure(fig_l, os.path.join(OUTPUT_DIR, 'supp_3l.svg'))
-    print("Saved: supp_3l.svg")
+    save_figure(fig_l, os.path.join(OUTPUT_DIR, 'figure4_supfig1_b.svg'))
+    print("Saved: figure4_supfig1_b.svg")
 
     # Data CSVs (projection-type cells only)
     lmi_df[lmi_df['cell_type_group'].isin(CELL_TYPES)][
         ['mouse_id', 'roi', 'reward_group', 'cell_type_group', 'lmi', 'lmi_p']
-    ].to_csv(os.path.join(OUTPUT_DIR, 'supp_3k_data.csv'), index=False)
-    print("Saved: supp_3k_data.csv")
+    ].to_csv(os.path.join(OUTPUT_DIR, 'figure4_supfig1_a_data.csv'), index=False)
+    print("Saved: figure4_supfig1_a_data.csv")
 
     weights_df[weights_df['cell_type_group'].isin(CELL_TYPES)][
         ['mouse_id', 'roi', 'reward_group', 'cell_type_group', 'classifier_weight']
-    ].to_csv(os.path.join(OUTPUT_DIR, 'supp_3l_data.csv'), index=False)
-    print("Saved: supp_3l_data.csv")
+    ].to_csv(os.path.join(OUTPUT_DIR, 'figure4_supfig1_b_data.csv'), index=False)
+    print("Saved: figure4_supfig1_b_data.csv")
 
-    stats_lmi.to_csv(os.path.join(OUTPUT_DIR, 'supp_3k_stats.csv'), index=False)
-    print("Saved: supp_3k_stats.csv")
+    stats_lmi.to_csv(os.path.join(OUTPUT_DIR, 'figure4_supfig1_a_stats.csv'), index=False)
+    print("Saved: figure4_supfig1_a_stats.csv")
 
-    stats_weight.to_csv(os.path.join(OUTPUT_DIR, 'supp_3l_stats.csv'), index=False)
-    print("Saved: supp_3l_stats.csv")
+    stats_weight.to_csv(os.path.join(OUTPUT_DIR, 'figure4_supfig1_b_stats.csv'), index=False)
+    print("Saved: figure4_supfig1_b_stats.csv")
 
     plt.close()
