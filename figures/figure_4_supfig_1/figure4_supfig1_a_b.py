@@ -2,7 +2,12 @@
 Figure 4—figure supplement 1a, b: CDF comparison of wS2 vs wM1 projector neurons.
 
   Panel a: CDF of LMI values (positive and negative, 2 reward groups)
-  Panel b: CDF of classifier weights (positive and negative, 2 reward groups)
+  Panel b: CDF of classifier weights (positive and negative, 2 reward groups),
+           normalised within each mouse: each mouse has its own decoder, and
+           the scale of its weights varies about 3-fold across mice (smaller
+           with more cells), so weights are divided by the mouse's median
+           |weight| over all its cells. Pooled raw weights mix this scale with
+           the mice that contribute each cell type.
 
 Statistics: KS distance between pooled wS2 and wM1 cells per reward group and
 sign, with a permutation p-value that respects mice (wS2/wM1 labels shuffled
@@ -33,6 +38,7 @@ from fast_learning.stats import format_p, ks_permutation_test, significance_star
 CELL_TYPES = ['wS2', 'wM1']
 CELL_TYPE_COLORS = {'wS2': s2_m1_palette[0], 'wM1': s2_m1_palette[1]}
 RESULTS_DIR = os.path.join(paths.processed_dir, 'decoding')
+XMAX_NORM = 5  # x-axis limit of the normalised weights (multiples of the median |weight|)
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure4_SupFig1')
 
 
@@ -70,7 +76,7 @@ def compute_ks_test(df, value_col, reward_groups, positive_only=False, negative_
     return pd.DataFrame(rows)
 
 
-def plot_cdf_panel(ax, data, value_col, reward_group, positive_only, ks_df, xlabel):
+def plot_cdf_panel(ax, data, value_col, reward_group, positive_only, ks_df, xlabel, xmax=0.8):
     sub = data[data['reward_group'] == reward_group]
     if positive_only:
         sub = sub[sub[value_col] > 0]
@@ -91,7 +97,7 @@ def plot_cdf_panel(ax, data, value_col, reward_group, positive_only, ks_df, xlab
     sign_label = 'Positive' if positive_only else 'Negative (abs)'
     ax.set_title(f'{reward_group} — {sign_label}', fontweight='bold')
     ax.legend(frameon=False)
-    ax.set_xlim(left=0, right=0.8)
+    ax.set_xlim(left=0, right=xmax)
     ax.set_ylim(0, 1)
 
     vtype = 'positive' if positive_only else 'negative'
@@ -150,6 +156,8 @@ if __name__ == '__main__':
         weights_df['cell_type_xr'].isna() | (weights_df['cell_type_xr'] == 'na'), 'cell_type_group'
     ] = 'non_projector'
 
+    scale = weights_df.groupby('mouse_id')['classifier_weight'].transform(lambda w: w.abs().median())
+    weights_df['weight_norm'] = weights_df['classifier_weight'] / scale
     print(f"Weights: {len(weights_df)} cells, {weights_df['mouse_id'].nunique()} mice")
 
     # ============================================================================
@@ -158,8 +166,8 @@ if __name__ == '__main__':
 
     ks_lmi_pos = compute_ks_test(lmi_df, 'lmi', ['R+', 'R-'], positive_only=True)
     ks_lmi_neg = compute_ks_test(lmi_df, 'lmi', ['R+', 'R-'], negative_only=True)
-    ks_weight_pos = compute_ks_test(weights_df, 'classifier_weight', ['R+', 'R-'], positive_only=True)
-    ks_weight_neg = compute_ks_test(weights_df, 'classifier_weight', ['R+', 'R-'], negative_only=True)
+    ks_weight_pos = compute_ks_test(weights_df, 'weight_norm', ['R+', 'R-'], positive_only=True)
+    ks_weight_neg = compute_ks_test(weights_df, 'weight_norm', ['R+', 'R-'], negative_only=True)
 
     stats_lmi = pd.concat([ks_lmi_pos, ks_lmi_neg], ignore_index=True)
     stats_weight = pd.concat([ks_weight_pos, ks_weight_neg], ignore_index=True)
@@ -212,20 +220,22 @@ if __name__ == '__main__':
         plot_cdf_panel(
             ax_pos,
             weights_df,
-            'classifier_weight',
+            'weight_norm',
             rg,
             positive_only=True,
             ks_df=stats_weight,
-            xlabel='Classifier weight' if row_idx == 1 else '',
+            xlabel='Classifier weight (normalised)' if row_idx == 1 else '',
+            xmax=XMAX_NORM,
         )
         plot_cdf_panel(
             ax_neg,
             weights_df,
-            'classifier_weight',
+            'weight_norm',
             rg,
             positive_only=False,
             ks_df=stats_weight,
-            xlabel='|Classifier weight|' if row_idx == 1 else '',
+            xlabel='|Classifier weight| (normalised)' if row_idx == 1 else '',
+            xmax=XMAX_NORM,
         )
 
     sns.despine()
@@ -249,7 +259,7 @@ if __name__ == '__main__':
     print("Saved: figure4_supfig1_a_data.csv")
 
     weights_df[weights_df['cell_type_group'].isin(CELL_TYPES)][
-        ['mouse_id', 'roi', 'reward_group', 'cell_type_group', 'classifier_weight']
+        ['mouse_id', 'roi', 'reward_group', 'cell_type_group', 'classifier_weight', 'weight_norm']
     ].to_csv(os.path.join(OUTPUT_DIR, 'figure4_supfig1_b_data.csv'), index=False)
     print("Saved: figure4_supfig1_b_data.csv")
 
