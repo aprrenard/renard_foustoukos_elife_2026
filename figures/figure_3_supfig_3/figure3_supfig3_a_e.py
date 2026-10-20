@@ -1,23 +1,30 @@
 """
-Figure 3—figure supplement 3a-d: Day-to-day drift of the passive whisker
-responses, between the baseline days (-2/-1) and across learning (-1/0)
+Figure 3—figure supplement 3a-e: Stability of the passive whisker responses
+within the passive block, and day-to-day drift between the baseline days
+(-2/-1) and across learning (-1/0)
 
-- a: day-to-day pattern correlation (noise-corrected; 1 = same pattern on
-  both days); -1/0 vs -2/-1 within group (Wilcoxon signed-rank, p-values
-  above -1/0) and R+ vs R- on -2/-1 (Mann-Whitney U).
-- b-d: LMI computed between consecutive days (one day on each side, as
-  pipeline step 05 otherwise): fraction of LMI+ cells (b), LMI- cells (c) and
-  the net fraction (d, LMI+ minus LMI-), with the two-day LMI of Fig. 3
+- a: within each day, correlation of the mean response vectors of the first
+  and the last 20 of the 40 passive trials, and of the odd and the even
+  trials (same number of trials, no separation in time); each mouse's median
+  over the five days; Wilcoxon signed-rank per group.
+- b: pattern correlation (noise-corrected; 1 = same pattern) within the
+  passive block (first vs last 20 trials, median over days) and between
+  consecutive days; within-block and -1/0 vs -2/-1 within group (Wilcoxon
+  signed-rank, p-values above them) and R+ vs R- on -2/-1 (Mann-Whitney U).
+- c-e: LMI computed between consecutive days (one day on each side, as
+  pipeline step 05 otherwise): fraction of LMI+ cells (c), LMI- cells (d) and
+  the net fraction (e, LMI+ minus LMI-), with the two-day LMI of Fig. 3
   (-2,-1 / +1,+2) for reference. Change from -2/-1 to -1/0 within group
   (Wilcoxon signed-rank, p-values above -1/0); net fraction against zero
   (Wilcoxon signed-rank, p-values above -2/-1 and the two-day LMI); R+ vs R-
   (Mann-Whitney U, stats file only).
 Points: mean and bootstrapped 95% CI across mice. See fast_learning.drift.
 
-Outputs: <figures_dir>/Figure3_SupFig3/figure3_supfig3_a_d.pdf,
-figure3_supfig3_a_data.csv (mouse x pair), figure3_supfig3_b_d_data.csv
-(mouse x pair), figure3_supfig3_b_d_cells.csv (cell x pair),
-figure3_supfig3_a_stats.csv, figure3_supfig3_b_d_stats.csv.
+Outputs: <figures_dir>/Figure3_SupFig3/figure3_supfig3_a_e.pdf,
+figure3_supfig3_a_data.csv (mouse x day), figure3_supfig3_b_data.csv
+(mouse x pair), figure3_supfig3_c_e_data.csv (mouse x pair),
+figure3_supfig3_c_e_cells.csv (cell x pair), figure3_supfig3_a_stats.csv,
+figure3_supfig3_b_stats.csv, figure3_supfig3_c_e_stats.csv.
 """
 
 import os
@@ -34,6 +41,7 @@ from fast_learning.drift import (
     LEARNING_PAIR,
     LMI_POSITIVE_THRESHOLD,
     REFERENCE,
+    WITHIN,
     compute_metrics,
     drift_lmi,
     drift_lmi_stats,
@@ -41,6 +49,9 @@ from fast_learning.drift import (
     load_response_vectors,
     pair_label,
     signal_noise_stats,
+    within_block,
+    within_block_means,
+    within_block_stats,
 )
 from fast_learning.plotting import panel_size, save_figure, set_style
 from fast_learning.stats import format_p
@@ -48,11 +59,11 @@ from fast_learning.stats import format_p
 OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3_SupFig3')
 
 
-def pair_points(ax, data, y, order, legend=False):
+def pair_points(ax, data, y, order, legend=False, x='pair'):
     """Mean and bootstrapped 95% CI across mice for each day pair."""
     sns.pointplot(
         data=data,
-        x='pair',
+        x=x,
         y=y,
         order=order,
         hue='reward_group',
@@ -69,10 +80,28 @@ def pair_points(ax, data, y, order, legend=False):
     ax.set_xlabel('Day pair')
 
 
+def within_block_panel(ax, means, stats):
+    """First/last vs odd/even correlation within each day."""
+    splits = {'r_first_last': 'First vs\nlast 20', 'r_odd_even': 'Odd vs\neven'}
+    long = means.reset_index().melt(
+        id_vars=['reward_group', 'mouse_id'], value_vars=list(splits), var_name='split', value_name='r'
+    )
+    pair_points(ax, long, 'r', list(splits), legend=True, x='split')
+    ax.set_xticks(range(len(splits)), list(splits.values()))
+    ax.set_xlabel('Trials of the same day')
+    pvalues(ax, 0.5, stats[stats['measure'] == 'r all days'])
+    ax.set_ylim(0, 1)
+    ax.set_ylabel('Pattern correlation')
+    ax.legend(frameon=False, loc='lower left')
+
+
 def pattern_drift_panel(ax, drift_df, stats):
-    """Noise-corrected correlation of consecutive days."""
-    order = [pair_label(*p) for p in DAY_PAIRS]
-    pair_points(ax, drift_df, 'r_corrected', order, legend=True)
+    """Noise-corrected correlation within the passive block and between
+    consecutive days."""
+    order = [WITHIN] + [pair_label(*p) for p in DAY_PAIRS]
+    pair_points(ax, drift_df, 'r_corrected', order)
+    ax.set_xticks(range(len(order)), ['Within\nday', *order[1:]])
+    ax.set_xlabel('')
     ax.axhline(1, color='grey', linestyle='--', linewidth=0.6)
     # p-values above each pair: -1/0 vs -2/-1 within group (colored), R+ vs R- (black).
     for gi, rg in enumerate(['R+', 'R-', 'R+ vs R-']):
@@ -88,9 +117,8 @@ def pattern_drift_panel(ax, drift_df, stats):
                     color=GROUP_COLORS.get(rg, 'black'),
                     fontsize=5,
                 )
-    ax.set_ylim(0.4, 1.2)
-    ax.set_ylabel('Day-to-day pattern correlation\n(noise-corrected)')
-    ax.legend(frameon=False, loc='lower left')
+    ax.set_ylim(0.4, 1.25)
+    ax.set_ylabel('Pattern correlation\n(noise-corrected)')
 
 
 def pvalues(ax, x, rows):
@@ -132,6 +160,12 @@ if __name__ == '__main__':
     day_df, drift_df = compute_metrics(vectors)
     drift_stats = signal_noise_stats(day_df, drift_df)[0]
     drift_stats = drift_stats[drift_stats['measure'].str.startswith('drift')]
+    wb = within_block(vectors)
+    wb_means = within_block_means(wb)
+    wb_stats = within_block_stats(wb, drift_df)
+    within = wb_means['r_corrected'].reset_index().assign(pair=WITHIN)
+    pattern_df = pd.concat([within, drift_df], ignore_index=True)
+    pattern_stats = pd.concat([wb_stats[wb_stats['measure'] == f'drift {WITHIN}'], drift_stats])
 
     lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
     _, _, _, db = database.select_sessions_from_db(paths.db_path, paths.nwb_dir, two_p_imaging='yes')
@@ -144,21 +178,25 @@ if __name__ == '__main__':
     lmi_stats = drift_lmi_stats(frac)
 
     set_style()
-    fig, axes = plt.subplots(1, 4, figsize=panel_size(4))
-    pattern_drift_panel(axes[0], drift_df, drift_stats)
-    for ax, m in zip(axes[1:], FRACTIONS):
+    fig, axes = plt.subplots(1, 5, figsize=panel_size(5))
+    within_block_panel(axes[0], wb_means, wb_stats)
+    pattern_drift_panel(axes[1], pattern_df, pattern_stats)
+    for ax, m in zip(axes[2:], FRACTIONS):
         lmi_panel(ax, frac, lmi_stats, m)
     sns.despine()
     plt.tight_layout()
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_d.pdf'))
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_e.pdf'))
     plt.close(fig)
 
-    drift_df.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_data.csv'), index=False)
-    drift_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_stats.csv'), index=False)
-    frac.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_b_d_data.csv'), index=False)
-    cells.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_b_d_cells.csv'), index=False)
-    lmi_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_b_d_stats.csv'), index=False)
+    wb.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_data.csv'), index=False)
+    wb_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_stats.csv'), index=False)
+    pattern_df.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_b_data.csv'), index=False)
+    pattern_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_b_stats.csv'), index=False)
+    frac.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_c_e_data.csv'), index=False)
+    cells.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_c_e_cells.csv'), index=False)
+    lmi_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_c_e_stats.csv'), index=False)
+    print(wb_stats.drop(columns=['test']).round(4).to_string(index=False))
     print(
         drift_stats[['reward_group', 'measure', 'median_pre', 'median_post', 'p_value']].to_string(
             index=False

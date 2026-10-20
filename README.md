@@ -120,7 +120,7 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | **Figure 3 – figure supplement 2** | | |
 | 3-S2a, b | [`figures/figure_3_supfig_2/figure3_supfig2_a_b.py`](figures/figure_3_supfig_2/figure3_supfig2_a_b.py) | Signal and noise power of the passive whisker responses, before vs after learning |
 | **Figure 3 – figure supplement 3** | | |
-| 3-S3a–d | [`figures/figure_3_supfig_3/figure3_supfig3_a_d.py`](figures/figure_3_supfig_3/figure3_supfig3_a_d.py) | Day-to-day drift of the passive whisker responses, between the baseline days (-2/-1) and across learning (-1/0) |
+| 3-S3a–e | [`figures/figure_3_supfig_3/figure3_supfig3_a_e.py`](figures/figure_3_supfig_3/figure3_supfig3_a_e.py) | Stability of the passive whisker responses within the passive block, and day-to-day drift between the baseline days (-2/-1) and across learning (-1/0) |
 | **Figure 5** | | |
 | 5b–d | [`figures/figure_5/figure_5b_d.py`](figures/figure_5/figure_5b_d.py) | Decoding analyses (Figure 3l-n of the submitted version; 5a is a schematic) |
 | 5f | [`figures/figure_5/figure_5f.py`](figures/figure_5/figure_5f.py) | Example mice — behaviour and decoder decision value during Day 0 |

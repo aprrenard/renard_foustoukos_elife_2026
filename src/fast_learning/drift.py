@@ -13,6 +13,13 @@ the learning session, so -1/0 spans learning. n = mice throughout.
   consecutive days, divided by the geometric mean of their split-half
   reliabilities (Spearman-Brown corrected), so that 1 means the same pattern
   on both days.
+- Stability within the passive block: in each day, correlation of the mean
+  response vectors of the first and the last N_HALF of the N_MAP_TRIALS
+  trials (block order), compared with that of the odd and the even trials
+  (same number of trials, no separation in time), and noise-corrected as the
+  day-to-day drift (reliability of each half), to be compared with it. Each
+  mouse is summarised by its median over the five days (with 20-trial halves
+  the reliability is noisy in a few low-signal mouse-days).
 - LMI between two consecutive days: as pipeline step 05 (ROC of each cell's
   response, 0-300 ms after a -1-0 s baseline, all passive trials, 1000
   label shuffles; LMI+ at p >= 0.975, LMI- at p <= 0.025), one day on each
@@ -42,6 +49,8 @@ BASELINE_PAIR = (-2, -1)  # the only consecutive days without learning
 LEARNING_PAIR = (-1, 0)  # spans the first whisker learning session
 DAY_PAIRS = [BASELINE_PAIR, LEARNING_PAIR]
 N_SPLITS = 100
+N_HALF = N_MAP_TRIALS // 2
+WITHIN = 'within'  # pair label of the first/last comparison within a day
 RESPONSE_WIN = (0, 0.300)  # LMI, as pipeline step 05
 BASELINE_WIN = (-1, 0)
 N_SHUFFLES = 1000
@@ -138,6 +147,81 @@ def compute_metrics(vectors):
                 }
             )
     return pd.DataFrame(day_rows), pd.DataFrame(drift_rows)
+
+
+def within_block(vectors):
+    """Per mouse and day: correlation of the mean response vectors of the
+    first and the last N_HALF trials and of the odd and the even trials, and
+    the first/last correlation corrected by the split-half reliabilities of
+    the two halves."""
+    rows = []
+    rng = np.random.default_rng(SEED)
+    for mouse, (rg, d) in vectors.items():
+        X, day_of = d.values, d['day'].values
+        for day in DAYS:
+            t = X[:, day_of == day]  # block order
+            first, last = t[:, :N_HALF], t[:, -N_HALF:]
+            r = pearsonr(first.mean(1), last.mean(1))[0]
+            rel_first, rel_last = split_half_reliability(first, rng), split_half_reliability(last, rng)
+            rows.append(
+                {
+                    'mouse_id': mouse,
+                    'reward_group': rg,
+                    'day': day,
+                    'r_first_last': r,
+                    'r_odd_even': pearsonr(t[:, 0::2].mean(1), t[:, 1::2].mean(1))[0],
+                    'reliability_first': rel_first,
+                    'reliability_last': rel_last,
+                    'r_corrected': r / np.sqrt(rel_first * rel_last),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _comparison_row(rg, measure, test, x, y, names, paired=True):
+    res = wilcoxon(x, y) if paired else mannwhitneyu(x, y)
+    return {
+        'reward_group': rg,
+        'measure': measure,
+        'comparison': f'{names[0]} vs {names[1]}',
+        'test': test,
+        'n_mice': len(x) if paired else f'{len(x)} / {len(y)}',
+        'median_1': np.median(x),
+        'median_2': np.median(y),
+        'statistic': res.statistic,
+        'p_value': res.pvalue,
+    }
+
+
+def within_block_means(wb):
+    """Each mouse's median over days of the within-block measures."""
+    cols = ['r_first_last', 'r_odd_even', 'r_corrected']
+    return wb.groupby(['reward_group', 'mouse_id'])[cols].median()
+
+
+def within_block_stats(wb, drift_df):
+    """First/last vs odd/even correlation (each mouse's median over days, and
+    per day), and the noise-corrected first/last correlation (median over
+    days) vs the baseline drift (-2/-1), per group (Wilcoxon signed-rank,
+    n = mice)."""
+    base = pair_label(*BASELINE_PAIR)
+    drift = drift_df.pivot(index=['reward_group', 'mouse_id'], columns='pair', values='r_corrected')
+    mean = within_block_means(wb)
+    rows = []
+    for rg in ['R+', 'R-']:
+        names = ('first/last', 'odd/even')
+        g = mean.loc[rg]
+        test = 'Wilcoxon signed-rank (n = mice), median over days'
+        rows.append(_comparison_row(rg, 'r all days', test, g['r_first_last'], g['r_odd_even'], names))
+        for day in DAYS:
+            d = wb[(wb['reward_group'] == rg) & (wb['day'] == day)]
+            test = 'Wilcoxon signed-rank (n = mice)'
+            rows.append(_comparison_row(rg, f'r day {day}', test, d['r_first_last'], d['r_odd_even'], names))
+        x = g['r_corrected']
+        y = drift.loc[rg][base].reindex(x.index)
+        test = 'Wilcoxon signed-rank (n = mice), noise-corrected correlation, within: median over days'
+        rows.append(_comparison_row(rg, f'drift {WITHIN}', test, x, y, (WITHIN, base)))
+    return pd.DataFrame(rows)
 
 
 def pre_post_means(day_df, metrics):
