@@ -1,5 +1,5 @@
 """Response strength, trial-to-trial noise and day-to-day drift of passive
-whisker responses (Figure 3—figure supplements 3 and 4).
+whisker responses (Figure 3—figure supplements 2 and 3).
 
 Response vectors: all cells, last N_MAP_TRIALS passive trials per day, mean
 over WIN (as Fig. 3h-i). Days -2 and -1 are the only consecutive days without

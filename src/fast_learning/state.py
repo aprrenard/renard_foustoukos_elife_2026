@@ -1,4 +1,4 @@
-"""Behavioural state of the imaging mice across days (Figure 3—figure
+"""Behavioural state of the imaging mice across days (Figure 5—figure
 supplement 2): session measures from the trial tables, and whisker and
 orofacial movements during the passive trials (DeepLabCut).
 

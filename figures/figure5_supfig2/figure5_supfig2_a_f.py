@@ -1,5 +1,5 @@
 """
-Figure 3—figure supplement 2a-f: Behavioural state of the imaging mice
+Figure 5—figure supplement 2a-f: Behavioural state of the imaging mice
 across days
 
 - a-c: number of trials, task duration and water consumed per session, R+ vs
@@ -15,9 +15,9 @@ See fast_learning.state.
 The session measures are read from the NWB files (several minutes) and cached
 in the data file; --recompute rebuilds them.
 
-Outputs: <figures_dir>/Figure3_SupFig2/figure3_supfig2_a_f.pdf,
-figure3_supfig2_a_c_data.csv (session), figure3_supfig2_a_c_stats.csv,
-figure3_supfig2_d_f_data.csv (mouse x day x speed), figure3_supfig2_d_f_stats.csv.
+Outputs: <figures_dir>/Figure5_SupFig2/figure5_supfig2_a_f.pdf,
+figure5_supfig2_a_c_data.csv (session), figure5_supfig2_a_c_stats.csv,
+figure5_supfig2_d_f_data.csv (mouse x day x speed), figure5_supfig2_d_f_stats.csv.
 """
 
 import argparse
@@ -33,8 +33,8 @@ from fast_learning import state
 from fast_learning.plotting import panel_size, reward_palette, save_figure, set_style
 from fast_learning.stats import format_p
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3_SupFig2')
-SESSION_DATA = os.path.join(OUTPUT_DIR, 'figure3_supfig2_a_c_data.csv')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure5_SupFig2')
+SESSION_DATA = os.path.join(OUTPUT_DIR, 'figure5_supfig2_a_c_data.csv')
 GROUP_COLORS = {'R+': reward_palette[1], 'R-': reward_palette[0]}
 SESSION_YLIMS = {'n_trials': (0, 600), 'session_duration_min': (0, 120), 'total_reward_uL': (0, 1000)}
 SPEED_YLIMS = {'whisker_angular_speed': (0, 1500), 'tongue_speed': (0, 10), 'jaw_speed': (0, 800)}
@@ -127,12 +127,12 @@ if __name__ == '__main__':
         speed_panel(ax, means, m_stats, speed, units[speed])
     sns.despine()
     plt.tight_layout()
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure3_supfig2_a_f.pdf'))
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure5_supfig2_a_f.pdf'))
     plt.close(fig)
 
-    s_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig2_a_c_stats.csv'), index=False)
-    means.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig2_d_f_data.csv'), index=False)
-    m_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig2_d_f_stats.csv'), index=False)
+    s_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure5_supfig2_a_c_stats.csv'), index=False)
+    means.to_csv(os.path.join(OUTPUT_DIR, 'figure5_supfig2_d_f_data.csv'), index=False)
+    m_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure5_supfig2_d_f_stats.csv'), index=False)
     print(s_stats[['measure', 'comparison', 'mean_1', 'mean_2', 'p_value']].round(4).to_string(index=False))
     print(m_stats.drop(columns=['test']).round(3).to_string(index=False))
     print(np.round(means.groupby(['speed', 'day'])['value'].mean().unstack(), 1))

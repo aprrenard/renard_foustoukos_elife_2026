@@ -1,5 +1,5 @@
 """
-Figure 3—figure supplement 4a-d: Day-to-day drift of the passive whisker
+Figure 3—figure supplement 3a-d: Day-to-day drift of the passive whisker
 responses, between the baseline days (-2/-1) and across learning (-1/0)
 
 - a: day-to-day pattern correlation (noise-corrected; 1 = same pattern on
@@ -14,10 +14,10 @@ responses, between the baseline days (-2/-1) and across learning (-1/0)
   (Mann-Whitney U, stats file only).
 Points: mean and bootstrapped 95% CI across mice. See fast_learning.drift.
 
-Outputs: <figures_dir>/Figure3_SupFig4/figure3_supfig4_a_d.pdf,
-figure3_supfig4_a_data.csv (mouse x pair), figure3_supfig4_b_d_data.csv
-(mouse x pair), figure3_supfig4_b_d_cells.csv (cell x pair),
-figure3_supfig4_a_stats.csv, figure3_supfig4_b_d_stats.csv.
+Outputs: <figures_dir>/Figure3_SupFig3/figure3_supfig3_a_d.pdf,
+figure3_supfig3_a_data.csv (mouse x pair), figure3_supfig3_b_d_data.csv
+(mouse x pair), figure3_supfig3_b_d_cells.csv (cell x pair),
+figure3_supfig3_a_stats.csv, figure3_supfig3_b_d_stats.csv.
 """
 
 import os
@@ -45,7 +45,7 @@ from fast_learning.drift import (
 from fast_learning.plotting import panel_size, save_figure, set_style
 from fast_learning.stats import format_p
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3_SupFig4')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3_SupFig3')
 
 
 def pair_points(ax, data, y, order, legend=False):
@@ -151,14 +151,14 @@ if __name__ == '__main__':
     sns.despine()
     plt.tight_layout()
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure3_supfig4_a_d.pdf'))
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_d.pdf'))
     plt.close(fig)
 
-    drift_df.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig4_a_data.csv'), index=False)
-    drift_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig4_a_stats.csv'), index=False)
-    frac.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig4_b_d_data.csv'), index=False)
-    cells.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig4_b_d_cells.csv'), index=False)
-    lmi_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig4_b_d_stats.csv'), index=False)
+    drift_df.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_data.csv'), index=False)
+    drift_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_stats.csv'), index=False)
+    frac.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_b_d_data.csv'), index=False)
+    cells.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_b_d_cells.csv'), index=False)
+    lmi_stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_b_d_stats.csv'), index=False)
     print(
         drift_stats[['reward_group', 'measure', 'median_pre', 'median_post', 'p_value']].to_string(
             index=False

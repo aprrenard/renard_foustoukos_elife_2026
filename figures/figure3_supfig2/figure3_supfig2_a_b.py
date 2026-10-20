@@ -1,5 +1,5 @@
 """
-Figure 3—figure supplement 3a-b: Signal and noise power of the passive whisker
+Figure 3—figure supplement 2a-b: Signal and noise power of the passive whisker
 responses, before vs after learning
 
 Response vectors as Fig. 3h-i (all cells, last 40 passive trials per day,
@@ -10,8 +10,8 @@ fast_learning.drift). Each mouse averaged over Days -2/-1 (pre) and +1/+2
 bootstrapped 95% CI across mice; lines: mice.
 Stats file also: SNR, observed and predicted within-day cosine.
 
-Outputs: <figures_dir>/Figure3_SupFig3/figure3_supfig3_a_b.pdf,
-figure3_supfig3_a_b_data.csv (mouse x day), figure3_supfig3_a_b_stats.csv.
+Outputs: <figures_dir>/Figure3_SupFig2/figure3_supfig2_a_b.pdf,
+figure3_supfig2_a_b_data.csv (mouse x day), figure3_supfig2_a_b_stats.csv.
 """
 
 import os
@@ -25,7 +25,7 @@ from fast_learning.drift import GROUP_COLORS, compute_metrics, load_response_vec
 from fast_learning.plotting import panel_size, save_figure, set_style
 from fast_learning.stats import format_p
 
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3_SupFig3')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3_SupFig2')
 
 
 def paired_panel(ax, pp, metric, ylabel, stats, ylim):
@@ -78,10 +78,10 @@ if __name__ == '__main__':
     sns.despine()
     plt.tight_layout()
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_b.pdf'))
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure3_supfig2_a_b.pdf'))
     plt.close(fig)
-    day_df.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_b_data.csv'), index=False)
-    stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig3_a_b_stats.csv'), index=False)
+    day_df.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig2_a_b_data.csv'), index=False)
+    stats.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig2_a_b_stats.csv'), index=False)
     print(
         stats[['reward_group', 'measure', 'n_mice', 'median_pre', 'median_post', 'p_value']].to_string(
             index=False

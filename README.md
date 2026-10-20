@@ -118,17 +118,17 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 3-S1c | [`figures/figure3_supfig1/figure3_supfig1_c.py`](figures/figure3_supfig1/figure3_supfig1_c.py) | Relationship between classifier weights and the Learning Modulation Index (LMI) |
 | 3-S1d | [`figures/figure3_supfig1/figure3_supfig1_d.py`](figures/figure3_supfig1/figure3_supfig1_d.py) | Decoding accuracy vs percentage of most-modulated cells retained |
 | **Figure 3 – figure supplement 2** | | |
-| 3-S2a–f | [`figures/figure3_supfig2/figure3_supfig2_a_f.py`](figures/figure3_supfig2/figure3_supfig2_a_f.py) | Behavioural state of the imaging mice across days |
+| 3-S2a, b | [`figures/figure3_supfig2/figure3_supfig2_a_b.py`](figures/figure3_supfig2/figure3_supfig2_a_b.py) | Signal and noise power of the passive whisker responses, before vs after learning |
 | **Figure 3 – figure supplement 3** | | |
-| 3-S3a, b | [`figures/figure3_supfig3/figure3_supfig3_a_b.py`](figures/figure3_supfig3/figure3_supfig3_a_b.py) | Signal and noise power of the passive whisker responses, before vs after learning |
-| **Figure 3 – figure supplement 4** | | |
-| 3-S4a–d | [`figures/figure3_supfig4/figure3_supfig4_a_d.py`](figures/figure3_supfig4/figure3_supfig4_a_d.py) | Day-to-day drift of the passive whisker responses, between the baseline days (-2/-1) and across learning (-1/0) |
+| 3-S3a–d | [`figures/figure3_supfig3/figure3_supfig3_a_d.py`](figures/figure3_supfig3/figure3_supfig3_a_d.py) | Day-to-day drift of the passive whisker responses, between the baseline days (-2/-1) and across learning (-1/0) |
 | **Figure 5** | | |
 | 5b–d | [`figures/figure_5/figure_5b_d.py`](figures/figure_5/figure_5b_d.py) | Decoding analyses (Figure 3l-n of the submitted version; 5a is a schematic) |
 | 5f | [`figures/figure_5/figure_5f.py`](figures/figure_5/figure_5f.py) | Example mice — behaviour and decoder decision value during Day 0 |
 | 5g | [`figures/figure_5/figure_5g.py`](figures/figure_5/figure_5g.py) | Progressive learning during Day 0 — population average behaviour and decoder value, R+ vs R- |
 | 5h | [`figures/figure_5/figure_5h.py`](figures/figure_5/figure_5h.py) | Slope analysis of the progressive learning decoder — R+ vs R- |
 | 5i | [`figures/figure_5/figure_5i.py`](figures/figure_5/figure_5i.py) | Correlation between decoder decision value and behavioural performance across Day-0 whisker trials — R+ vs R- |
+| **Figure 5 – figure supplement 2** | | |
+| 5-S2a–f | [`figures/figure5_supfig2/figure5_supfig2_a_f.py`](figures/figure5_supfig2/figure5_supfig2_a_f.py) | Behavioural state of the imaging mice across days |
 | **Figure 6** | | |
 | 6a | [`figures/figure_6/figure_6a.py`](figures/figure_6/figure_6a.py) | Reactivation heatmap illustration (mouse AR127, single day) |
 | 6b | [`figures/figure_6/figure_6b.py`](figures/figure_6/figure_6b.py) | Example correlation traces across days (mouse AR127) |
