@@ -57,6 +57,7 @@ FIGURE_DIRS = [
     'figure_3_supfig_2',
     'figure_3_supfig_3',
     'figure_5',
+    'figure_5_supfig_1',
     'figure_5_supfig_2',
     'figure_6',
     'supp_3',
@@ -75,7 +76,7 @@ FIGURE_VARIANTS = {
     'supp_4a_b': [_ALLCELLS, _NOLICK],
 }
 # Revision analyses with a slow computation of their own; --recompute forces it.
-RECOMPUTE = {'figure_3f_LMIshuffles', 'figure_6c_shuffle_control', 'thresholds_robustness'}
+RECOMPUTE = {'figure3_supfig1_c', 'figure_6c_shuffle_control', 'thresholds_robustness'}
 
 
 def figure_steps():

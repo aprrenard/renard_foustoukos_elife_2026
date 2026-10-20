@@ -1,5 +1,5 @@
 """
-Figure 3—figure supplement 1d: Decoding accuracy vs percentage of most-modulated
+Figure 5—figure supplement 1b: Decoding accuracy vs percentage of most-modulated
 cells retained.
 
 Cells are ranked by |LMI| in descending order and progressively removed from
@@ -32,7 +32,7 @@ from fast_learning.decoding import load_and_process_data
 PERCENTILES = np.arange(0, 91, 5)  # % of most-modulated cells to remove
 N_SPLITS = 10
 SEED = 42
-OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure3_SupFig1')
+OUTPUT_DIR = os.path.join(paths.manuscript_output_dir, 'Figure5_SupFig1')
 
 
 if __name__ == '__main__':
@@ -181,10 +181,10 @@ if __name__ == '__main__':
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure3_supfig1_d.svg'))
-    print("Saved: figure3_supfig1_d.svg")
+    save_figure(fig, os.path.join(OUTPUT_DIR, 'figure5_supfig1_b.svg'))
+    print("Saved: figure5_supfig1_b.svg")
 
-    df_plot.to_csv(os.path.join(OUTPUT_DIR, 'figure3_supfig1_d_data.csv'), index=False)
-    print("Saved: figure3_supfig1_d_data.csv")
+    df_plot.to_csv(os.path.join(OUTPUT_DIR, 'figure5_supfig1_b_data.csv'), index=False)
+    print("Saved: figure5_supfig1_b_data.csv")
 
     plt.close()

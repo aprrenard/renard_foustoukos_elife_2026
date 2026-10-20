@@ -115,8 +115,7 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 3h–j | [`figures/figure_3/figure_3h_j.py`](figures/figure_3/figure_3h_j.py) | Trial-by-trial correlation matrices and network reorganization metrics |
 | **Figure 3 – figure supplement 1** | | |
 | 3-S1b | [`figures/figure_3_supfig_1/figure3_supfig1_b.py`](figures/figure_3_supfig_1/figure3_supfig1_b.py) | Example mapping-trial PSTHs for three illustrative cells across learning days |
-| 3-S1c | [`figures/figure_3_supfig_1/figure3_supfig1_c.py`](figures/figure_3_supfig_1/figure3_supfig1_c.py) | Relationship between classifier weights and the Learning Modulation Index (LMI) |
-| 3-S1d | [`figures/figure_3_supfig_1/figure3_supfig1_d.py`](figures/figure_3_supfig_1/figure3_supfig1_d.py) | Decoding accuracy vs percentage of most-modulated cells retained |
+| 3-S1c | [`figures/figure_3_supfig_1/figure3_supfig1_c.py`](figures/figure_3_supfig_1/figure3_supfig1_c.py) | LMI distribution vs shuffled null |
 | **Figure 3 – figure supplement 2** | | |
 | 3-S2a, b | [`figures/figure_3_supfig_2/figure3_supfig2_a_b.py`](figures/figure_3_supfig_2/figure3_supfig2_a_b.py) | Signal and noise power of the passive whisker responses, before vs after learning |
 | **Figure 3 – figure supplement 3** | | |
@@ -127,6 +126,9 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 5g | [`figures/figure_5/figure_5g.py`](figures/figure_5/figure_5g.py) | Progressive learning during Day 0 — population average behaviour and decoder value, R+ vs R- |
 | 5h | [`figures/figure_5/figure_5h.py`](figures/figure_5/figure_5h.py) | Slope analysis of the progressive learning decoder — R+ vs R- |
 | 5i | [`figures/figure_5/figure_5i.py`](figures/figure_5/figure_5i.py) | Correlation between decoder decision value and behavioural performance across Day-0 whisker trials — R+ vs R- |
+| **Figure 5 – figure supplement 1** | | |
+| 5-S1a | [`figures/figure_5_supfig_1/figure5_supfig1_a.py`](figures/figure_5_supfig_1/figure5_supfig1_a.py) | Relationship between classifier weights and the Learning Modulation Index (LMI) |
+| 5-S1b | [`figures/figure_5_supfig_1/figure5_supfig1_b.py`](figures/figure_5_supfig_1/figure5_supfig1_b.py) | Decoding accuracy vs percentage of most-modulated cells retained |
 | **Figure 5 – figure supplement 2** | | |
 | 5-S2a–f | [`figures/figure_5_supfig_2/figure5_supfig2_a_f.py`](figures/figure_5_supfig_2/figure5_supfig2_a_f.py) | Behavioural state of the imaging mice across days |
 | **Figure 6** | | |
@@ -146,7 +148,6 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | — | [`figures/revisions/behavior_day0_initial_licking.py`](figures/revisions/behavior_day0_initial_licking.py) | Licking to the whisker stimulus at the start of Day 0 (R2 public 1, R1 recommendation 1, R3 public 1) |
 | — | [`figures/revisions/behavior_dprime.py`](figures/revisions/behavior_dprime.py) | Behavior quantified via d' (signal detection theory) instead of whisker hit rate |
 | — | [`figures/revisions/figure_3_passive_adaptation.py`](figures/revisions/figure_3_passive_adaptation.py) | Adaptation within the passive block, and the learning-related response changes in early vs late passive trials (R3 public 3) |
-| — | [`figures/revisions/figure_3f_LMIshuffles.py`](figures/revisions/figure_3f_LMIshuffles.py) | LMI distribution vs. shuffled null |
 | — | [`figures/revisions/figure_6c_event_timing.py`](figures/revisions/figure_6c_event_timing.py) | Are reactivation events over-represented when mice can lick? |
 | — | [`figures/revisions/figure_6c_previous_outcome.py`](figures/revisions/figure_6c_previous_outcome.py) | Does the reactivation rate depend on the outcome of the previous trial? |
 | — | [`figures/revisions/figure_6c_shuffle_control.py`](figures/revisions/figure_6c_shuffle_control.py) | Shuffled-template reactivation detection |
