@@ -67,6 +67,18 @@ def select_time(xarr, start, stop):
     return xarr.isel(time=np.flatnonzero(_in_window(t, start, stop)))
 
 
+N_PASSIVE_TRIALS = 40  # last passive (mapping) trials of each day used in all analyses
+
+
+def last_trials(xarr, n=N_PASSIVE_TRIALS):
+    """The last n trials of each day (all of them if fewer), in their order."""
+    days = xarr['day'].values
+    keep = np.zeros(len(days), bool)
+    for d in np.unique(days):
+        keep[np.flatnonzero(days == d)[-n:]] = True
+    return xarr.isel(trial=np.flatnonzero(keep))
+
+
 def baseline_frames(xarr, win=BASELINE_WIN_S):
     """Frame range (start, stop) of a baseline window given in seconds, from
     the time coordinate of an xarray; independent of where the tensor starts."""

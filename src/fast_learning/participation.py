@@ -29,7 +29,7 @@ rate on a day is the mean over the splits whose detection had at least
 MIN_EVENTS_FOR_RELIABILITY valid events. Participation of all cells in the
 events of step 07 (cells='all') is kept for comparison.
 
-Participation above chance (Supp. 4). A cell that is often active crosses the
+Participation above chance (Fig. 6d-e). A cell that is often active crosses the
 participation threshold at many moments, events or not. Its chance rate is
 the participation expected if events occurred at random times: the fraction
 of time points (those where events are counted) at which its +/- 150 ms mean
@@ -140,6 +140,16 @@ def load_participation(threshold=PARTICIPATION_THRESHOLD, nolick=False, cells='h
         f"({thr_tag(threshold)}{suffix(nolick, cells)})."
     )
     return merged_df, per_day_df
+
+
+def excess_tables(merged_df, per_day_df):
+    """(merged, per_day) with participation_rate replaced by the rate above
+    chance (excess_rate), aggregated and merged with LMI as the rates."""
+    per_day = per_day_df.assign(participation_rate=per_day_df['excess_rate'])
+    groups = merged_df.groupby('mouse_id')['reward_group'].first().to_dict()
+    lmi_df = pd.read_csv(os.path.join(paths.processed_dir, 'lmi_results.csv'))
+    merged = merge_with_lmi(aggregate_across_days(per_day), lmi_df, groups)
+    return merged, per_day
 
 
 # ============================================================================

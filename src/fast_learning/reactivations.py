@@ -6,8 +6,8 @@ Participation rates are computed per reactivation event, so a mouse with
 almost no events on day 0 has undefined or unreliable day-0 rates (with one
 event, every cell's rate is exactly 0 or 1). Mice with fewer than
 MIN_DAY0_EVENTS events on day 0, at the main detection threshold, are
-therefore excluded from every participation analysis (Fig. 6d-e, Supp. 4a-b
-and their revisions). Event-rate analyses (Fig. 6c and its controls) keep all
+therefore excluded from every participation analysis (Fig. 6d-e, its
+supplement 1 and their revisions). Event-rate analyses (Fig. 6c and its controls) keep all
 mice: there, zero events is a valid measurement, and excluding mice on it
 would select on the outcome.
 

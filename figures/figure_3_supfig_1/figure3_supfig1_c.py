@@ -5,8 +5,9 @@ For R+ and R- separately, the LMI distribution of the data is overlaid on a
 null LMI distribution obtained by shuffling the pre/post labels, to show that
 the real distribution is more spread than expected by chance.
 
-The null LMI uses the same data, windows and pre (Days -2/-1) vs post
-(Days +1/+2) pooling as pipeline/05_lmi.py, and the same shuffle procedure
+The null LMI uses the same data (last 40 passive trials of each day),
+windows and pre (Days -2/-1) vs post (Days +1/+2) pooling as
+pipeline/05_lmi.py, and the same shuffle procedure
 (imaging.compute_roc with return_shuffles=True, which keeps every per-cell
 per-shuffle null LMI instead of only the significance percentile). All
 shuffle x cell null values are pooled per reward group (not averaged per
@@ -104,6 +105,7 @@ def compute_null_lmi_distribution(n_shuffles=N_SHUFFLES):
         data_mapping = data_mapping - np.nanmean(
             imaging.select_time(data_mapping, *BASELINE_WIN), axis=2, keepdims=True
         )
+        data_mapping = imaging.last_trials(data_mapping)
 
         data_pre = data_mapping.sel(trial=data_mapping.coords['day'].isin([-2, -1]))
         data_pre = imaging.select_time(data_pre, *RESPONSE_WIN).mean(dim='time')

@@ -1,20 +1,27 @@
 """
-Figure 6d-e: Reactivation participation rate vs LMI.
+Figure 6d-e: Participation in reactivations above chance vs LMI.
 
-Panel d: Scatter plot of day-0 participation rate vs LMI (one dot per cell),
+A cell that is often active crosses the participation threshold at many
+moments, events or not, so its participation rate partly reflects its
+activity. Its chance rate is the participation expected if events occurred
+at random times: the fraction of time points (those where events are
+counted) at which its +/- 150 ms mean dF/F reaches the threshold, on the
+same day and trials. Participation above chance = participation rate -
+chance rate, per cell-day (fast_learning.participation). The participation
+rate itself is in Figure 6—figure supplement 1.
+
+Panel d: day-0 participation above chance vs LMI (one dot per cell),
          separately for R+ and R- mice. Stats: linear mixed-effects model
-         participation_rate ~ LMI + (1 + LMI | mouse), with an intercept and
-         a slope per mouse, so that the test of the slope takes the mouse,
-         not the cell, as the unit. Stats file also: per-mouse Spearman
-         correlation of LMI and participation, Wilcoxon signed-rank test
-         against zero (n = mice), insensitive to the tails of the LMI
-         distribution.
+         excess ~ LMI + (1 + LMI | mouse), with an intercept and a slope per
+         mouse, so that the test of the slope takes the mouse, not the cell,
+         as the unit. Stats file also: per-mouse Spearman correlation of LMI
+         and participation, Wilcoxon signed-rank test against zero (n = mice),
+         insensitive to the tails of the LMI distribution.
 
-Panel e: Participation rate across days (-2 to +2) for LMI+ vs LMI- cells,
-         showing per-mouse averages. Stats: linear trend across days with
-         mice as the unit: one participation-vs-day slope per mouse, then a
-         Wilcoxon signed-rank test of the slopes against zero, for each
-         (reward group, LMI category).
+Panel e: participation above chance across days (-2 to +2) for LMI+ vs LMI-
+         cells, per-mouse averages. Stats: linear trend across days with mice
+         as the unit: one slope per mouse, then a Wilcoxon signed-rank test of
+         the slopes against zero, for each (reward group, LMI category).
 
 Participation is measured in held-out cells: events are detected with a
 random half of the cells and participation is measured in the other half,
@@ -26,11 +33,13 @@ Both are comparisons showing the effect of the circularity.
 
 Cells: cell-days with >= 3 valid reactivation events (for held-out cells, in
 at least one split). Mice: those in the participation mouse selection
-(>= 3 reactivation events on day 0; see fast_learning.reactivations).
+(>= 3 reactivation events on day 0; see fast_learning.reactivations). LMI:
+last 40 passive trials of each day (pipeline/05_lmi.py).
 
-Inputs:  participation rates from pipeline/08_participation.py, at each
-         participation threshold: 2.5 x each cell's noise SD (main), 5 and 10 x
-         (robustness checks; see fast_learning.participation).
+Inputs:  participation rates with chance rates from
+         pipeline/08_participation.py, at each participation threshold: 2.5 x
+         each cell's noise SD (main), 5 and 10 x (robustness checks; see
+         fast_learning.participation).
 Outputs: <figures_dir>/Figure6/figure_6d_<k>sd<sfx>.pdf, _stats.csv
          and figure_6e_<k>sd<sfx>.pdf, _data.csv, _stats.csv; <sfx> is
          empty for held-out cells, _insample or _allcells, then _nolick for
@@ -321,10 +330,19 @@ if __name__ == '__main__':
     for threshold in participation.PARTICIPATION_THRESHOLDS:
         tag = participation.thr_tag(threshold)
         print(f"\n--- participation threshold {threshold:g} x noise SD ({tag}{sfx}) ---")
-        merged_df, per_day_df = participation.load_participation(threshold, args.nolick, args.cells)
-        print(
-            f"Dataset: {len(merged_df)} cells, {len(per_day_df)} cell-day records, "
-            f"{merged_df['mouse_id'].nunique()} mice"
+        merged, per_day = participation.excess_tables(
+            *participation.load_participation(threshold, args.nolick, args.cells)
         )
-        panel_i_participation_vs_lmi(merged_df, filename=f'figure_6d_{tag}{sfx}')
-        panel_j_participation_across_days(merged_df, per_day_df, filename=f'figure_6e_{tag}{sfx}')
+        print(
+            f"Dataset: {len(merged)} cells, {len(per_day)} cell-day records, {merged['mouse_id'].nunique()} mice"
+        )
+        panel_i_participation_vs_lmi(
+            merged, filename=f'figure_6d_{tag}{sfx}', ylabel='Participation above chance (day 0)'
+        )
+        panel_j_participation_across_days(
+            merged,
+            per_day,
+            filename=f'figure_6e_{tag}{sfx}',
+            ylabel='Participation above chance',
+            ylim=(None, 0.12),
+        )

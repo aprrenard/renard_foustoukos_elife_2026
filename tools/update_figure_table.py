@@ -23,13 +23,13 @@ SECTIONS = [
     ('figure_3_supfig_1', 'Figure 3 – figure supplement 1'),
     ('figure_3_supfig_2', 'Figure 3 – figure supplement 2'),
     ('figure_3_supfig_3', 'Figure 3 – figure supplement 3'),
+    ('figure_3_supfig_4', 'Figure 3 – figure supplement 4'),
     ('figure_4', 'Figure 4'),
     ('figure_5', 'Figure 5'),
     ('figure_5_supfig_1', 'Figure 5 – figure supplement 1'),
-    ('figure_5_supfig_2', 'Figure 5 – figure supplement 2'),
     ('figure_6', 'Figure 6'),
+    ('figure_6_supfig_1', 'Figure 6 – figure supplement 1'),
     ('supp_3', 'Figure 3 – supplement'),
-    ('supp_4', 'Figure 4 – supplement'),
     ('revisions', 'Revision analyses (in progress)'),
 ]
 

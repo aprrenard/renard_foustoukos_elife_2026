@@ -10,7 +10,7 @@ deviation x 1.4826) of that 300-ms mean over the trials analysed
 thresholds in dF/F0, with the fixed 10% threshold of the submitted version.
 Results at each threshold: Fig. 6d (day-0 LMM slope vs LMI) and Fig. 6e
 (per-mouse day slopes, LMI+ / LMI-), on the participation rate and the rate
-above chance (Supp. 4), held-out cells (pipeline step 08).
+above chance (Fig. 6d-e), held-out cells (pipeline step 08).
 
 Detection threshold (surrogate percentile 99 main; 99.5 and 99.9). The
 detection threshold is the median over circular-shift surrogates of this
@@ -23,9 +23,9 @@ threshold 2.5 x noise SD. Mice: the participation mouse selection (at p99)
 throughout.
 
 Panels per condition:
-    4i: LMM slope of day-0 participation vs LMI (random intercept and slope
+    6d: LMM slope of day-0 participation vs LMI (random intercept and slope
         per mouse), 95% CI, per reward group.
-    4j: per-mouse slopes of participation vs day, for R+ / R- x LMI+ / LMI-
+    6e: per-mouse slopes of participation vs day, for R+ / R- x LMI+ / LMI-
         (dots: mice; bar: mean, bootstrapped 95% CI, seed 0; p: Wilcoxon
         signed-rank against zero, n = mice).
 
@@ -144,7 +144,7 @@ def event_rates(percentile):
 
 
 def condition_stats(merged, per_day, labels):
-    """4i LMM slopes and 4j per-mouse slope tests for one condition."""
+    """6d LMM slopes and 6e per-mouse slope tests for one condition."""
     rows, slopes = [], []
     day0 = merged.dropna(subset=['lmi', 'learning_rate'])
     day0 = day0[day0['reliable_learning']]
@@ -153,7 +153,7 @@ def condition_stats(merged, per_day, labels):
         rows.append(
             dict(
                 **labels,
-                panel='4i',
+                panel='6d',
                 reward_group=rg,
                 lmi_category='',
                 estimate=fit['slope'],
@@ -181,7 +181,7 @@ def condition_stats(merged, per_day, labels):
         rows.append(
             dict(
                 **labels,
-                panel='4j',
+                panel='6e',
                 reward_group=rg,
                 lmi_category=cat,
                 estimate=test['median_slope'],
@@ -204,8 +204,8 @@ def condition_stats(merged, per_day, labels):
 
 
 def plot_lmm(ax, stats, conditions, cond_key, cond_labels):
-    """4i: LMM slope with 95% CI per condition and reward group."""
-    s = stats[stats['panel'] == '4i']
+    """6d: LMM slope with 95% CI per condition and reward group."""
+    s = stats[stats['panel'] == '6d']
     for gi, rg in enumerate(['R+', 'R-']):
         for ci, c in enumerate(conditions):
             r = s[(s[cond_key] == c) & (s['reward_group'] == rg)].iloc[0]
@@ -226,7 +226,7 @@ def plot_lmm(ax, stats, conditions, cond_key, cond_labels):
     ax.axhline(0, color='grey', linestyle='--', linewidth=0.6)
     ax.set_xticks(range(len(conditions)), cond_labels)
     ax.set_xlim(-0.6, len(conditions) - 0.4)
-    ax.set_ylabel('4i: LMM slope vs LMI (day 0)')
+    ax.set_ylabel('6d: LMM slope vs LMI (day 0)')
     bottom, top = ax.get_ylim()
     ax.set_ylim(bottom, top + 0.6 * (top - bottom))  # room for the p-values
     for gi, rg in enumerate(['R+', 'R-']):
@@ -234,7 +234,7 @@ def plot_lmm(ax, stats, conditions, cond_key, cond_labels):
 
 
 def plot_slopes(ax, slopes, stats, title):
-    """4j: per-mouse day slopes, four groups."""
+    """6e: per-mouse day slopes, four groups."""
     slopes = slopes.assign(
         group=[GROUPS.index((rg, c)) for rg, c in zip(slopes['reward_group'], slopes['lmi_category'])]
     )
@@ -268,14 +268,14 @@ def plot_slopes(ax, slopes, stats, title):
     ax.axhline(0, color='grey', linestyle='--', linewidth=0.6)
     top = slopes['slope'].max()
     for i, (rg, c) in enumerate(GROUPS):
-        p = stats[(stats['panel'] == '4j') & (stats['reward_group'] == rg) & (stats['lmi_category'] == c)][
+        p = stats[(stats['panel'] == '6e') & (stats['reward_group'] == rg) & (stats['lmi_category'] == c)][
             'p_value'
         ].iloc[0]
         ax.text(i, top * 1.05, format_p(p), ha='center', va='bottom', rotation=90, fontsize=5)
     ax.set_ylim(top=top * 1.6)
     ax.set_xticks(range(len(GROUPS)), GROUP_LABELS)
     ax.set_xlabel('')
-    ax.set_ylabel('4j: day slope (per mouse)')
+    ax.set_ylabel('6e: day slope (per mouse)')
     ax.set_title(title)
 
 

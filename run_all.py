@@ -12,7 +12,7 @@ its output goes to <output_root>/logs/<step>.log. Paths come from config.yaml
 Examples:
     python run_all.py --list                    # show the steps
     python run_all.py --stage figures           # all figures from processed data
-    python run_all.py --only figure_6 supp_4    # one or more figure folders
+    python run_all.py --only figure_6 figure_6_supfig_1    # one or more figure folders
     python run_all.py --stage pipeline --from 06_decoder
     python run_all.py --stage all --skip 04_learning_curves
 """
@@ -56,13 +56,13 @@ FIGURE_DIRS = [
     'figure_3_supfig_1',
     'figure_3_supfig_2',
     'figure_3_supfig_3',
+    'figure_3_supfig_4',
     'figure_5',
     'figure_5_supfig_1',
-    'figure_5_supfig_2',
     'figure_6',
+    'figure_6_supfig_1',
     'supp_3',
     'figure_4',
-    'supp_4',
     'revisions',
 ]
 # Figure scripts that also run as variants (name suffix, extra arguments): the
@@ -73,7 +73,7 @@ _ALLCELLS = ('allcells', ['--cells', 'all'])
 FIGURE_VARIANTS = {
     'figure_6c': [_NOLICK],
     'figure_6d_e': [_ALLCELLS, ('insample', ['--cells', 'insample']), _NOLICK],
-    'supp_4a_b': [_ALLCELLS, _NOLICK],
+    'figure6_supfig1_a_b': [_ALLCELLS, ('insample', ['--cells', 'insample']), _NOLICK],
 }
 # Revision analyses with a slow computation of their own; --recompute forces it.
 RECOMPUTE = {'figure3_supfig1_c', 'figure_6c_shuffle_control', 'thresholds_robustness'}

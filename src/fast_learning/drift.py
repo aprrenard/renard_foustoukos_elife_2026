@@ -1,5 +1,5 @@
 """Response strength, trial-to-trial noise and day-to-day drift of passive
-whisker responses (Figure 3—figure supplements 2 and 3).
+whisker responses (Figure 3—figure supplements 3 and 4).
 
 Response vectors: all cells, last N_MAP_TRIALS passive trials per day, mean
 over WIN (as Fig. 3h-i). Days -2 and -1 are the only consecutive days without
@@ -13,6 +13,11 @@ the learning session, so -1/0 spans learning. n = mice throughout.
   consecutive days, divided by the geometric mean of their split-half
   reliabilities (Spearman-Brown corrected), so that 1 means the same pattern
   on both days.
+- Adaptation within the passive block: population response of each trial
+  (mean over cells), in bins of BIN trials along the block and in the first
+  and the last N_HALF trials; first vs last (each mouse averaged over days),
+  and pre vs post learning computed from the first or the last N_HALF trials
+  only.
 - Stability within the passive block: in each day, correlation of the mean
   response vectors of the first and the last N_HALF of the N_MAP_TRIALS
   trials (block order), compared with that of the odd and the even trials
@@ -21,7 +26,7 @@ the learning session, so -1/0 spans learning. n = mice throughout.
   mouse is summarised by its median over the five days (with 20-trial halves
   the reliability is noisy in a few low-signal mouse-days).
 - LMI between two consecutive days: as pipeline step 05 (ROC of each cell's
-  response, 0-300 ms after a -1-0 s baseline, all passive trials, 1000
+  response, 0-300 ms after a -1-0 s baseline, last 40 passive trials, 1000
   label shuffles; LMI+ at p >= 0.975, LMI- at p <= 0.025), one day on each
   side. Fractions of LMI+ and LMI- cells per mouse and pair, and the net
   fraction (LMI+ minus LMI-).
@@ -50,6 +55,7 @@ LEARNING_PAIR = (-1, 0)  # spans the first whisker learning session
 DAY_PAIRS = [BASELINE_PAIR, LEARNING_PAIR]
 N_SPLITS = 100
 N_HALF = N_MAP_TRIALS // 2
+BIN = 10  # trials per bin along the passive block
 WITHIN = 'within'  # pair label of the first/last comparison within a day
 RESPONSE_WIN = (0, 0.300)  # LMI, as pipeline step 05
 BASELINE_WIN = (-1, 0)
@@ -186,11 +192,69 @@ def _comparison_row(rg, measure, test, x, y, names, paired=True):
         'comparison': f'{names[0]} vs {names[1]}',
         'test': test,
         'n_mice': len(x) if paired else f'{len(x)} / {len(y)}',
+        'mean_1': np.mean(x),
+        'mean_2': np.mean(y),
         'median_1': np.median(x),
         'median_2': np.median(y),
         'statistic': res.statistic,
         'p_value': res.pvalue,
     }
+
+
+def amplitude_tables(vectors):
+    """Population response (mean over cells) per mouse, day and bin of BIN
+    trials, and per mouse, day and half ('first' / 'last' N_HALF trials)."""
+    bins, halves = [], []
+    for mouse, (rg, d) in vectors.items():
+        X, day_of = d.values, d['day'].values
+        for day in DAYS:
+            r = np.nanmean(X[:, day_of == day], axis=0)  # block order
+            for b in range(int(np.ceil(len(r) / BIN))):
+                bins.append(
+                    dict(
+                        mouse_id=mouse,
+                        reward_group=rg,
+                        day=day,
+                        bin=b + 1,
+                        response=r[b * BIN : (b + 1) * BIN].mean(),
+                    )
+                )
+            for half, sl in [('first', slice(0, N_HALF)), ('last', slice(-N_HALF, None))]:
+                halves.append(
+                    dict(mouse_id=mouse, reward_group=rg, day=day, half=half, response=r[sl].mean())
+                )
+    return pd.DataFrame(bins), pd.DataFrame(halves)
+
+
+def pre_post_halves(halves):
+    """Per mouse and half: mean response over the pre and the post days."""
+    period = halves['day'].map({d: 'pre' for d in PRE_DAYS} | {d: 'post' for d in POST_DAYS})
+    return (
+        halves.assign(period=period)
+        .dropna(subset=['period'])
+        .groupby(['reward_group', 'mouse_id', 'half', 'period'])['response']
+        .mean()
+        .unstack()
+    )
+
+
+def amplitude_stats(halves):
+    """First vs last N_HALF trials (each mouse averaged over days), and pre vs
+    post computed from either half, per group (Wilcoxon signed-rank, n = mice)."""
+    block = halves.groupby(['reward_group', 'mouse_id', 'half'])['response'].mean().unstack()
+    pp = pre_post_halves(halves)
+    test = 'Wilcoxon signed-rank (n = mice)'
+    rows = []
+    for rg in ['R+', 'R-']:
+        b = block.loc[rg]
+        rows.append(
+            _comparison_row(rg, 'amplitude first/last', test, b['first'], b['last'], ('first', 'last'))
+        )
+        for half in ('first', 'last'):
+            g = pp.loc[(rg, slice(None), half), :]
+            measure = f'amplitude pre/post, {half} {N_HALF} trials'
+            rows.append(_comparison_row(rg, measure, test, g['pre'], g['post'], ('pre', 'post')))
+    return pd.DataFrame(rows)
 
 
 def within_block_means(wb):
@@ -340,6 +404,7 @@ def mouse_drift_lmi(mouse, rng):
         mouse, paths.tensor_dir, 'tensor_xarray_mapping_data.nc', subtracted=False
     )
     data = data - np.nanmean(imaging.select_time(data, *BASELINE_WIN), axis=2, keepdims=True)
+    data = imaging.last_trials(data)
     resp = imaging.select_time(data, *RESPONSE_WIN).mean(dim='time')
     days = resp['day'].values
     rows = []

@@ -18,9 +18,11 @@ Parts (both by default, or one with --only):
             fast_learning.participation), with the cell's noise SD and
             threshold, the chance rate and the rate above chance
             (excess_rate), and per-cell baseline / day-0 / post rates merged
-            with LMI                                   (Fig. 6d-e, Supp. 4)
+            with LMI                         (Fig. 6d-e and its supplement 1)
             Held-out: also the in-sample rates (cells of the detecting half,
             same events), for comparison.
+    merge   only the merge of the saved per-day rates with LMI (after the LMI
+            of step 05 changes; not run by default)
 
 Inputs:  <processed_dir>/reactivation/reactivation_results_p99.pkl,
          mouse_selection.csv, <processed_dir>/lmi_results.csv, tensors.
@@ -32,7 +34,7 @@ Outputs: <processed_dir>/reactivation/
          (no-lick control) followed by _nolick.
 
 Usage:
-    python pipeline/08_participation.py [--cells heldout|all] [--only events rates] [--nolick]
+    python pipeline/08_participation.py [--cells heldout|all] [--only events rates merge] [--nolick]
 """
 
 import argparse
@@ -190,6 +192,17 @@ def run_rates_all(results, reward_groups, nolick=False):
         )
 
 
+def run_merge(reward_groups, cells, nolick=False):
+    """Merge the saved per-day participation rates with the current LMI."""
+    lmi_df = pd.read_csv(LMI_RESULTS_CSV)
+    for threshold in pt.PARTICIPATION_THRESHOLDS:
+        for role in cells:
+            per_day_df = pd.read_csv(pt.rates_csv(threshold, nolick, role))
+            merged = pt.merge_with_lmi(pt.aggregate_across_days(per_day_df), lmi_df, reward_groups)
+            merged.to_csv(pt.merged_csv(threshold, nolick, role), index=False)
+            print(f"Saved: {pt.merged_csv(threshold, nolick, role)} ({len(merged)} cells)")
+
+
 # ============================================================================
 # Main
 # ============================================================================
@@ -197,7 +210,7 @@ def run_rates_all(results, reward_groups, nolick=False):
 if __name__ == '__main__':
     parts = ['events', 'rates']
     parser = argparse.ArgumentParser(description='Pipeline step 08: participation in reactivations.')
-    parser.add_argument('--only', nargs='+', choices=parts, default=parts)
+    parser.add_argument('--only', nargs='+', choices=parts + ['merge'], default=parts)
     parser.add_argument(
         '--cells',
         choices=['heldout', 'all'],
@@ -212,6 +225,10 @@ if __name__ == '__main__':
     results, reward_groups = load_selected_results(
         os.path.join(rx.results_dir(args.nolick), 'reactivation_results_p99.pkl')
     )
+    if 'merge' in args.only:
+        run_merge(
+            reward_groups, ('heldout', 'insample') if args.cells == 'heldout' else ('all',), args.nolick
+        )
     if args.cells == 'heldout':
         if 'events' in args.only:
             run_events(results, args.nolick)
