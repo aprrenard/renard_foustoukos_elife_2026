@@ -146,12 +146,13 @@ exploratory/         earlier and exploratory analyses, not needed for the paper
 | 6d, e | [`figures/figure_6/figure_6d_e.py`](figures/figure_6/figure_6d_e.py) | Participation in reactivations above chance vs LMI |
 | **Figure 6 – figure supplement 1** | | |
 | 6-S1a, b | [`figures/figure_6_supfig_1/figure6_supfig1_a_b.py`](figures/figure_6_supfig_1/figure6_supfig1_a_b.py) | Participation rate in reactivations vs LMI, without correction for chance |
+| **Figure 6 – figure supplement 3** | | |
+| 6-S3a–c | [`figures/figure_6_supfig_3/figure6_supfig3_a_c.py`](figures/figure_6_supfig_3/figure6_supfig3_a_c.py) | Robustness of the reactivation results to the detection threshold, the participation threshold and licking |
 | **Revision analyses (in progress)** | | |
 | — | [`figures/revisions/behavior_day0_initial_licking.py`](figures/revisions/behavior_day0_initial_licking.py) | Licking to the whisker stimulus at the start of Day 0 (R2 public 1, R1 recommendation 1, R3 public 1) |
 | — | [`figures/revisions/figure_6c_event_timing.py`](figures/revisions/figure_6c_event_timing.py) | Are reactivation events over-represented when mice can lick? |
 | — | [`figures/revisions/figure_6c_previous_outcome.py`](figures/revisions/figure_6c_previous_outcome.py) | Does the reactivation rate depend on the outcome of the previous trial? |
 | — | [`figures/revisions/figure_6c_shuffle_control.py`](figures/revisions/figure_6c_shuffle_control.py) | Shuffled-template reactivation detection |
-| — | [`figures/revisions/thresholds_robustness.py`](figures/revisions/thresholds_robustness.py) | Robustness of the reactivation results to the participation threshold and to the detection threshold |
 <!-- figure-table:end -->
 
 The table is generated from the scripts' docstrings: `python tools/update_figure_table.py`.
